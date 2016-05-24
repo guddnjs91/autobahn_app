@@ -1,0 +1,6 @@
+Compile : make
+
+Execute : bin/test
+
+After Execution, there are leftover data in shared memory.
+So need to bin/shm-remove for deallocating shared memory.
