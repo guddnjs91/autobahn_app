@@ -14,7 +14,7 @@
 #include "nvm-atomic-rw.h"
 //#include "dumpcode.h"
 
-#define MAX_BUF_SIZE 20000000
+#define MAX_BUF_SIZE 500000000
 //#define MAX_BUF_SIZE 4000000*125
 
 extern NVM_metadata* NVM;
@@ -38,7 +38,7 @@ void* thread_sync_func(void* data)
 void fill_buf(char *buf, int size)
 {
 	int i;
-	for(i = 0; i < size; i++)
+	for(i = 0; i < size - 1; i++)
 	{
 		if(rand()%10 == 0)
 		{
@@ -51,7 +51,7 @@ void fill_buf(char *buf, int size)
 			buf[i] = rand() % 26 + 'A';
 	}
 
-        buf[size-1] = 0;
+        buf[size-1] = '\0';
 }
 
 void *thread_write_func(void *data)
@@ -59,10 +59,10 @@ void *thread_write_func(void *data)
 	int tid = *((int *)data);
 	char *buf = (char *)malloc(sizeof(char) * MAX_BUF_SIZE);
 
-	/* Test case #1 : Write 1GiB at one time */
+	/* Test case #1 : Write 512 Bytes at one time */
 	fill_buf(buf, MAX_BUF_SIZE);
 
-        nvm_atomic_write(tid, 0,  buf, MAX_BUF_SIZE);	// change to nvm_write() later..
+        nvm_atomic_write(tid, 0, buf, MAX_BUF_SIZE);	// change to nvm_write() later..
 
 	return NULL;
 }
@@ -122,15 +122,15 @@ int main(int argc, char * argv[])
 	pthread_create(&sync_thread, NULL, thread_sync_func, NULL);
         
         // Multi-writer
-	pthread_t write_thread[3];
-	int tid[3];
-	for(i=0; i<3; i++)
+	pthread_t write_thread[1];
+	int tid[1];
+	for(i=0; i<1; i++)
 		tid[i] = i + 1;
 
-	for(i=0; i<3; i++)
+	for(i=0; i<1; i++)
 		pthread_create(&write_thread[i], NULL, thread_write_func, (void *)&tid[i]);
 
-	for(i=0; i<3; i++)
+	for(i=0; i<1; i++)
 		pthread_join(write_thread[i], (void **)&status);
 	
 	print_nvm_info();

@@ -11,40 +11,50 @@
 #define MAX_NVM_INODE       2000000
 #define BLOCK_SIZE          512
 
+/* State of inode */
 #define	INODE_STATE_FREE        0
 #define	INODE_STATE_ALLOCATED   1
 #define	INODE_STATE_WRITTEN     2
 #define INODE_STATE_SYNCED      3
 
+/* Represent one volume table entry */
+typedef struct _vt_entry {
+
+    unsigned int        vid;    // volume id (implicit filename)
+    int                 fd;     // file descriptor (useless when recovery)
+    struct _nvm_inode*  iroot;  // inode root
+    
+    // managed by vte's free-list
+    unsigned int next;
+
+} VT_entry;
+
 /* Represent one inode object */
 typedef struct _nvm_inode {
-    unsigned int lbn;           // logical block number
-    int state;                  // state of block
-    struct _vt_entry* vte;      // volume id (implicit filename)
+    
+    unsigned int        lbn;      // logical block number
+    int                 state;    // state of block
+    struct _vt_entry*   vte;      // volume id (implicit filename)
 
-    unsigned int f_prev;        // for free list
-    unsigned int f_next;        // for free list
+    // managed by inode's free-list
+    unsigned int        f_prev;
+    unsigned int        f_next;
     
-    struct _nvm_inode* s_prev;  // for sync list => Is there any way to represent as index offset??
-    struct _nvm_inode* s_next;  // for sync list
+    // managed by inode's sync-list
+    // => Is there any way to represent as index offset??
+    struct _nvm_inode*  s_prev;
+    struct _nvm_inode*  s_next;
     
-    struct _nvm_inode* left;    // for AVL tree
-    struct _nvm_inode* right;   // for AVL tree
-    int height;                 // for AVL tree
+    // managed by vte's AVL tree
+    struct _nvm_inode*  left;
+    struct _nvm_inode*  right;
+    int                 height;
     
 } NVM_inode;
 
-/* Represent one volume table entry */
-typedef struct _vt_entry {
-    unsigned int vid;           // volume id (implicit filename)
-    int fd;                     // file descriptor (useless when recovery)
-    struct _nvm_inode* iroot;   // inode root
-    
-    unsigned int next;          // managed by free list
-} VT_entry;
-
 /* Represent the metadata of NVM */
 typedef struct _nvm_metadata {
+
     // Base address for calculating offset
     struct _vt_entry*   VOL_TABLE_START;
     struct _nvm_inode*  INODE_START;
@@ -61,20 +71,22 @@ typedef struct _nvm_metadata {
     // Sync list for NVM_inode
     struct _nvm_inode*	SYNC_INODE_LIST_HEAD;
     struct _nvm_inode*	SYNC_INODE_LIST_TAIL;
+
 } NVM_metadata;
 
+/* Global variable that can access every NVM area */
 NVM_metadata* NVM;
 
-/* Initialize NVM */
+/* Initialize and set up NVM */
 void init_nvm_address(void *start_addr)
 {
     int i;
     
     // Initialize NVM address at the first time
     NVM = (NVM_metadata *)start_addr;
-    NVM->VOL_TABLE_START        = (VT_entry *)(NVM + 1);
-    NVM->INODE_START            = (NVM_inode *)(NVM->VOL_TABLE_START + MAX_VT_ENTRY);
-    NVM->DATA_START             = (char *)(NVM->INODE_START + MAX_NVM_INODE);
+    NVM->VOL_TABLE_START = (VT_entry *)(NVM + 1);
+    NVM->INODE_START     = (NVM_inode *)(NVM->VOL_TABLE_START + MAX_VT_ENTRY);
+    NVM->DATA_START      = (char *)(NVM->INODE_START + MAX_NVM_INODE);
     
     // Initialize Free list for VT_entry
     VT_entry* vteptr = NVM->VOL_TABLE_START;
@@ -82,10 +94,12 @@ void init_nvm_address(void *start_addr)
     for (i = 0; i < MAX_VT_ENTRY - 1; i++)
     {
         vteptr->vid = 0;
+        vteptr->fd  = 0;
         vteptr->next = i + 1;
         vteptr++;
     }
     vteptr->vid = 0;
+    vteptr->fd  = 0;
     vteptr->next = MAX_VT_ENTRY;
     NVM->FREE_VTE_LIST_TAIL = vteptr;
     
@@ -247,7 +261,7 @@ VT_entry* search_vt_entry(VT_entry* vt_root, unsigned int vid)
 	return NULL;
 }
 
-/* Get VT_entry object for vid */
+/* Get VT_entry object which has vid */
 VT_entry* get_vt_entry(unsigned int vid)
 {
 	VT_entry* vte;
@@ -455,57 +469,64 @@ void insert_sync_inode_list(NVM_inode* inode)
 
 }
 
-
+/* Sync one data block from NVM to data */
 void nvm_sync()
 {
+    // get the first inode in sync-list
     NVM_inode* inode = __sync_lock_test_and_set(
                 &NVM->SYNC_INODE_LIST_HEAD, NVM->SYNC_INODE_LIST_HEAD->s_next);
 
+    // get the index and write that data block
     unsigned int idx = get_nvm_inode_idx(inode);
     write(inode->vte->fd, NVM->DATA_START + BLOCK_SIZE * idx, BLOCK_SIZE);
     inode->state = INODE_STATE_SYNCED;
-    // printf("sync %d Bytes\n", BLOCK_SIZE);
+    printf("sync %d Bytes\n", BLOCK_SIZE);
 }
 
+/* Atomically write data to nvm 
+   - get vte
+   - calculate how many inode need
+   - get inode and memcpy data block
+   - insert inode to sync-list
+*/
 void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len)
 {
-//	printf("NVM write %u Bytes to VOL%u.txt\n", len, vid);
+    printf("NVM write %u Bytes to VOL%u.txt\n", len, vid);
 
-	// Search VT_entry of vid
-	VT_entry* vte = get_vt_entry(vid);
+    // get vte with vid
+    VT_entry* vte = get_vt_entry(vid);
 	
-        // Calculate total write size by offset and length
-	unsigned int lbn_start	= ofs / BLOCK_SIZE;
-	unsigned int lbn_end	= (ofs + len) / BLOCK_SIZE;
-	NVM_inode* inode;
-
-	unsigned int write_bytes = 0;
-	unsigned int offset = ofs % BLOCK_SIZE;
-	for(unsigned int i = 0; i < lbn_end - lbn_start + 1; i++)
-	{
-		// Get NVM_inode with its lbn
-		inode = get_nvm_inode(vte, lbn_start + i);
-		
-		// need lock?
-
-		// Get how many bytes to write
-		write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
-		
-		// Write data to the NVRAM data block space
-		unsigned int idx = get_nvm_inode_idx(inode);
-		char* data_dst = NVM->DATA_START + BLOCK_SIZE * idx + offset; 
-		memcpy(data_dst, ptr, write_bytes);
-		inode->state = INODE_STATE_WRITTEN;
-
-//		printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
-
-		// Insert written inode to sync list
-		insert_sync_inode_list(inode);
-
-		// Re-inintialize offset and len
-		offset = 0;
-		len -= write_bytes;
-	}
+    // calculate total size for writing by offset and length
+    unsigned int lbn_start   = ofs / BLOCK_SIZE;
+    unsigned int lbn_end     = (ofs + len) / BLOCK_SIZE;
+    unsigned int write_bytes = 0;
+    unsigned int offset      = ofs % BLOCK_SIZE;
+    
+    for (unsigned int i = 0; i < lbn_end - lbn_start + 1; i++)
+    {
+        // get inode with its lbn
+        NVM_inode* inode = get_nvm_inode(vte, lbn_start + i);
+        
+        // need lock?
+        
+        // calculate how many bytes to write
+        write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
+        
+        // write data to the NVM data block space
+        unsigned int idx = get_nvm_inode_idx(inode);
+        char* data_dst = NVM->DATA_START + BLOCK_SIZE * idx + offset; 
+        memcpy(data_dst, ptr, write_bytes);
+        inode->state = INODE_STATE_WRITTEN;
+        
+        printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
+        
+        // innsert written inode to sync list
+        insert_sync_inode_list(inode);
+        
+        // Re-inintialize offset and len
+        offset = 0;
+        len -= write_bytes;
+    }
 }
 
 #endif
