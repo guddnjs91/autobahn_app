@@ -14,8 +14,7 @@
 #include "nvm-atomic-rw.h"
 //#include "dumpcode.h"
 
-#define MAX_BUF_SIZE 500000000
-//#define MAX_BUF_SIZE 4000000*125
+unsigned int MAX_BUF_SIZE = 512*1024*1024;
 
 extern NVM_metadata* NVM;
 
@@ -35,7 +34,7 @@ void* thread_sync_func(void* data)
     return NULL;
 }
 
-void fill_buf(char *buf, int size)
+void fill_buf(char *buf, size_t size)
 {
 	int i;
 	for(i = 0; i < size - 1; i++)
@@ -114,7 +113,7 @@ int main(int argc, char * argv[])
 	/* Initialize start address of shared memory */
 	init_nvm_address(shm_addr);
 
-	print_nvm_info();
+	// print_nvm_info();
 
 	pthread_t sync_thread;  // sync thread always runs 
 	int status;
@@ -133,7 +132,7 @@ int main(int argc, char * argv[])
 	for(i=0; i<1; i++)
 		pthread_join(write_thread[i], (void **)&status);
 	
-	print_nvm_info();
+	// print_nvm_info();
 
 	pthread_join(sync_thread, (void**)&status);
 
