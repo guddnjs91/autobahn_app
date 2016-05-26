@@ -19,7 +19,8 @@ nvm_system_init()
     //TODO: start sync_thread
 }
 
-/* Initialize and set up NVM */
+/**
+ * Initialize and set up NVM */
 void
 init_nvm_address(
     void *start_addr)
@@ -67,7 +68,8 @@ init_nvm_address(
     NVM->SYNC_INODE_LIST_TAIL = NULL;
 }
 
-// Print NVM address information
+/**
+ * Print NVM address information */
 void
 print_nvm_info()
 {
@@ -106,6 +108,9 @@ print_nvm_info()
 //  data_dump((unsigned char*)NVM->DATA_START, BLOCK_SIZE * 33);
 }
 
+/**
+ * Get the number of not using vte from free-vte-list
+ @return the number of free-vte */
 int
 get_free_vte_num()
 {
@@ -122,6 +127,9 @@ get_free_vte_num()
     return cnt;
 }
 
+/**
+ * Get the number of not using inode from free-inode-list
+ @return the number of free-inode */
 int
 get_free_inode_num()
 {
@@ -138,6 +146,9 @@ get_free_inode_num()
     return cnt;
 }
 
+/**
+ * Get the number of inodes for syncing from sync-inode-list
+ @return the number of inodes for syncing */
 int
 get_sync_inode_num()
 {
@@ -158,6 +169,9 @@ get_sync_inode_num()
     return cnt;
 }
 
+/**
+ * Get the index for given inode
+ @return the index of that inode */
 unsigned int 
 get_nvm_inode_idx(
     NVM_inode* addr)

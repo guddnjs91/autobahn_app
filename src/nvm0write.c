@@ -7,12 +7,12 @@
 
 extern NVM_metadata* NVM;
 
-/* Atomically write data to nvm 
-   - get vte
-   - calculate how many inode need
-   - get inode and memcpy data block
-   - insert inode to sync-list
-*/
+/**
+ * Atomically write data to nvm 
+ - get vte
+ - calculate how many inode need
+ - get inode and memcpy data block
+ - insert inode to sync-list */
 void
 nvm_atomic_write(
     unsigned int vid, /* !<in: volume ID */
@@ -62,7 +62,7 @@ nvm_atomic_write(
  * @return a free volume entry */
 VT_entry*
 get_vt_entry(
-    unsigned int vid)
+    unsigned int vid) /* !<in: key to find VT_entry */
 {
     VT_entry* vte;
 
@@ -85,8 +85,8 @@ get_vt_entry(
  * @return found entry */
 VT_entry*
 search_vt_entry(
-    VT_entry* vt_root,
-    unsigned int vid)
+    VT_entry* vt_root, /* !<in: root of tree (later) */
+    unsigned int vid)  /* !<in: searching tree with vid */
 {
     // Just linear search in this code
     // need to search from tree structure later
@@ -107,7 +107,7 @@ search_vt_entry(
  * @return allocated volume entry */
 VT_entry*
 alloc_vt_entry(
-    unsigned int vid)
+    unsigned int vid) /* !<in: given vid to new allocated VT_entry */
 {
     VT_entry* vte;
 
@@ -120,7 +120,7 @@ alloc_vt_entry(
     }
 
     vte->vid = vid;
-        vte->fd = open(get_filename(vid), O_WRONLY| O_CREAT, 0644);
+    vte->fd = open(get_filename(vid), O_WRONLY| O_CREAT, 0644);
     vte->next = MAX_VT_ENTRY;   // meaning next null
     vte->iroot = NULL;
 
@@ -132,8 +132,8 @@ alloc_vt_entry(
  * @return inode */
 NVM_inode*
 get_nvm_inode(
-    VT_entry* vte,
-    unsigned int lbn)
+    VT_entry* vte,    /* !<in: volume that contains inodes we are looking for */
+    unsigned int lbn) /* !<in: find inode which has this lbn */
 {
     NVM_inode* inode;
 
@@ -157,7 +157,7 @@ get_nvm_inode(
  * @return inode */
 NVM_inode*
 alloc_nvm_inode(
-    unsigned int lbn)
+    unsigned int lbn) /* !<in: lbn to new allocating inode */
 {
     NVM_inode* inode;
 
@@ -182,7 +182,7 @@ alloc_nvm_inode(
  * Insert inode to sync-list for flushing. */
 void
 insert_sync_inode_list(
-    NVM_inode* inode)
+    NVM_inode* inode) /* !<in: inode which would be inserted to sync-inode-list */
 {
     if(NVM->SYNC_INODE_LIST_HEAD == NULL) {
         NVM->SYNC_INODE_LIST_HEAD = inode;
@@ -194,9 +194,12 @@ insert_sync_inode_list(
     }
 }
 
+/**
+ * Get filename with argument vid (vid maps filename 1 to 1)
+ @return char* containing filename */
 const char*
 get_filename(
-    unsigned int vid)
+    unsigned int vid) /* !<in: vid representing its own filename */
 {
     std::string filename = "VOL";
     std::stringstream ss;

@@ -4,7 +4,8 @@
 
 extern NVM_metadata* NVM;
 
-/* Sync one data block from NVM to data */
+/**
+ * Sync one data block from NVM to data */
 void
 nvm_sync()
 {

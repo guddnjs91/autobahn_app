@@ -3,7 +3,9 @@
 
 extern NVM_metadata* NVM;
 
-/* Search NVM_inode object from avl tree root */
+/**
+ * Search NVM_inode object from avl tree root
+ @return inode with lbn from avl-tree */
 NVM_inode*
 search_nvm_inode(
     NVM_inode* root,
@@ -23,7 +25,9 @@ search_nvm_inode(
     return NULL;
 }
 
-/* Insert NVM_inode object to avl tree */
+/**
+ * Insert NVM_inode object to avl tree
+ @return root node of avl-tree*/
 NVM_inode*
 insert_nvm_inode(
     NVM_inode* root,
@@ -71,6 +75,9 @@ insert_nvm_inode(
     return root;
 }
 
+/**
+ * Get the height of avl-tree
+ @return height */
 int
 height(
     NVM_inode* N)

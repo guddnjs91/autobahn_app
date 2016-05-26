@@ -12,6 +12,8 @@ printchar(
     }
 }
 
+/**
+ * Print memory dump for given address with size len */
 void
 data_dump(
     unsigned char *buff,

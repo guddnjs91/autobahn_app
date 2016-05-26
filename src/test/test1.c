@@ -17,6 +17,10 @@ unsigned int MAX_BUF_SIZE = 512*1024*1024;
 
 extern NVM_metadata* NVM;
 
+/**
+ * Sync thread checking if sync-list is not empty
+ and sync 1 block from nvm
+ @return NULL */
 void*
 thread_sync_func(
     void* data)
@@ -32,6 +36,9 @@ thread_sync_func(
     return NULL;
 }
 
+/**
+ * Fill in buffer with given size 
+ write each element with random characters */
 void
 fill_buf(
     char *buf,
@@ -54,6 +61,8 @@ fill_buf(
     buf[size-1] = '\0';
 }
 
+/**
+ * Write thread fills in buffer and write it to nvm */
 void
 *thread_write_func(
     void *data)
