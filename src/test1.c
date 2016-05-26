@@ -36,7 +36,7 @@ void* thread_sync_func(void* data)
 void fill_buf(char *buf, size_t size)
 {
 	int i;
-	for(i = 0; i < size - 1; i++)
+	for(i = 0; i < (int)size - 1; i++)
 	{
 		if(rand()%10 == 0)
 		{
