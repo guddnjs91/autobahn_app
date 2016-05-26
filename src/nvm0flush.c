@@ -5,7 +5,8 @@
 extern NVM_metadata* NVM;
 
 /* Sync one data block from NVM to data */
-void nvm_sync()
+void
+nvm_sync()
 {
     // get the first inode in sync-list
     NVM_inode* inode = __sync_lock_test_and_set(

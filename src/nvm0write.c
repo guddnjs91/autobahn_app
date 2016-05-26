@@ -31,8 +31,7 @@ nvm_atomic_write(
     unsigned int write_bytes = 0;
     unsigned int offset      = ofs % BLOCK_SIZE;
     
-    for (unsigned int i = 0; i < lbn_end - lbn_start + 1; i++)
-    {
+    for (unsigned int i = 0; i < lbn_end - lbn_start + 1; i++) {
         // get inode with its lbn
         NVM_inode* inode = get_nvm_inode(vte, lbn_start + i);
         
@@ -97,7 +96,8 @@ search_vt_entry(
     for(i = 0; i < MAX_VT_ENTRY; i++) {
         if(vte->vid == vid) {
             return vte;
-            vte++;
+        }
+        vte++;
     }
     return NULL;
 }
@@ -112,13 +112,10 @@ alloc_vt_entry(
     VT_entry* vte;
 
     // Check if free-list is empty
-    if(NVM->FREE_VTE_LIST_HEAD != NVM->FREE_VTE_LIST_TAIL)
-    {
+    if(NVM->FREE_VTE_LIST_HEAD != NVM->FREE_VTE_LIST_TAIL) {
         vte = __sync_lock_test_and_set(
                 &NVM->FREE_VTE_LIST_HEAD, NVM->VOL_TABLE_START + NVM->FREE_VTE_LIST_HEAD->next);
-    }
-    else
-    {
+    } else {
         // wait until vt_entry freed (later)
     }
 

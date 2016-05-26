@@ -3,10 +3,6 @@
 
 NVM_metadata* NVM;
 
-unsigned int MAX_BUF_SIZE = 512*1024*1024;
-
-extern NVM_metadata* NVM;
-
 void
 nvm_system_init()
 {
