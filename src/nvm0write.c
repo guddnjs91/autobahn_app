@@ -21,10 +21,10 @@ nvm_atomic_write(
     unsigned int len) /* !<in: size of buffer to be written */
 {
     printf("NVM write %u Bytes to VOL%u.txt\n", len, vid);
-
+    
     // get vte with vid
     VT_entry* vte = get_vt_entry(vid);
-	
+    
     // calculate total size for writing by offset and length
     unsigned int lbn_start   = ofs / BLOCK_SIZE;
     unsigned int lbn_end     = (ofs + len) / BLOCK_SIZE;
@@ -69,7 +69,7 @@ get_vt_entry(
 
     // 1. search from vt_tree
     vte = search_vt_entry(NVM->VOL_TABLE_START, vid);
-	
+    
     // 2. If search found vte, return it
     if(vte != NULL) {
         return vte;
@@ -109,25 +109,25 @@ VT_entry*
 alloc_vt_entry(
     unsigned int vid)
 {
-	VT_entry* vte;
+    VT_entry* vte;
 
-	// Check if free-list is empty
-	if(NVM->FREE_VTE_LIST_HEAD != NVM->FREE_VTE_LIST_TAIL)
-	{
-		vte = __sync_lock_test_and_set(
-				&NVM->FREE_VTE_LIST_HEAD, NVM->VOL_TABLE_START + NVM->FREE_VTE_LIST_HEAD->next);
-	}
-	else
-	{
-		// wait until vt_entry freed (later)
-	}
+    // Check if free-list is empty
+    if(NVM->FREE_VTE_LIST_HEAD != NVM->FREE_VTE_LIST_TAIL)
+    {
+        vte = __sync_lock_test_and_set(
+                &NVM->FREE_VTE_LIST_HEAD, NVM->VOL_TABLE_START + NVM->FREE_VTE_LIST_HEAD->next);
+    }
+    else
+    {
+        // wait until vt_entry freed (later)
+    }
 
-	vte->vid = vid;
+    vte->vid = vid;
         vte->fd = open(get_filename(vid), O_WRONLY| O_CREAT, 0644);
-	vte->next = MAX_VT_ENTRY;	// meaning next null
-	vte->iroot = NULL;
+    vte->next = MAX_VT_ENTRY;   // meaning next null
+    vte->iroot = NULL;
 
-	return vte;
+    return vte;
 }
 
 /**
@@ -174,9 +174,9 @@ alloc_nvm_inode(
     }
 
     inode->lbn = lbn;
-    inode->f_next = MAX_NVM_INODE;	// meaning NULL
-    inode->s_prev = NULL;			// meaning NULL
-    inode->s_next = NULL;			// meaning NULL
+    inode->f_next = MAX_NVM_INODE;  // meaning NULL
+    inode->s_prev = NULL;           // meaning NULL
+    inode->s_next = NULL;           // meaning NULL
     inode->state = INODE_STATE_ALLOCATED;
     return inode;
 }

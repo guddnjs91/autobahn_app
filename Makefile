@@ -20,4 +20,4 @@ clean:
 	rm -rf $(OBJS)
 
 allclean:
-	rm -rf $(OBJS) $(BIN)*
+	rm -rf $(OBJS) $(BIN)test

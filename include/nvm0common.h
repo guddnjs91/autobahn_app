@@ -6,9 +6,9 @@
 #define BLOCK_SIZE          512
 
 /* State of inode */
-#define	INODE_STATE_FREE        0
-#define	INODE_STATE_ALLOCATED   1
-#define	INODE_STATE_WRITTEN     2
+#define INODE_STATE_FREE        0
+#define INODE_STATE_ALLOCATED   1
+#define INODE_STATE_WRITTEN     2
 #define INODE_STATE_SYNCED      3
 
 /* Represent one volume table entry */
@@ -59,12 +59,12 @@ typedef struct _nvm_metadata {
     struct _vt_entry*   FREE_VTE_LIST_TAIL;
     
     // Free list for NVM_inode
-    struct _nvm_inode*	FREE_INODE_LIST_HEAD;
-    struct _nvm_inode*	FREE_INODE_LIST_TAIL;
+    struct _nvm_inode*  FREE_INODE_LIST_HEAD;
+    struct _nvm_inode*  FREE_INODE_LIST_TAIL;
 
     // Sync list for NVM_inode
-    struct _nvm_inode*	SYNC_INODE_LIST_HEAD;
-    struct _nvm_inode*	SYNC_INODE_LIST_TAIL;
+    struct _nvm_inode*  SYNC_INODE_LIST_HEAD;
+    struct _nvm_inode*  SYNC_INODE_LIST_TAIL;
 
 } NVM_metadata;
 

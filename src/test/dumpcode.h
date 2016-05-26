@@ -4,7 +4,7 @@
 void printchar(char c)
 {
     if(isprint(c))
-	printf("%c", c);
+    printf("%c", c);
     else
         printf(".");
 }
@@ -22,7 +22,7 @@ void data_dump(unsigned char *buff, int len)
         printf("%02x ", buff[i]);
 
         if(i%16-15 == 0)
-	{
+    {
             int j;
             printf(" ");
             for(j = i-15; j <= i; j++)

@@ -3,8 +3,30 @@
 
 NVM_metadata* NVM;
 
+unsigned int MAX_BUF_SIZE = 512*1024*1024;
+
+extern NVM_metadata* NVM;
+
+void
+nvm_system_init()
+{
+    //TODO: get_nvm_address();
+
+    //TODO:
+    //if(setup required)
+    //construct_nvm();
+
+    //TODO:
+    //else
+    //start_ecovery();
+
+    //TODO: start sync_thread
+}
+
 /* Initialize and set up NVM */
-void init_nvm_address(void *start_addr)
+void
+init_nvm_address(
+    void *start_addr)
 {
     int i;
     
@@ -50,44 +72,46 @@ void init_nvm_address(void *start_addr)
 }
 
 // Print NVM address information
-void print_nvm_info()
+void
+print_nvm_info()
 {
-	printf("\nHere is the NVM information \n");
-	
-	printf("\n[RESERVED AREA]\n");
-	printf("- start  : %p\n", NVM);
-	printf("- size   : %ld\n", sizeof(NVM_metadata));
+    printf("\nHere is the NVM information \n");
+    
+    printf("\n[RESERVED AREA]\n");
+    printf("- start  : %p\n", NVM);
+    printf("- size   : %ld\n", sizeof(NVM_metadata));
 
-	printf("\n[VOLUME TABLE]\n");
-	printf("- start	 : %p\n", NVM->VOL_TABLE_START);
-	printf("- end    : %p\n", NVM->VOL_TABLE_START + MAX_VT_ENTRY);
-	printf("- vte size  : %ld Bytes\n", sizeof(VT_entry));
-	printf("- #vte      : %d\n", MAX_VT_ENTRY);
-	printf("- free list : %p\n", NVM->FREE_VTE_LIST_HEAD);
-	printf("- #free vte : %d\n", get_free_vte_num());
-//	data_dump((unsigned char*)NVM->VOL_TABLE_START, 1024);
+    printf("\n[VOLUME TABLE]\n");
+    printf("- start  : %p\n", NVM->VOL_TABLE_START);
+    printf("- end    : %p\n", NVM->VOL_TABLE_START + MAX_VT_ENTRY);
+    printf("- vte size  : %ld Bytes\n", sizeof(VT_entry));
+    printf("- #vte      : %d\n", MAX_VT_ENTRY);
+    printf("- free list : %p\n", NVM->FREE_VTE_LIST_HEAD);
+    printf("- #free vte : %d\n", get_free_vte_num());
+//  data_dump((unsigned char*)NVM->VOL_TABLE_START, 1024);
 
-	printf("\n[INODE]\n");
-	printf("- start : %p\n", NVM->INODE_START);
-	printf("- end   : %p\n", NVM->INODE_START + MAX_NVM_INODE);
-	printf("- inode size  : %ld Bytes\n", sizeof(NVM_inode));
-	printf("- #inodes     : %d\n", MAX_NVM_INODE);
-	printf("- free list   : %p\n", NVM->FREE_INODE_LIST_HEAD);
-	printf("- #free inode : %d\n", get_free_inode_num());
-	printf("- sync list   : %p\n", NVM->SYNC_INODE_LIST_HEAD);
-	printf("- #sync inode : %d\n", get_sync_inode_num());
-//	data_dump((unsigned char*)NVM->INODE_START, sizeof(NVM_inode)*20);
-	
-	printf("\n[DATA]\n");
-	printf("- start : %p\n", NVM->DATA_START);
-	printf("- end   : %p\n", NVM->DATA_START + MAX_NVM_INODE * BLOCK_SIZE);
-	printf("- block size : %d Bytes\n", BLOCK_SIZE);
-	printf("- #blk in nvm: %d\n", MAX_NVM_INODE - get_free_inode_num());
-	printf("\n\n");
-//	data_dump((unsigned char*)NVM->DATA_START, BLOCK_SIZE * 33);
+    printf("\n[INODE]\n");
+    printf("- start : %p\n", NVM->INODE_START);
+    printf("- end   : %p\n", NVM->INODE_START + MAX_NVM_INODE);
+    printf("- inode size  : %ld Bytes\n", sizeof(NVM_inode));
+    printf("- #inodes     : %d\n", MAX_NVM_INODE);
+    printf("- free list   : %p\n", NVM->FREE_INODE_LIST_HEAD);
+    printf("- #free inode : %d\n", get_free_inode_num());
+    printf("- sync list   : %p\n", NVM->SYNC_INODE_LIST_HEAD);
+    printf("- #sync inode : %d\n", get_sync_inode_num());
+//  data_dump((unsigned char*)NVM->INODE_START, sizeof(NVM_inode)*20);
+    
+    printf("\n[DATA]\n");
+    printf("- start : %p\n", NVM->DATA_START);
+    printf("- end   : %p\n", NVM->DATA_START + MAX_NVM_INODE * BLOCK_SIZE);
+    printf("- block size : %d Bytes\n", BLOCK_SIZE);
+    printf("- #blk in nvm: %d\n", MAX_NVM_INODE - get_free_inode_num());
+    printf("\n\n");
+//  data_dump((unsigned char*)NVM->DATA_START, BLOCK_SIZE * 33);
 }
 
-int get_free_vte_num()
+int
+get_free_vte_num()
 {
     int cnt = 0;
     VT_entry* vte = NVM->FREE_VTE_LIST_HEAD;
@@ -102,44 +126,45 @@ int get_free_vte_num()
     return cnt;
 }
 
-int get_free_inode_num()
+int
+get_free_inode_num()
 {
-	int cnt = 0;
-	NVM_inode* inode = NVM->FREE_INODE_LIST_HEAD;
-	while(inode != NVM->FREE_INODE_LIST_TAIL)
-	{
-		cnt++;
-		inode = NVM->INODE_START + inode->f_next;
-	}
+    int cnt = 0;
+    NVM_inode* inode = NVM->FREE_INODE_LIST_HEAD;
+    while(inode != NVM->FREE_INODE_LIST_TAIL)
+    {
+        cnt++;
+        inode = NVM->INODE_START + inode->f_next;
+    }
 
-	cnt++;
+    cnt++;
 
-	return cnt;
+    return cnt;
 }
 
-int get_sync_inode_num()
+int
+get_sync_inode_num()
 {
-	int cnt = 0;
-	NVM_inode* inode = NVM->SYNC_INODE_LIST_HEAD;
-	
-	if(inode == NULL)
-		return cnt;
+    int cnt = 0;
+    NVM_inode* inode = NVM->SYNC_INODE_LIST_HEAD;
+    
+    if(inode == NULL)
+        return cnt;
 
-	while(inode != NVM->SYNC_INODE_LIST_TAIL)
-	{
-		cnt++;
-		inode = inode->s_next;
-	}
+    while(inode != NVM->SYNC_INODE_LIST_TAIL)
+    {
+        cnt++;
+        inode = inode->s_next;
+    }
 
-	cnt++;
+    cnt++;
 
-	return cnt;
+    return cnt;
 }
 
-
-
-
-unsigned int get_nvm_inode_idx(NVM_inode* addr)
+unsigned int 
+get_nvm_inode_idx(
+    NVM_inode* addr)
 {
-	return (unsigned int)(((char*)addr - (char*)NVM->INODE_START)/sizeof(NVM_inode));
+    return (unsigned int)(((char*)addr - (char*)NVM->INODE_START)/sizeof(NVM_inode));
 }
