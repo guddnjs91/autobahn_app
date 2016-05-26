@@ -13,7 +13,12 @@ extern NVM_metadata* NVM;
    - get inode and memcpy data block
    - insert inode to sync-list
 */
-void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len)
+void
+nvm_atomic_write(
+    unsigned int vid, /* !<in: volume ID */
+    unsigned int ofs, /* !<in: ??? */ 
+    void* ptr,        /* !<in: buffer */
+    unsigned int len) /* !<in: size of buffer to be written */
 {
     printf("NVM write %u Bytes to VOL%u.txt\n", len, vid);
 
@@ -53,49 +58,56 @@ void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned in
     }
 }
 
-/* Get VT_entry object which has vid */
-VT_entry* get_vt_entry(unsigned int vid)
+/**
+ * Get VT_entry object which has vid.
+ * @return a free volume entry */
+VT_entry*
+get_vt_entry(
+    unsigned int vid)
 {
-	VT_entry* vte;
+    VT_entry* vte;
 
-	// 1. search from vt_tree
-	vte = search_vt_entry(NVM->VOL_TABLE_START, vid);
+    // 1. search from vt_tree
+    vte = search_vt_entry(NVM->VOL_TABLE_START, vid);
 	
-	// 2. If search found vte, return it
-	if(vte != NULL)
-	{
-		return vte;
-	}
-	else
-	{
-		// 3. If not found, allocate new vte
-		vte = alloc_vt_entry(vid);
-		// insert this vte to vte_tree structure (later)
-	}
-
-	return vte;
+    // 2. If search found vte, return it
+    if(vte != NULL) {
+        return vte;
+    } else {
+        // 3. If not found, allocate new vte
+        vte = alloc_vt_entry(vid);
+        // insert this vte to vte_tree structure (later)
+    }
+    return vte;
 }
 
-/* Search VT_entry object from Volume Table */
-VT_entry* search_vt_entry(VT_entry* vt_root, unsigned int vid)
+/**
+ * Search VT_entry object from Volume Table.
+ * @return found entry */
+VT_entry*
+search_vt_entry(
+    VT_entry* vt_root,
+    unsigned int vid)
 {
-	// Just linear search in this code
-	// need to search from tree structure later
-	int i;
-	VT_entry* vte = NVM->VOL_TABLE_START;
+    // Just linear search in this code
+    // need to search from tree structure later
+    int i;
+    VT_entry* vte = NVM->VOL_TABLE_START;
 
-	for(i = 0; i < MAX_VT_ENTRY; i++) {
-		if(vte->vid == vid)
-			return vte;
-		vte++;
-	}
-
-	
-	return NULL;
+    for(i = 0; i < MAX_VT_ENTRY; i++) {
+        if(vte->vid == vid) {
+            return vte;
+            vte++;
+    }
+    return NULL;
 }
 
-/* Allocate new VT_entry from free-list of vte */
-VT_entry* alloc_vt_entry(unsigned int vid)
+/**
+ * Allocate new VT_entry from free-list of vte
+ * @return allocated volume entry */
+VT_entry*
+alloc_vt_entry(
+    unsigned int vid)
 {
 	VT_entry* vte;
 
@@ -118,72 +130,76 @@ VT_entry* alloc_vt_entry(unsigned int vid)
 	return vte;
 }
 
-/* Get NVM_inode object for lbn*/
-NVM_inode* get_nvm_inode(VT_entry* vte, unsigned int lbn)
+/**
+ * Get NVM_inode object for lbn.
+ * @return inode */
+NVM_inode*
+get_nvm_inode(
+    VT_entry* vte,
+    unsigned int lbn)
 {
-	NVM_inode* inode;
+    NVM_inode* inode;
 
-	// 1. Search from inode tree
-	inode = search_nvm_inode(vte->iroot, lbn);
+    // 1. Search from inode tree
+    inode = search_nvm_inode(vte->iroot, lbn);
 
-	// 2. If search found inode, return it
-	if(inode != NULL)
-	{
-		return inode;
-	}
-	else
-	{
-		// 3. If not found, allocate new inode
-		inode = alloc_nvm_inode(lbn);
-                inode->vte = vte;
-		vte->iroot = insert_nvm_inode(vte->iroot, inode);
-	}
-
-	return inode;
+    // 2. If search found inode, return it
+    if(inode != NULL) {
+        return inode;
+    } else {
+        // 3. If not found, allocate new inode
+        inode = alloc_nvm_inode(lbn);
+        inode->vte = vte;
+        vte->iroot = insert_nvm_inode(vte->iroot, inode);
+    }
+    return inode;
 }
 
-/* Allocate new VT_entry from free-list of vte */
-NVM_inode* alloc_nvm_inode(unsigned int lbn)
+/**
+ * Allocate new VT_entry from free-list of vte.
+ * @return inode */
+NVM_inode*
+alloc_nvm_inode(
+    unsigned int lbn)
 {
-	NVM_inode* inode;
+    NVM_inode* inode;
 
-	// Check if free-list is empty
-	if(NVM->FREE_INODE_LIST_HEAD != NVM->FREE_INODE_LIST_TAIL)
-	{
-		inode = __sync_lock_test_and_set(
-				&NVM->FREE_INODE_LIST_HEAD, NVM->INODE_START + NVM->FREE_INODE_LIST_HEAD->f_next);
-	}
-	else
-	{
-		// wait until vt_entry freed (later)
-	}
+    // Check if free-list is empty
+    if(NVM->FREE_INODE_LIST_HEAD != NVM->FREE_INODE_LIST_TAIL) {
+        inode = __sync_lock_test_and_set(&NVM->FREE_INODE_LIST_HEAD,
+                                         NVM->INODE_START +
+                                         NVM->FREE_INODE_LIST_HEAD->f_next);
+    } else {
+        // wait until vt_entry freed (later)
+    }
 
-	inode->lbn = lbn;
-	inode->f_next = MAX_NVM_INODE;	// meaning NULL
-	inode->s_prev = NULL;			// meaning NULL
-	inode->s_next = NULL;			// meaning NULL
-	inode->state = INODE_STATE_ALLOCATED;
-
-	return inode;
+    inode->lbn = lbn;
+    inode->f_next = MAX_NVM_INODE;	// meaning NULL
+    inode->s_prev = NULL;			// meaning NULL
+    inode->s_next = NULL;			// meaning NULL
+    inode->state = INODE_STATE_ALLOCATED;
+    return inode;
 }
 
-/* Insert inode to sync-list for flushing */
-void insert_sync_inode_list(NVM_inode* inode)
+/**
+ * Insert inode to sync-list for flushing. */
+void
+insert_sync_inode_list(
+    NVM_inode* inode)
 {
-	if(NVM->SYNC_INODE_LIST_HEAD == NULL)
-	{
-		NVM->SYNC_INODE_LIST_HEAD = inode;
-		NVM->SYNC_INODE_LIST_TAIL = inode;
-	}
-	else
-	{
-		 inode->s_prev = __sync_lock_test_and_set(
-				 &NVM->SYNC_INODE_LIST_TAIL, inode);
-		 inode->s_prev->s_next = inode;
-	}
+    if(NVM->SYNC_INODE_LIST_HEAD == NULL) {
+        NVM->SYNC_INODE_LIST_HEAD = inode;
+        NVM->SYNC_INODE_LIST_TAIL = inode;
+    } else {
+        inode->s_prev
+            = __sync_lock_test_and_set(&NVM->SYNC_INODE_LIST_TAIL, inode);
+        inode->s_prev->s_next = inode;
+    }
 }
 
-const char* get_filename(unsigned int vid)
+const char*
+get_filename(
+    unsigned int vid)
 {
     std::string filename = "VOL";
     std::stringstream ss;
