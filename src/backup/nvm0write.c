@@ -35,6 +35,8 @@ nvm_atomic_write(
         // get inode with its lbn
         NVM_inode* inode = get_nvm_inode(vte, lbn_start + i);
         
+        // need lock?
+        
         // calculate how many bytes to write
         write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
         
@@ -42,7 +44,7 @@ nvm_atomic_write(
         unsigned int idx = get_nvm_inode_idx(inode);
         char* data_dst = NVM->DATA_START + BLOCK_SIZE * idx + offset; 
         memcpy(data_dst, ptr, write_bytes);
-        inode->state = INODE_STATE_WRITTEN; // state changed to WRITTEN.
+        inode->state = INODE_STATE_WRITTEN;
         
         printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
         
@@ -107,20 +109,19 @@ VT_entry*
 alloc_vt_entry(
     unsigned int vid) /* !<in: given vid to new allocated VT_entry */
 {
-    /**
-     * Get the free vte from free_vte_lfqueue.
-     * Multi-writers can ask for each free-vte and
-     * lf-queue deque(consume) free-vte to each writers.
-     * Thread asking for deque might be waiting for the queue if it's empty. */
-    VT_entry* vte = free_vte_lfqueue.deque();
+    VT_entry* vte;
 
-    /**
-     * Setting up acquired free-vte for use now.
-     * Give vte its vid, fd from opening the file.
-     * Initialize iroot NULL which would contain
-     * the logical blocks of inodes for its volume(file) */
+    // Check if free-list is empty
+    if(NVM->FREE_VTE_LIST_HEAD != NVM->FREE_VTE_LIST_TAIL) {
+        vte = __sync_lock_test_and_set(
+                &NVM->FREE_VTE_LIST_HEAD, NVM->VOL_TABLE_START + NVM->FREE_VTE_LIST_HEAD->next);
+    } else {
+        // wait until vt_entry freed (later)
+    }
+
     vte->vid = vid;
     vte->fd = open(get_filename(vid), O_WRONLY| O_CREAT, 0644);
+    vte->next = MAX_VT_ENTRY;   // meaning next null
     vte->iroot = NULL;
 
     return vte;
@@ -158,17 +159,21 @@ NVM_inode*
 alloc_nvm_inode(
     unsigned int lbn) /* !<in: lbn to new allocating inode */
 {
-    /**
-     * Get the free inode from free_inode_lfqueue.
-     * Multi-writers can ask for each free-inode and
-     * lf-queue deque(consume) free-inode to each writers.
-     * Thread asking for deque might be waiting for the queue if it's empty. */
-    NVM_inode* inode = free_inode_lfqueue.deque();
+    NVM_inode* inode;
 
-    /**
-     * Setting up the acquired inode.
-     * Give inode its lbn, and make its state as ALLOCATED */
+    // Check if free-list is empty
+    if(NVM->FREE_INODE_LIST_HEAD != NVM->FREE_INODE_LIST_TAIL) {
+        inode = __sync_lock_test_and_set(&NVM->FREE_INODE_LIST_HEAD,
+                                         NVM->INODE_START +
+                                         NVM->FREE_INODE_LIST_HEAD->f_next);
+    } else {
+        // wait until vt_entry freed (later)
+    }
+
     inode->lbn = lbn;
+    inode->f_next = MAX_NVM_INODE;  // meaning NULL
+    inode->s_prev = NULL;           // meaning NULL
+    inode->s_next = NULL;           // meaning NULL
     inode->state = INODE_STATE_ALLOCATED;
     return inode;
 }
@@ -179,14 +184,14 @@ void
 insert_sync_inode_list(
     NVM_inode* inode) /* !<in: inode which would be inserted to sync-inode-list */
 {
-    /**
-     * Insert written inode to sync_inode_lfqueue.
-     * Enqueud inode would be flushed by sync_thread at certain time.
-     * There is no waiting inode to be enqueued because 
-     * maximum inodes of allocated inode is less then queue size. (Invariant) */
-     sync_inode_lfqueue.enqueue(inode);
-
-     inode->state = INODE_STATE_SYNCED; // state changed to SYNCED.
+    if(NVM->SYNC_INODE_LIST_HEAD == NULL) {
+        NVM->SYNC_INODE_LIST_HEAD = inode;
+        NVM->SYNC_INODE_LIST_TAIL = inode;
+    } else {
+        inode->s_prev
+            = __sync_lock_test_and_set(&NVM->SYNC_INODE_LIST_TAIL, inode);
+        inode->s_prev->s_next = inode;
+    }
 }
 
 /**
