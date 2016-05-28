@@ -26,7 +26,7 @@ class lfqueue
     lfqueue(uint32_t);
     void enqueue(T value);
     T dequeue();
-}
+};
 
 /* Constructor
  * Takes capacity as an argument and initializes a queue. */
@@ -67,7 +67,7 @@ T lfqueue<T>::dequeue()
 {
     uint_fast64_t c_count = (this->c_count++) + 1;   //atomic operation
 
-    while ( c_count != p_counts[c_count%size].p_count) {
+    while ( c_count != p_counts[c_count%capacity]) {
         __sync_synchronize();
     }
 
