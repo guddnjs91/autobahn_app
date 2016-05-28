@@ -112,7 +112,7 @@ alloc_vt_entry(
      * Multi-writers can ask for each free-vte and
      * lf-queue deque(consume) free-vte to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    VT_entry* vte = free_vte_lfqueue.deque();
+    VT_entry* vte = free_vte_lfqueue.dequeue();
 
     /**
      * Setting up acquired free-vte for use now.
@@ -163,7 +163,7 @@ alloc_nvm_inode(
      * Multi-writers can ask for each free-inode and
      * lf-queue deque(consume) free-inode to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    NVM_inode* inode = free_inode_lfqueue.deque();
+    NVM_inode* inode = free_inode_lfqueue.dequeue();
 
     /**
      * Setting up the acquired inode.

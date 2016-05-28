@@ -3,6 +3,9 @@
 
 extern NVM_metadata* NVM;
 
+void deallocateNode(NVM_inode* root);
+NVM_inode* minValueNode(NVM_inode* inode);
+
 /**
  * Search NVM_inode object from avl tree root
  @return inode with lbn from avl-tree */
@@ -73,6 +76,104 @@ insert_nvm_inode(
     }
 
     return root;
+}
+
+/**
+ * Delete NVM_inode object from avl tree 
+ * @return tree after deleting the inode */
+NVM_inode*
+delete_nvm_inode(
+    NVM_inode* root,  /* !<out: sub-tree root after deleting inode */
+    NVM_inode* inode) /* !<in: inode to be deleted */
+{
+    if (root == NULL) {
+        return root;
+    }
+    
+    if (inode->lbn < root->lbn) {
+        root->left = delete_nvm_inode(root->left, inode);
+    } else if (inode->lbn > root->lbn) {
+        root->right = delete_nvm_inode(root->right, inode);
+    } else {
+        // 1 child || no child
+        if ((root->left == NULL) || (root->right == NULL)) {
+            NVM_inode* temp = root->left ? root->left : root->right;
+            
+            if (temp == NULL) { // no child
+                temp = root;
+                root = NULL;
+            } else  { // 1 child, copy the contents of the non-empty child
+		*root = *temp;
+            }
+
+            deallocateNode(temp);
+        } else {
+            
+            // 2 children
+            NVM_inode* temp =  minValueNode(root->right);
+            
+            // copy the inorder successor's data
+            root->lbn = temp->lbn;
+            
+            // Delete the inorder successor
+            root->right = delete_nvm_inode(root->right, temp);
+	}
+    }
+    
+    if (root == NULL) {
+        return root;
+    }
+    
+    //update height
+    root->height = Max(height(root->left), height(root->right)) + 1;
+    
+    //rebalancing
+    int balance = getBalance(root);
+    
+    //LL
+    if (balance > 1 && getBalance(root->left) >= 0) {
+        return rightRotate(root);
+    }
+    
+    //LR
+    if (balance > 1 && getBalance(root->left) < 0) {
+        root->left = leftRotate(root->left);
+        return rightRotate(root);
+    }
+    
+    //RR
+    if (balance < -1 && getBalance(root->right) <= 0) {
+        return leftRotate(root); 
+    }
+    
+    //RL
+    if (balance < -1 && getBalance(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+    
+    return root;
+}
+
+
+NVM_inode* minValueNode(NVM_inode* inode)
+{
+	NVM_inode* current = inode;
+
+	while (current->left != NULL)
+		current = current->left;
+
+	return current;
+}
+
+void deallocateNode(NVM_inode* root)
+{
+	// Re-initialization
+	root->lbn = 0;
+	root->height = 1;
+	root->state = 0;
+	root->left = NULL;
+	root->right = NULL;
 }
 
 /**
