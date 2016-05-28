@@ -35,16 +35,16 @@ lfqueue<T>::lfqueue(uint32_t capacity)
 {
     uint32_t i;
 
-	p_count = 0;                            //initialize p_count
+    p_count = 0;                            //initialize p_count
     c_count = 0;                            //initialize c_count
 
     values = new T[capacity];               //initialize values[]
-	p_counts = new uint_fast64_t[capacity]; //initialize pcounts[]
-	for(i=0; i<capacity; i++) {
-		p_counts[i] = 0;
-	}
+    p_counts = new uint_fast64_t[capacity]; //initialize pcounts[]
+    for(i=0; i<capacity; i++) {
+        p_counts[i] = 0;
+    }
     
-	this->capacity = capacity;              //initialize capacity
+    this->capacity = capacity;              //initialize capacity
 }
 
 /**
@@ -53,10 +53,10 @@ lfqueue<T>::lfqueue(uint32_t capacity)
 template <typename T>
 void lfqueue<T>::enqueue(const T value)
 {
-	uint_fast64_t p_count = (this->p_count++) + 1;  //atomic operation
+    uint_fast64_t p_count = (this->p_count++) + 1;  //atomic operation
 
-	values[p_count%capacity] = value;
-	p_counts[p_count%capacity] = p_count;
+    values[p_count%capacity] = value;
+    p_counts[p_count%capacity] = p_count;
 }
 
 /**
@@ -65,12 +65,12 @@ void lfqueue<T>::enqueue(const T value)
 template <typename T>
 T lfqueue<T>::dequeue()
 {
-	uint_fast64_t c_count = (this->c_count++) + 1;   //atomic operation
+    uint_fast64_t c_count = (this->c_count++) + 1;   //atomic operation
 
-	while ( c_count != p_counts[c_count%size].p_count) {
+    while ( c_count != p_counts[c_count%size].p_count) {
         __sync_synchronize();
     }
 
-	return values[c_count%capacity];
+    return values[c_count%capacity];
 }
 
