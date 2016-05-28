@@ -1,7 +1,7 @@
 .SUFFIXES : .c .o
 CC = g++
 
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -std=c++11
  all : hw
 
 OBJS = ./src/nvm0nvm.o ./src/nvm0write.o ./src/nvm0flush.o ./src/nvm0avltree.o ./src/test/test1.o
@@ -14,7 +14,7 @@ LIBNAME = -lpthread -lrt
 CFLAGS += -I$(INCLUDE)
 
 hw: $(OBJS)
-	$(CC) -std=c++11 -g -o $(BIN)test $(OBJS) $(LIBNAME) -L$(LIB) -O3
+	$(CC) -o $(BIN)test $(OBJS) $(LIBNAME) -L$(LIB) -O3
 
 clean:
 	rm -rf $(OBJS)
