@@ -21,7 +21,7 @@ class lfqueue
     atomic<uint_fast64_t> c_count;  //global consumer count
 
     T* values;                      //value for each element in a queue
-    uint_fast64_t* p_counts;        //p_count for each element in a queue
+    atomic<uint_fast64_t>* p_counts;//p_count for each element in a queue
 
     uint32_t capacity;              //capacity of queue
 
@@ -41,13 +41,13 @@ lfqueue<T>::lfqueue(uint32_t capacity)
 {
     uint32_t i;
 
-    p_count = 0;                            //initialize p_count
-    c_count = 0;                            //initialize c_count
+    p_count.store(0);                       //initialize p_count
+    c_count.store(0);                       //initialize c_count
 
     values = new T[capacity];               //initialize values[]
     p_counts = new uint_fast64_t[capacity]; //initialize pcounts[]
     for(i=0; i<capacity; i++) {
-        p_counts[i] = 0;
+        p_counts[i].store(0);
     }
     
     this->capacity = capacity;              //initialize capacity
@@ -55,7 +55,7 @@ lfqueue<T>::lfqueue(uint32_t capacity)
 
 /**
  * Destructor
- * Deletes the dynamic allocation of arrays: values and p_counts. */
+ * Deletes the dynamically allocated arrays: values and p_counts. */
 template <typename T>
 lfqueue<T>::~lfqueue()
 {
@@ -69,10 +69,12 @@ lfqueue<T>::~lfqueue()
 template <typename T>
 void lfqueue<T>::enqueue(const T value)
 {
-    uint_fast64_t p_count = (this->p_count++) + 1;  //atomic operation
+    //atomically increments the global p_count and saves the incremented value to the local p_count
+    uint_fast64_t p_count = this->p_count.fetch_add(1) + 1;
 
+    //stores the new value first, and atomically update the pcount of the new element
     values[p_count%capacity] = value;
-    p_counts[p_count%capacity] = p_count;
+    p_counts[p_count%capacity].store(p_count);
 }
 
 /**
@@ -81,12 +83,13 @@ void lfqueue<T>::enqueue(const T value)
 template <typename T>
 T lfqueue<T>::dequeue()
 {
-    uint_fast64_t c_count = (this->c_count++) + 1;   //atomic operation
+    //atomically increments the global c_count and saves the incremented value to the local c_count
+    uint_fast64_t c_count = this->c_count.fetch_add(1) + 1;
 
-    while ( c_count != p_counts[c_count%capacity]) {
-        __sync_synchronize();
+    //waits until a new value is added to the (c_count)th element
+    while ( c_count != p_counts[c_count%capacity].load()) {
+        //do nothing
     }
-
     return values[c_count%capacity];
 }
 /**
@@ -95,7 +98,7 @@ T lfqueue<T>::dequeue()
 template <typename T>
 bool lfqueue<T>::is_empty()
 {
-    return p_count <= c_count;
+    return p_count.load() <= c_count.load();
 }
 
 //////////////////////////////////TEST_lfqueue////////////////////////////////
