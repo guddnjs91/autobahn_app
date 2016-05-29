@@ -170,8 +170,9 @@ void deallocateNode(NVM_inode* root)
 {
 	// Re-initialization
 	root->lbn = 0;
+        root->vte = NULL;
 	root->height = 1;
-	root->state = 0;
+	root->state = INODE_STATE_FREE;
 	root->left = NULL;
 	root->right = NULL;
 }

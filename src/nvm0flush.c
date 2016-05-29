@@ -1,20 +1,42 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <pthread.h>
 #include "nvm0common.h"
 #include "nvm0lfq.h"
 
 extern NVM_metadata* NVM;
+extern pthread_mutex_t reclaim_lock; /* Lock and Condition Variable for signaling */
+extern pthread_cond_t reclaim_cond;  /* between write_thread and reclain_thread.  */
 
 /**
- * Sync one data block from NVM to data */
+ * Flush thread function.
+ * Flushing dirty inodes in NVM to disk storage proactively */
+void*
+flush_thread_func(
+    void* data)
+{
+    while(1) {
+        /**
+         * Policy : if there are dirty inodes, flush it */
+        while(dirty_inode_lfqueue.is_empty() == true) {
+            sched_yield();
+        }
+        nvm_flush();
+    }
+
+    return NULL;
+}
+
+/**
+ * Flush one data block from NVM to data */
 void
-nvm_sync()
+nvm_flush(
+    void)
 {
     /**
-     * Get the inode to be flushed soon.
-     * This inode in sync_inode_lfqueue is dirty so
-     * flushing and re-cycling it should be handled pro-actively */
-    NVM_inode* inode = sync_inode_lfqueue.dequeue();
+     * Get the dirty inode which will be flushed soon. */
+    NVM_inode* inode = dirty_inode_lfqueue.dequeue();
 
     /**
      * Get the index of inode which is also the index of data block,
@@ -27,27 +49,33 @@ nvm_sync()
 
     /**
      * Once flushed inode should be reclaimed for re-use.
-     * This inode temporarily enqueued to flush_inode_lfqueue. */
-    inode->state = INODE_STATE_FREE;
-    flush_inode_lfqueue.enqueue(*inode);
+     * This inode temporarily enqueued to synced_inode_lfqueue. */
+    synced_inode_lfqueue.enqueue(*inode);
 }
 
 /**
- * Deallocate flushed inode : delete inode from vte's tree and
- * return it to the free_inode_lfqueue for next use. */
-void
-dealloc_nvm_inode(NVM_inode* inode) /* !<out: inode to be deallocated */
+ * Reclaim thread function.
+ * When threads are waken up, get the number of inodes which are
+ * in synced_inode_lfqueue, and reclaim those inodes. */
+void*
+reclaim_thread_func(
+    void* data)
 {
-    // delete inode from vte->iroot first.
-    delete_nvm_inode(inode); // implemented with nvm0avltree.c (later)
-
-    // re-initialize inode.
-    inode->left = NULL;
-    inode->right = NULL;
-    inode->height = 0;
-    inode->state = INODE_STATE_FREE;
-
-    // enqueue inode to free_inode_lfqueue.
-    free_inode_lfqueue.enqueue(*inode);
-
+    /**
+     * Policy : Wakes up and get the number of inodes for reclamation, 
+     * reclaim them and sleeps again. */
+     while(1) {
+         pthread_mutex_lock(&reclaim_lock);
+         pthread_cond_wait(&reclaim_cond, &reclaim_lock); // wait
+         /* When wake up */
+         uint32_t size = synced_inode_lfqueue.get_size(); // get size
+         while(size) {
+             NVM_inode* inode = synced_inode_lfqueue.dequeue(); // get synced inode
+             inode->vte = delete_nvm_inode(inode->vte, inode); // delete from AVL tree
+             inode->state = INODE_STATE_FREE; // change state
+             free_inode_lfqueue.enqueue(*inode); // enqueue inode to free-inode-lfqueue.
+             size = size - 1;
+         }
+         pthread_mutex_unlock(&reclaim_lock);
+     }
 }

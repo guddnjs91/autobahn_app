@@ -180,11 +180,11 @@ insert_sync_inode_list(
     NVM_inode* inode) /* !<in: inode which would be inserted to sync-inode-list */
 {
     /**
-     * Insert written inode to sync_inode_lfqueue.
-     * Enqueud inode would be flushed by sync_thread at certain time.
+     * Insert written inode to dirty_inode_lfqueue.
+     * Enqueud inode would be flushed by flush_thread at certain time.
      * There is no waiting inode to be enqueued because 
      * maximum inodes of allocated inode is less then queue size. (Invariant) */
-     sync_inode_lfqueue.enqueue(inode);
+     dirty_inode_lfqueue.enqueue(inode);
 
      inode->state = INODE_STATE_SYNCED; // state changed to SYNCED.
 }
