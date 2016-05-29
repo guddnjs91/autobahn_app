@@ -3,8 +3,8 @@
 
 extern NVM_metadata* NVM;
 
-void deallocateNode(NVM_inode* root);
-NVM_inode* minValueNode(NVM_inode* inode);
+void deallocate_node(NVM_inode* root);
+NVM_inode* min_value_node(NVM_inode* inode);
 
 /**
  * Search NVM_inode object from avl tree root
@@ -106,11 +106,11 @@ delete_nvm_inode(
 		*root = *temp;
             }
 
-            deallocateNode(temp);
+            deallocate_node(temp);
         } else {
             
             // 2 children
-            NVM_inode* temp =  minValueNode(root->right);
+            NVM_inode* temp =  min_value_node(root->right);
             
             // copy the inorder successor's data
             root->lbn = temp->lbn;
@@ -155,26 +155,35 @@ delete_nvm_inode(
     return root;
 }
 
-
-NVM_inode* minValueNode(NVM_inode* inode)
+/**
+ * Find the minimum key from AVL tree.
+ * @return inode that has minimum key value in tree.*/
+NVM_inode*
+min_value_node(
+    NVM_inode* inode)
 {
-	NVM_inode* current = inode;
-
-	while (current->left != NULL)
-		current = current->left;
-
-	return current;
+    NVM_inode* current = inode;
+    
+    while (current->left != NULL) {
+        current = current->left;
+    }
+    
+    return current;
 }
 
-void deallocateNode(NVM_inode* root)
+/**
+ * Deallocate inode structure */
+void
+deallocate_node(
+    NVM_inode* inode)
 {
-	// Re-initialization
-	root->lbn = 0;
-        root->vte = NULL;
-	root->height = 1;
-	root->state = INODE_STATE_FREE;
-	root->left = NULL;
-	root->right = NULL;
+    // Re-initialization
+    inode->lbn = 0;
+    inode->state = INODE_STATE_FREE;
+    inode->vte = nullptr;
+    inode->height = 1;
+    inode->left = nullptr;
+    inode->right = nullptr;
 }
 
 /**
@@ -182,12 +191,12 @@ void deallocateNode(NVM_inode* root)
  @return height */
 int
 height(
-    NVM_inode* N)
+    NVM_inode* inode)
 {
-    if (N == NULL) {
+    if (inode == NULL) {
         return 0;
     }
-    return N->height;
+    return inode->height;
 }
 
 int
@@ -200,13 +209,13 @@ Max(
 
 int
 getBalance(
-    NVM_inode* N)
+    NVM_inode* inode)
 {
-    if (N == NULL) {
+    if (inode == NULL) {
         return 0;
     }
 
-    return height(N->left) - height(N->right);
+    return height(inode->left) - height(inode->right);
 }
 
 NVM_inode*
