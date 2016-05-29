@@ -18,6 +18,7 @@ class lfqueue
     atomic<uint_fast64_t> c_count;  //global consumer count
 
     T* values;                      //value for each element in a queue
+    atomic<uint_fast64_t>* c_counts;//c_count for each element in a queue
     atomic<uint_fast64_t>* p_counts;//p_count for each element in a queue
 
     uint32_t capacity;              //capacity of queue

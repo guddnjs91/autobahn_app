@@ -67,7 +67,7 @@ void test_get_size()
 
 lfqueue<int>* queue1;
 lfqueue<int>* queue2;
-int queuesize = 100;
+int queuesize = 10000;
 int timeout;
 
 void* producer(void* arg)
@@ -100,7 +100,7 @@ void* consumer(void* arg)
 void test_concurrency()
 {
     int i;
-    int nthread = 2;
+    int nthread = 10;
 
     printf("\nTest concurrency(%d producers, %d consumers)\n", nthread, nthread);
     queue1 = new lfqueue<int>(queuesize);
@@ -117,7 +117,7 @@ void test_concurrency()
         pthread_create(&c_thread[i], NULL, consumer, (void*) &i);
     }
 
-    usleep(1000000);
+    usleep(5000000);
     timeout = 1;
 
     for(i=0; i<nthread; i++) {

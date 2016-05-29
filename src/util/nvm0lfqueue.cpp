@@ -6,17 +6,19 @@
  * Constructor
  * Takes capacity as an argument and initializes a queue. */
 template <typename T>
-lfqueue<T>::lfqueue(uint32_t capacity)
+lfqueue<T>::lfqueue(const uint32_t capacity)
 {
     uint32_t i;
 
-    p_count.store(0);   //initialize p_count
-    c_count.store(0);   //initialize c_count
+    p_count.store(capacity-1);   //initialize p_count
+    c_count.store(capacity-1);   //initialize c_count
 
     values = new T[capacity];                       //initialize values[]
+    c_counts = new atomic<uint_fast64_t>[capacity]; //initialize ccounts[]
     p_counts = new atomic<uint_fast64_t>[capacity]; //initialize pcounts[]
     for(i=0; i<capacity; i++) {
-        p_counts[i].store(0);
+        c_counts[i].store(i+capacity);
+        p_counts[i].store(i);
     }
     
     this->capacity = capacity;  //initialize capacity
@@ -41,6 +43,11 @@ void lfqueue<T>::enqueue(const T value)
     //atomically increments the global p_count and saves the incremented value to the local p_count
     uint_fast64_t p_count = this->p_count.fetch_add(1) + 1;
 
+    //waits until the previous value in this element is taken by dequeue
+    while ( p_count != c_counts[p_count%capacity].load() ) {
+        //do nothing
+    }
+
     //stores the new value first, and atomically update the pcount of the new element
     values[p_count%capacity] = value;
     p_counts[p_count%capacity].store(p_count);
@@ -56,10 +63,14 @@ T lfqueue<T>::dequeue()
     uint_fast64_t c_count = this->c_count.fetch_add(1) + 1;
 
     //waits until a new value is added to the (c_count)th element
-    while ( c_count != p_counts[c_count%capacity].load()) {
+    while ( c_count != p_counts[c_count%capacity].load() ) {
         //do nothing
     }
-    return values[c_count%capacity];
+
+    //take out the value and atomically update the ccount and return the value
+    T value = values[c_count%capacity];
+    c_counts[c_count%capacity].store(c_count+capacity);
+    return value;
 }
 /**
  * Checks if a queue is empty.
