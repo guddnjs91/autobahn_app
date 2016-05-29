@@ -28,6 +28,7 @@ class lfqueue
     void enqueue(T value);
     T dequeue();
     bool is_empty();
+    uint32_t get_size();
 };
 
 #endif

@@ -69,3 +69,14 @@ bool lfqueue<T>::is_empty()
 {
     return p_count.load() <= c_count.load();
 }
+
+/**
+ * Calculate and returns the size of a queue.
+ * @return the size of a queue. */
+template <typename T>
+uint32_t lfqueue<T>::get_size()
+{
+    uint_fast64_t pc = p_count.load();
+    uint_fast64_t cc = c_count.load();
+    return (pc < cc) ? 0 : pc-cc;
+}
