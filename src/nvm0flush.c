@@ -50,7 +50,7 @@ nvm_flush(
     /**
      * Once flushed inode should be reclaimed for re-use.
      * This inode temporarily enqueued to synced_inode_lfqueue. */
-    synced_inode_lfqueue.enqueue(*inode);
+    INODE_SYNCED_LFQUEUE.enqueue(*inode);
 }
 
 /**
@@ -68,12 +68,12 @@ reclaim_thread_func(
          pthread_mutex_lock(&reclaim_lock);
          pthread_cond_wait(&reclaim_cond, &reclaim_lock); // wait
          /* When wake up */
-         uint32_t size = synced_inode_lfqueue.get_size(); // get size
+         uint32_t size = INODE_SYNCED_LFQUEUE.get_size(); // get size
          while(size) {
-             NVM_inode* inode = synced_inode_lfqueue.dequeue(); // get synced inode
+             NVM_inode* inode = INODE_SYNCED_LFQUEUE.dequeue(); // get synced inode
              inode->vte = delete_nvm_inode(inode->vte, inode); // delete from AVL tree
              inode->state = INODE_STATE_FREE; // change state
-             free_inode_lfqueue.enqueue(*inode); // enqueue inode to free-inode-lfqueue.
+             INODE_FREE_LFQUEUE.enqueue(*inode); // enqueue inode to free-inode-lfqueue.
              size = size - 1;
          }
          pthread_mutex_unlock(&reclaim_lock);
