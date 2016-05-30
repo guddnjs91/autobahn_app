@@ -24,7 +24,14 @@ int getBalance(NVM_inode* N);
 NVM_inode* rightRotate(NVM_inode* y);
 NVM_inode* leftRotate(NVM_inode* y);
 
-void nvm_sync(void);
-
 /* in file nvm0write.c */
+
 /* in file nvm0flush.c */
+void* flush_thread_func(void* data);
+void nvm_flush(void);
+void* reclaim_thread_func(void* data);
+
+/* in file nvm0avltree.c */
+NVM_inode* delete_nvm_inode(NVM_node* root, NVM_inode* inode);
+NVM_inode* min_value_node(NVM_inode* inode);
+void deallocate_node(NVM_inode* inode);

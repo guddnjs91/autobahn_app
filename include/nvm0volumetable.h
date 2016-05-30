@@ -13,6 +13,6 @@ typedef struct _vt_entry {
 
 } VT_entry;
 
-struct _vt_entry*   VTE_FREE_LFQUEUE;
-struct _vt_entry*   VTE_INUSE_LFQUEUE;
+lfqueue<_vt_entry*>*   VTE_FREE_LFQUEUE;
+lfqueue<_vt_entry*>*   VTE_INUSE_LFQUEUE;
 

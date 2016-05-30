@@ -21,7 +21,7 @@ typedef struct _nvm_inode {
     
 } NVM_inode;
 
-_nvm_inode*  INODE_FREE_LFQUEUE;
-_nvm_inode*  INODE_DIRTY_LFQUEUE;
-_nvm_inode*  INODE_SYNCED_LFQUEUE;
+lfqueue<_nvm_inode*>*  INODE_FREE_LFQUEUE;
+lfqueue<_nvm_inode*>*  INODE_DIRTY_LFQUEUE;
+lfqueue<_nvm_inode*>*  INODE_SYNCED_LFQUEUE;
 
