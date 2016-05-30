@@ -6,6 +6,10 @@
 #include "nvm0common.h"
 
 extern NVM_metadata* NVM;
+extern lfqueue<VT_entry*>* VTE_FREE_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_FREE_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_DIRTY_LFQUEUE;
+
 
 /**
  * Atomically write data to nvm 
@@ -48,7 +52,7 @@ nvm_atomic_write(
         
         // Insert written inode to dirty_inode_lfqueue.
         // Enqueud inode would be flushed by flush_thread at certain time.
-        INODE_DIRTY_LFQUEUE.enqueue(inode);
+        INODE_DIRTY_LFQUEUE->enqueue(inode);
         
         // Re-inintialize offset and len
         offset = 0;
@@ -113,7 +117,7 @@ alloc_vt_entry(
      * Multi-writers can ask for each free-vte and
      * lf-queue deque(consume) free-vte to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    VT_entry* vte = VTE_FREE_LFQUEUE.dequeue();
+    VT_entry* vte = VTE_FREE_LFQUEUE->dequeue();
 
     /**
      * Setting up acquired free-vte for use now.
@@ -164,7 +168,7 @@ alloc_nvm_inode(
      * Multi-writers can ask for each free-inode and
      * lf-queue deque(consume) free-inode to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    NVM_inode* inode = INODE_FREE_LFQUEUE.dequeue();
+    NVM_inode* inode = INODE_FREE_LFQUEUE->dequeue();
 
     /**
      * Setting up the acquired inode.
