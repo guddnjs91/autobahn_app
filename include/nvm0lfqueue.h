@@ -1,3 +1,6 @@
+/**
+ * nvm0lfqueue.h - header file for nvm0lfqueue.cpp */
+
 #ifndef LFQUEUE_H
 #define LFQUEUE_H
 

@@ -21,7 +21,7 @@ typedef struct _nvm_metadata {
     // Base address of each table
     char*       VOLUME_TABLE_START;
     char*       INODE_TABLE_START;
-    char*       DATA_TABLE__START;
+    char*       DATA_TABLE_START;
 
 } NVM_metadata;
 
