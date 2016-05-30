@@ -6,6 +6,10 @@
 #include "nvm0common.h"
 
 extern NVM_metadata* NVM;
+extern lfqueue<VT_entry*>* VTE_FREE_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_FREE_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_DIRTY_LFQUEUE;
+
 
 /**
  * Atomically write data to nvm 
@@ -42,12 +46,13 @@ nvm_atomic_write(
         unsigned int idx = get_nvm_inode_idx(inode);
         char* data_dst = NVM->DATA_START + BLOCK_SIZE * idx + offset; 
         memcpy(data_dst, ptr, write_bytes);
-        inode->state = INODE_STATE_WRITTEN; // state changed to WRITTEN.
+        inode->state = INODE_STATE_DIRTY; // state changed to DIRTY.
         
         printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
         
-        // innsert written inode to sync list
-        insert_sync_inode_list(inode);
+        // Insert written inode to dirty_inode_lfqueue.
+        // Enqueud inode would be flushed by flush_thread at certain time.
+        INODE_DIRTY_LFQUEUE->enqueue(inode);
         
         // Re-inintialize offset and len
         offset = 0;
@@ -112,7 +117,7 @@ alloc_vt_entry(
      * Multi-writers can ask for each free-vte and
      * lf-queue deque(consume) free-vte to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    VT_entry* vte = free_vte_lfqueue.dequeue();
+    VT_entry* vte = VTE_FREE_LFQUEUE->dequeue();
 
     /**
      * Setting up acquired free-vte for use now.
@@ -163,7 +168,7 @@ alloc_nvm_inode(
      * Multi-writers can ask for each free-inode and
      * lf-queue deque(consume) free-inode to each writers.
      * Thread asking for deque might be waiting for the queue if it's empty. */
-    NVM_inode* inode = free_inode_lfqueue.dequeue();
+    NVM_inode* inode = INODE_FREE_LFQUEUE->dequeue();
 
     /**
      * Setting up the acquired inode.
@@ -171,22 +176,6 @@ alloc_nvm_inode(
     inode->lbn = lbn;
     inode->state = INODE_STATE_ALLOCATED;
     return inode;
-}
-
-/**
- * Insert inode to sync-list for flushing. */
-void
-insert_sync_inode_list(
-    NVM_inode* inode) /* !<in: inode which would be inserted to sync-inode-list */
-{
-    /**
-     * Insert written inode to dirty_inode_lfqueue.
-     * Enqueud inode would be flushed by flush_thread at certain time.
-     * There is no waiting inode to be enqueued because 
-     * maximum inodes of allocated inode is less then queue size. (Invariant) */
-     dirty_inode_lfqueue.enqueue(inode);
-
-     inode->state = INODE_STATE_SYNCED; // state changed to SYNCED.
 }
 
 /**

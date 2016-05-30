@@ -3,11 +3,13 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "nvm0common.h"
-#include "nvm0lfq.h"
 
 extern NVM_metadata* NVM;
 extern pthread_mutex_t reclaim_lock; /* Lock and Condition Variable for signaling */
 extern pthread_cond_t reclaim_cond;  /* between write_thread and reclain_thread.  */
+extern lfqueue<NVM_inode*>* INODE_FREE_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_DIRTY_LFQUEUE;
+extern lfqueue<NVM_inode*>* INODE_SYNCED_LFQUEUE;
 
 /**
  * Flush thread function.
@@ -19,7 +21,7 @@ flush_thread_func(
     while(1) {
         /**
          * Policy : if there are dirty inodes, flush it */
-        while(dirty_inode_lfqueue.is_empty() == true) {
+        while(INODE_DIRTY_LFQUEUE->is_empty() == true) {
             sched_yield();
         }
         nvm_flush();
@@ -36,7 +38,7 @@ nvm_flush(
 {
     /**
      * Get the dirty inode which will be flushed soon. */
-    NVM_inode* inode = dirty_inode_lfqueue.dequeue();
+    NVM_inode* inode = INODE_DIRTY_LFQUEUE->dequeue();
 
     /**
      * Get the index of inode which is also the index of data block,
@@ -50,7 +52,7 @@ nvm_flush(
     /**
      * Once flushed inode should be reclaimed for re-use.
      * This inode temporarily enqueued to synced_inode_lfqueue. */
-    synced_inode_lfqueue.enqueue(*inode);
+    INODE_SYNCED_LFQUEUE->enqueue(inode);
 }
 
 /**
@@ -68,12 +70,12 @@ reclaim_thread_func(
          pthread_mutex_lock(&reclaim_lock);
          pthread_cond_wait(&reclaim_cond, &reclaim_lock); // wait
          /* When wake up */
-         uint32_t size = synced_inode_lfqueue.get_size(); // get size
+         uint32_t size = INODE_SYNCED_LFQUEUE->get_size(); // get size
          while(size) {
-             NVM_inode* inode = synced_inode_lfqueue.dequeue(); // get synced inode
+             NVM_inode* inode = INODE_SYNCED_LFQUEUE->dequeue(); // get synced inode
              inode->vte = delete_nvm_inode(inode->vte, inode); // delete from AVL tree
              inode->state = INODE_STATE_FREE; // change state
-             free_inode_lfqueue.enqueue(*inode); // enqueue inode to free-inode-lfqueue.
+             INODE_FREE_LFQUEUE->enqueue(inode); // enqueue inode to free-inode-lfqueue.
              size = size - 1;
          }
          pthread_mutex_unlock(&reclaim_lock);
