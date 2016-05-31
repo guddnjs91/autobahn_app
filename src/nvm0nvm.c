@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "nvm0common.h"
 
-NVM_metadata* NVM;
+//NVM_metadata* NVM;
 
 void
 nvm_system_init()

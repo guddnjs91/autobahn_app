@@ -1,3 +1,6 @@
+#ifndef _NVM_META_H_
+#define _NVM_META_H_
+
 /**
  * nvm0meta.h - Config and Metadata are stored in this header file.
  *   Config is the configuration before setting up and starting NVM System.
@@ -13,10 +16,10 @@
 typedef struct _nvm_metadata {
 
     //system config value
-    uint64_t    NVM_SIZE;
-    uint64_t    MAX_VT_ENTRY;
-    uint64_t    MAX_INODE_ENTRY;
-    uint64_t    BLOCK_SIZE;
+    //uint64_t    NVM_SIZE;
+    //uint64_t    MAX_VT_ENTRY;
+    //uint64_t    MAX_INODE_ENTRY;
+    //uint64_t    BLOCK_SIZE;
 
     // Base address of each table
     char*       VOLUME_TABLE_START;
@@ -28,3 +31,4 @@ typedef struct _nvm_metadata {
 /* Global variable that can access every NVM area */
 NVM_metadata* NVM;
 
+#endif

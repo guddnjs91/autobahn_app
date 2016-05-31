@@ -4,6 +4,9 @@
 #ifndef LFQUEUE_H
 #define LFQUEUE_H
 
+#include <atomic>
+#include <stdint.h>
+
 using namespace std;
 
 /**

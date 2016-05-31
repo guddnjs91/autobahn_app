@@ -4,6 +4,10 @@
 #include <pthread.h>
 #include "nvm0common.h"
 
+void* flush_thread_func(void*);
+void nvm_flush(void);
+void* reclaim_thread_func(void*);
+
 extern NVM_metadata* NVM;
 extern pthread_mutex_t reclaim_lock; /* Lock and Condition Variable for signaling */
 extern pthread_cond_t reclaim_cond;  /* between write_thread and reclain_thread.  */

@@ -1,27 +1,36 @@
 #include <stdio.h>
 #include "nvm0common.h"
+#include "nvm0avltree.h"
+
+T_node* search_nvm_inode(T_node* root, unsigned int lbn);
+T_node* insert_nvm_inode(T_node* root, T_node* inode);
+T_node* delete_nvm_inode(T_node* root, T_node* inode);
+void deallocate_node(T_node* root);
+T_node* min_value_node(T_node* inode);
+int Max(int a, int b);
+int height(T_node* N);
+int getBalance(T_node* N);
+T_node* rightRotate(T_node* y);
+T_node* leftRotate(T_node* y);
 
 extern NVM_metadata* NVM;
 
-void deallocate_node(NVM_inode* root);
-NVM_inode* min_value_node(NVM_inode* inode);
-
 /**
- * Search NVM_inode object from avl tree root
- @return inode with lbn from avl-tree */
-NVM_inode*
+ * Search tree node object from avl tree root
+ @return tree node with inode's lbn from avl-tree */
+T_node*
 search_nvm_inode(
-    NVM_inode* root,
+    T_node* root,
     unsigned int lbn)
 {
-    NVM_inode* localRoot = root;
+    T_node* localRoot = root;
 
     while(localRoot != NULL) {
-        if(lbn == localRoot->lbn) {
+        if(lbn == localRoot->inode->lbn) {
             return localRoot;
-        } else if(lbn < localRoot->lbn) {
+        } else if(lbn < localRoot->inode->lbn) {
             localRoot = localRoot->left;
-        } else if(lbn > localRoot->lbn) {
+        } else if(lbn > localRoot->inode->lbn) {
             localRoot = localRoot->right;
         }
     }
@@ -29,48 +38,48 @@ search_nvm_inode(
 }
 
 /**
- * Insert NVM_inode object to avl tree
+ * Insert tree node object to avl tree
  @return root node of avl-tree*/
-NVM_inode*
+T_node*
 insert_nvm_inode(
-    NVM_inode* root,
-    NVM_inode* inode)
+    T_node* root,
+    T_node* node)
 {
     if (root == NULL) {
-        root = inode;
+        root = node;
         return root;
     }
 
-    if (inode->lbn < root->lbn) {
-        root->left = insert_nvm_inode(root->left, inode);
+    if (node->inode->lbn < root->inode->lbn) {
+        root->left = insert_nvm_inode(root->left, node);
     } else {
-        root->right = insert_nvm_inode(root->right, inode);
+        root->right = insert_nvm_inode(root->right, node);
     }
 
     //update height
-    root->height = Max(height(root->left), height(root->right)) + 1;
+    root->inode->height = Max(height(root->left), height(root->right)) + 1;
 
     //rebalancing
     int balance = getBalance(root);
     
     // LL
-    if (balance > 1 && inode->lbn < root->left->lbn) {
+    if (balance > 1 && node->inode->lbn < root->left->inode->lbn) {
         return rightRotate(root);
     }
     
     // LR
-    if (balance > 1 && inode->lbn > root->left->lbn) {
+    if (balance > 1 && node->inode->lbn > root->left->inode->lbn) {
         root->left = leftRotate(root->left);
         return rightRotate(root);
     }   
     
     // RR
-    if (balance < -1 && inode->lbn > root->right->lbn) {
+    if (balance < -1 && node->inode->lbn > root->right->inode->lbn) {
         return leftRotate(root);
     }
     
     // RL
-    if (balance < -1 && inode->lbn < root->right->lbn) {
+    if (balance < -1 && node->inode->lbn < root->right->inode->lbn) {
         root->right = rightRotate(root->right);
         return leftRotate(root);
     }
@@ -79,25 +88,25 @@ insert_nvm_inode(
 }
 
 /**
- * Delete NVM_inode object from avl tree 
- * @return tree after deleting the inode */
-NVM_inode*
+ * Delete tree node object from avl tree 
+ * @return tree after deleting the node */
+T_node*
 delete_nvm_inode(
-    NVM_inode* root,  /* !<out: sub-tree root after deleting inode */
-    NVM_inode* inode) /* !<in: inode to be deleted */
+    T_node* root,  /* !<out: sub-tree root after deleting node */
+    T_node* node) /* !<in: node to be deleted */
 {
     if (root == NULL) {
         return root;
     }
     
-    if (inode->lbn < root->lbn) {
-        root->left = delete_nvm_inode(root->left, inode);
-    } else if (inode->lbn > root->lbn) {
-        root->right = delete_nvm_inode(root->right, inode);
+    if (node->inode->lbn < root->inode->lbn) {
+        root->left = delete_nvm_inode(root->left, node);
+    } else if (node->inode->lbn > root->inode->lbn) {
+        root->right = delete_nvm_inode(root->right, node);
     } else {
         // 1 child || no child
         if ((root->left == NULL) || (root->right == NULL)) {
-            NVM_inode* temp = root->left ? root->left : root->right;
+            T_node* temp = root->left ? root->left : root->right;
             
             if (temp == NULL) { // no child
                 temp = root;
@@ -110,10 +119,10 @@ delete_nvm_inode(
         } else {
             
             // 2 children
-            NVM_inode* temp =  min_value_node(root->right);
+            T_node* temp =  min_value_node(root->right);
             
             // copy the inorder successor's data
-            root->lbn = temp->lbn;
+            root->inode->lbn = temp->inode->lbn;
             
             // Delete the inorder successor
             root->right = delete_nvm_inode(root->right, temp);
@@ -157,12 +166,12 @@ delete_nvm_inode(
 
 /**
  * Find the minimum key from AVL tree.
- * @return inode that has minimum key value in tree.*/
-NVM_inode*
+ * @return tree node that has minimum key value in tree.*/
+T_node*
 min_value_node(
-    NVM_inode* inode)
+    T_node* node)
 {
-    NVM_inode* current = inode;
+    T_node* current = node;
     
     while (current->left != NULL) {
         current = current->left;
@@ -172,18 +181,18 @@ min_value_node(
 }
 
 /**
- * Deallocate inode structure */
+ * Deallocate tree's inode structure */
 void
 deallocate_node(
-    NVM_inode* inode)
+    T_node* node)
 {
     // Re-initialization
-    inode->lbn = 0;
-    inode->state = INODE_STATE_FREE;
-    inode->vte = nullptr;
-    inode->height = 1;
-    inode->left = nullptr;
-    inode->right = nullptr;
+    node->inode->lbn = 0;
+    node->inode->state = INODE_STATE_FREE;
+    node->inode->vte = nullptr;
+    node->inode->height = 1;
+    node->inode->left = nullptr;
+    node->inode->right = nullptr;
 }
 
 /**
@@ -191,12 +200,12 @@ deallocate_node(
  @return height */
 int
 height(
-    NVM_inode* inode)
+    T_node* node)
 {
-    if (inode == NULL) {
+    if (node == NULL) {
         return 0;
     }
-    return inode->height;
+    return node->height;
 }
 
 int
@@ -209,7 +218,7 @@ Max(
 
 int
 getBalance(
-    NVM_inode* inode)
+    T_node* inode)
 {
     if (inode == NULL) {
         return 0;
@@ -218,12 +227,12 @@ getBalance(
     return height(inode->left) - height(inode->right);
 }
 
-NVM_inode*
+T_node*
 rightRotate(
-    NVM_inode* y)
+    T_node* y)
 {
-    NVM_inode* x = y->left;
-    NVM_inode* T2 = x->right;
+    T_node* x = y->left;
+    T_node* T2 = x->right;
 
     // Perform rotation
     x->right = y;
@@ -237,12 +246,12 @@ rightRotate(
     return x;
 }
 
-NVM_inode*
+T_node*
 leftRotate(
-    NVM_inode* x)
+    T_node* x)
 {
-    NVM_inode* y = x->right;
-    NVM_inode* T2 = y->left;
+    T_node* y = x->right;
+    T_node* T2 = y->left;
 
     // Perform rotation
     y->left = x;

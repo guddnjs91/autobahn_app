@@ -1,3 +1,6 @@
+#ifndef _NVM_INODE_H_
+#define _NVM_INODE_H_
+
 /**
  * nvm0inode.h - header file for iNode */
 
@@ -25,3 +28,4 @@ lfqueue<_nvm_inode*>*  INODE_FREE_LFQUEUE;
 lfqueue<_nvm_inode*>*  INODE_DIRTY_LFQUEUE;
 lfqueue<_nvm_inode*>*  INODE_SYNCED_LFQUEUE;
 
+#endif

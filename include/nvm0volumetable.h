@@ -1,3 +1,6 @@
+#ifndef _NVM_VOLUME_TABLE_H_
+#define _NVM_VOLUME_TABLE_H_
+
 /**
  * nvm0volumetable.h - header file for Volume Table */
 
@@ -16,3 +19,4 @@ typedef struct _vt_entry {
 lfqueue<_vt_entry*>*   VTE_FREE_LFQUEUE;
 lfqueue<_vt_entry*>*   VTE_INUSE_LFQUEUE;
 
+#endif
