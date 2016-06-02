@@ -1,6 +1,8 @@
 #ifndef _NVM_VOLUME_TABLE_H_
 #define _NVM_VOLUME_TABLE_H_
 
+#include "nvm0avltree.h"
+
 /**
  * nvm0volumetable.h - header file for Volume Table */
 
@@ -9,10 +11,7 @@ typedef struct _vt_entry {
 
     unsigned int        vid;    // volume id (implicit filename)
     int                 fd;     // file descriptor (useless when recovery)
-    struct _nvm_inode*  iroot;  // inode root
-    
-    // managed by vte's free-list
-    unsigned int next;
+    struct _tree_node*  root;  // inode AVL tree root
 
 } VT_entry;
 

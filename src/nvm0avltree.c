@@ -2,16 +2,6 @@
 #include "nvm0common.h"
 #include "nvm0avltree.h"
 
-T_node* search_nvm_inode(T_node* root, unsigned int lbn);
-T_node* insert_nvm_inode(T_node* root, T_node* inode);
-T_node* delete_nvm_inode(T_node* root, T_node* inode);
-void deallocate_node(T_node* root);
-T_node* min_value_node(T_node* inode);
-int Max(int a, int b);
-int height(T_node* N);
-int getBalance(T_node* N);
-T_node* rightRotate(T_node* y);
-T_node* leftRotate(T_node* y);
 
 extern NVM_metadata* NVM;
 
@@ -57,7 +47,7 @@ insert_nvm_inode(
     }
 
     //update height
-    root->inode->height = Max(height(root->left), height(root->right)) + 1;
+    root->height = Max(height(root->left), height(root->right)) + 1;
 
     //rebalancing
     int balance = getBalance(root);
@@ -190,9 +180,9 @@ deallocate_node(
     node->inode->lbn = 0;
     node->inode->state = INODE_STATE_FREE;
     node->inode->vte = nullptr;
-    node->inode->height = 1;
-    node->inode->left = nullptr;
-    node->inode->right = nullptr;
+    node->height = 1;
+    node->left = nullptr;
+    node->right = nullptr;
 }
 
 /**

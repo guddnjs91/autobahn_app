@@ -17,11 +17,6 @@ typedef struct _nvm_inode {
     int                 state;    // state of block
     struct _vt_entry*   vte;      // volume id (implicit filename)
     
-    //AVL tree fields
-    struct _nvm_inode*  left;
-    struct _nvm_inode*  right;
-    int                 height;
-    
 } NVM_inode;
 
 lfqueue<_nvm_inode*>*  INODE_FREE_LFQUEUE;
