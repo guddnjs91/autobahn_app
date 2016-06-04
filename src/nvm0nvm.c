@@ -1,23 +1,42 @@
 #include <stdio.h>
 #include "nvm0common.h"
 
-NVM_metadata* NVM;
+extern NVM
 
+/**
+ * Construct NVM data structure
+ * - volume_table
+ * - inode_table
+ * - block_table
+ */
+void
+nvm_structure_build()
+{
+}
+
+/**
+ * Starts the NVM system
+ * 1. Create abstract data types to control NVM data structure.
+ *     - VTE_FREE_LFQUEUE
+ *     - VTE_INUSE_LFQUEUE
+ *     - INODE_FREE_LFQUEUE
+ *     - INODE_DIRTY_LFQUEUE
+ * 2. Create necessary threads for NVM system.
+ *     - FLUSH_THREAD
+ *     - BALLOON_THREAD
+ */
 void
 nvm_system_init()
 {
-    //TODO: get_nvm_address();
-
-    //TODO:
-    //if(setup required)
-    //construct_nvm();
-
-    //TODO:
-    //else
-    //start_ecovery();
-
-    //TODO: start sync_thread
 }
+
+/**
+ *  */
+void
+nvm_system_close()
+{
+}
+
 
 /**
  * Initialize and set up NVM */

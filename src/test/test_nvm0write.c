@@ -58,6 +58,18 @@
 //    return NULL;
 //}
 
+void create_files(int n_thread)
+{
+}
+
+delete_files(int n_thread)
+{
+}
+
+void create_buffer()
+{
+}
+
 void test_nvmwrite()
 {
     int n_thread, i;
@@ -67,7 +79,7 @@ void test_nvmwrite()
         create_files(n_thread);
 
         //Construct the NVM structure
-        nvm_build_structure();
+        nvm_structure_build();
 
         //start the nvm system
         nvm_system_init();
