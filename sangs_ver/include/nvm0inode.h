@@ -17,7 +17,7 @@ struct inode_entry {
     struct volume_entry*    volume; // volume id (implicit filename)
 };
 
-lfqueue<inode_entry*>*  inode_free_queue;
-lfqueue<inode_entry*>*  inode_dirty_queue;
+extern lfqueue<uint32_t>*  inode_free_queue;
+extern lfqueue<uint32_t>*  inode_dirty_queue;
 
 #endif

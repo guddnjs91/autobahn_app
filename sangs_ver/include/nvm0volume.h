@@ -11,7 +11,7 @@ struct volume_entry {
     struct tree_node*   root;   // inode AVL tree root
 };
 
-lfqueue<volume_entry*>* volume_free_queue;
-lfqueue<volume_entry*>* volume_inuse_queue;
+extern lfqueue<uint32_t>* volume_free_queue;
+extern lfqueue<uint32_t>* volume_inuse_queue;
 
 #endif

@@ -1,7 +1,8 @@
-void test_lfqueue();
+void test_nvm0lfqueue();
+void test_nvm0nvm();
 
-//g++ -std=c++11 -o test_lfqueue test_lfqueue.cpp nvm0lfqueue.cpp -lpthread
 int main()
 {
-    test_lfqueue();
+//    test_nvm0lfqueue();
+    test_nvm0nvm();
 }

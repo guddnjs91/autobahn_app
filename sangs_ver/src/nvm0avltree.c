@@ -2,9 +2,6 @@
 #include "nvm0common.h"
 #include "nvm0avltree.h"
 
-
-extern NVM_metadata* NVM;
-
 /**
  * Search tree node object from avl tree root
  @return tree node with inode's lbn from avl-tree */

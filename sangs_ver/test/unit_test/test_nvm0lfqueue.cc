@@ -183,7 +183,7 @@ void test_concurrency()
     delete queue2;
 }
 
-void test_lfqueue()
+void test_nvm0lfqueue()
 {
     printf("====================TEST nvm0lfqueue.cc====================\n");
     test_queue1();

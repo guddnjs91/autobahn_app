@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <unistd.h>
 #include "nvm0types.h"
 #include "nvm0lfqueue.h"
 #include "../util/nvm0lfqueue.cc"

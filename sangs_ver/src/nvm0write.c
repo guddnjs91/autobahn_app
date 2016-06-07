@@ -5,12 +5,6 @@
 #include <sstream>
 #include "nvm0common.h"
 
-extern NVM_metadata* NVM;
-extern lfqueue<VT_entry*>* VTE_FREE_LFQUEUE;
-extern lfqueue<NVM_inode*>* INODE_FREE_LFQUEUE;
-extern lfqueue<NVM_inode*>* INODE_DIRTY_LFQUEUE;
-
-
 /**
  * Atomically write data to nvm 
  - get vte
@@ -19,15 +13,15 @@ extern lfqueue<NVM_inode*>* INODE_DIRTY_LFQUEUE;
  - insert inode to sync-list */
 void
 nvm_atomic_write(
-    unsigned int vid, /* !<in: volume ID */
-    unsigned int ofs, /* !<in: ??? */ 
-    void* ptr,        /* !<in: buffer */
-    unsigned int len) /* !<in: size of buffer to be written */
+    uint32_t vid,   /* !<in: volume ID */
+    off_t ofs,      /* !<in: ??? */ 
+    void* ptr,      /* !<in: buffer */
+    size_t len)     /* !<in: size of buffer to be written */
 {
     printf("NVM write %u Bytes to VOL%u.txt\n", len, vid);
     
     // get vte with vid
-    VT_entry* vte = get_vt_entry(vid);
+    volume_entry* vol = get_vt_entry(vid);
     
     // calculate total size for writing by offset and length
     unsigned int lbn_start   = ofs / BLOCK_SIZE;

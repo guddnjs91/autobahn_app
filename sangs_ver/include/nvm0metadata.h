@@ -12,7 +12,7 @@ Created 2016/06/07 Sang Rhee
 #define nvm0metadata_h
 
 //config (make changes here ONLY)
-#define NVM_SIZE            8 * 1024 * 1024 * 1024
+#define NVM_SIZE            8 * 1024 * 1024 * 1024LLU
 #define MAX_VOLUME_ENTRY    1024
 #define BLOCK_SIZE          16 * 1024
 
