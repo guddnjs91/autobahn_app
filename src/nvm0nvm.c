@@ -1,17 +1,75 @@
 #include <stdio.h>
 #include "nvm0common.h"
 
-//NVM_metadata* NVM;
+#define SHM_KEY 1234
+
+NVM_metadata*
+create_nvm_in_shm()
+{
+    int shm_id;
+    char* shm_addr;
+
+    printf("Creating NVM in DRAM (shared memory).\n");
+
+    shm_id = shmget((key_t) SHM_KEY, NVM_SIZE, 0666 | IPC_CREAT);
+    if(shmid == -1) {
+        perror("shmget failed: ");
+        exit(0);
+    }
+    shm_addr = shmat(shmid, (void *)0, 0);
+    if(shm_addr == (char*) -1) {
+        perror("shmat failed: ");
+        exit(0);
+    }
+
+    printf("[Succeeded]\n");
+
+    return (NVM_metadata*) shm_addr;
+}
 
 /**
  * Construct NVM data structure
  * - volume_table
  * - inode_table
  * - block_table
+ *
+ *  +---------------------------------------------------------------------------------------+
+ *  |                                  NON-VOLATILE MEMORY                                  |
+ *  +--------------------------+------------------+-----------------------+-----------------+
+ *  |         METADATA         |   VOLUME TABLE   |      INODE TABLE      |   BLOCK TABLE   |
+ *  +--------------------------+------------------+-----------------------+-----------------+
+ *  | NVM_SIZE                 | Volume ID        | Logical Block Number  |                 |
+ *  | Max Volume Table Entry   | fd               | INode State           |                 |
+ *  | Max INode Table Entry    | INode Tree Root  | Volume Table Entry    |                 |
+ *  | Block Size               |                  |                       |                 |
+ *  | Volume Table             |                  |                       |                 |
+ *  | INode Table              |                  |                       |                 |
+ *  | Data Block Table         |                  |                       |                 |
+ *  +--------------------------+------------------+-----------------------+-----------------+
  */
 void
 nvm_structure_build()
 {
+    int i;
+
+    NVM = create_nvm_in_shm();
+
+    NVM->NVM_SIZE           = NVM_SIZE;
+    NVM->MAX_VT_ENTRY       = MAX_VT_ENTRY;
+    NVM->MAX_INODE_ENTRY    = ( NVM_SIZE - sizeof(NVM_metadata) - sizeof(VT_entry)*MAX_VT_ENTRY ) /
+                              ( sizeof(NVM_inode) + BLOCK_SIZE )
+    NVM->BLOCK_SIZE         = BLOCK_SIZE;
+
+    NVM->VOLUME_TABLE   = (char *) (NVM + 1);
+    NVM->INODE_TABLE    = (char *) ((VT_entry*) NVM->VOLUME_TABLE_START + NVM->MAX_VT_ENTRY);
+    NVM->DATA_TABLE     = (char *) ((NVM_inode*) NVM->INODE_START + MAX_NVM_INODE);
+
+    for(i = 0; i < MAX_INODE_ENTRY; i++)
+    {
+        NVM->INODE_TABLE[i] = INODE_STATE_FREE;
+    }
+
+    print_nvm_info();
 }
 
 /**
@@ -37,62 +95,12 @@ nvm_system_close()
 {
 }
 
-
-/**
- * Initialize and set up NVM */
-void
-init_nvm_address(
-    void *start_addr)
-{
-    int i;
-    
-    // Initialize NVM address at the first time
-    NVM = (NVM_metadata *)start_addr;
-    NVM->VOL_TABLE_START = (VT_entry *)(NVM + 1);
-    NVM->INODE_START     = (NVM_inode *)(NVM->VOL_TABLE_START + MAX_VT_ENTRY);
-    NVM->DATA_START      = (char *)(NVM->INODE_START + MAX_NVM_INODE);
-    
-    // Initialize Free list for VT_entry
-    VT_entry* vteptr = NVM->VOL_TABLE_START;
-    NVM->FREE_VTE_LIST_HEAD = vteptr;
-    for (i = 0; i < MAX_VT_ENTRY - 1; i++)
-    {
-        vteptr->vid = 0;
-        vteptr->fd  = 0;
-        vteptr->next = i + 1;
-        vteptr++;
-    }
-    vteptr->vid = 0;
-    vteptr->fd  = 0;
-    vteptr->next = MAX_VT_ENTRY;
-    NVM->FREE_VTE_LIST_TAIL = vteptr;
-    
-    // Initialize Free list for NVM_inode
-    NVM_inode* iptr = NVM->INODE_START;
-    NVM->FREE_INODE_LIST_HEAD = iptr;
-    for (i = 0; i < MAX_NVM_INODE - 1; i++) 
-    {
-        iptr->lbn = 0;
-        iptr->f_next = i + 1;
-        iptr->state = INODE_STATE_FREE;
-        iptr++;
-    }
-    iptr->lbn = 0;
-    iptr->f_next = MAX_NVM_INODE;
-    iptr->state = INODE_STATE_FREE;
-    NVM->FREE_INODE_LIST_TAIL = iptr;
-
-    // Initialize Sync List for NVM_inode
-    NVM->SYNC_INODE_LIST_HEAD = NULL;
-    NVM->SYNC_INODE_LIST_TAIL = NULL;
-}
-
 /**
  * Print NVM address information */
 void
 print_nvm_info()
 {
-    printf("\nHere is the NVM information \n");
+    printf("\nNVM information \n");
     
     printf("\n[RESERVED AREA]\n");
     printf("- start  : %p\n", NVM);
@@ -125,75 +133,4 @@ print_nvm_info()
     printf("- #blk in nvm: %d\n", MAX_NVM_INODE - get_free_inode_num());
     printf("\n\n");
 //  data_dump((unsigned char*)NVM->DATA_START, BLOCK_SIZE * 33);
-}
-
-/**
- * Get the number of not using vte from free-vte-list
- @return the number of free-vte */
-int
-get_free_vte_num()
-{
-    int cnt = 0;
-    VT_entry* vte = NVM->FREE_VTE_LIST_HEAD;
-    while(vte != NVM->FREE_VTE_LIST_TAIL)
-    {
-        cnt++;
-        vte = NVM->VOL_TABLE_START + vte->next;
-    }
-    
-    cnt++;
-    
-    return cnt;
-}
-
-/**
- * Get the number of not using inode from free-inode-list
- @return the number of free-inode */
-int
-get_free_inode_num()
-{
-    int cnt = 0;
-    NVM_inode* inode = NVM->FREE_INODE_LIST_HEAD;
-    while(inode != NVM->FREE_INODE_LIST_TAIL)
-    {
-        cnt++;
-        inode = NVM->INODE_START + inode->f_next;
-    }
-
-    cnt++;
-
-    return cnt;
-}
-
-/**
- * Get the number of inodes for syncing from sync-inode-list
- @return the number of inodes for syncing */
-int
-get_sync_inode_num()
-{
-    int cnt = 0;
-    NVM_inode* inode = NVM->SYNC_INODE_LIST_HEAD;
-    
-    if(inode == NULL)
-        return cnt;
-
-    while(inode != NVM->SYNC_INODE_LIST_TAIL)
-    {
-        cnt++;
-        inode = inode->s_next;
-    }
-
-    cnt++;
-
-    return cnt;
-}
-
-/**
- * Get the index for given inode
- @return the index of that inode */
-unsigned int 
-get_nvm_inode_idx(
-    NVM_inode* addr)
-{
-    return (unsigned int)(((char*)addr - (char*)NVM->INODE_START)/sizeof(NVM_inode));
 }

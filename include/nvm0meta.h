@@ -16,10 +16,10 @@
 typedef struct _nvm_metadata {
 
     //system config value
-    //uint64_t    NVM_SIZE;
-    //uint64_t    MAX_VT_ENTRY;
-    //uint64_t    MAX_INODE_ENTRY;
-    //uint64_t    BLOCK_SIZE;
+    uint64_t    NVM_SIZE;
+    uint64_t    MAX_VT_ENTRY;
+    uint64_t    MAX_INODE_ENTRY;
+    uint64_t    BLOCK_SIZE;
 
     // Base address of each table
     char*       VOLUME_TABLE_START;
@@ -29,6 +29,6 @@ typedef struct _nvm_metadata {
 } NVM_metadata;
 
 /* Global variable that can access every NVM area */
-NVM_metadata* NVM;
+extern NVM_metadata* NVM;
 
 #endif
