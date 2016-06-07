@@ -1,67 +1,115 @@
-#include <atomic>
-#include <cstdint>
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "nvm0lfqueue.h"
-#include "nvm0lfqueue.cpp"
+#include "nvm0common.h"
 
 void test_queue1()
 {
-    printf("\nTest 1\n");
+    //init
     lfqueue<int>* queue = new lfqueue<int>(10);
     
+    //test
     queue->enqueue(1);
-    printf("value dequeued: %d\n", queue->dequeue());
+    int val = queue->dequeue();
 
+    //assert
+    if(val == 1) {
+        printf("test_queue1 passed.\n");
+    }
+    else {
+        printf("test_queue1 failed.\n");
+        exit(0);
+    }
+
+    //clean
     delete queue;
 }
 
 void test_queue10()
 {
-    printf("\nTest 10\n");
+    //init
+    int i;
     lfqueue<int>* queue = new lfqueue<int>(10);
     
-    int i;
+    //test
     for(i=0; i<10; i++) {
         queue->enqueue(i);
     }
-    for(i=0; i<10; i++) {
-        printf("value dequeued: %d\n", queue->dequeue());
-    }
 
+    //assert
+    for(i=0; i<10; i++) {
+        if(queue->dequeue() != i)
+        {
+            printf("test_queue10 failed. : %d\n", i);
+            exit(0);
+        }
+    }
+    printf("test_queue10 passed.\n");
+
+    //clean
     delete queue;
 }
 
 void test_is_empty()
 {
-    printf("\nTest is_empty\n");
+    //init
     lfqueue<int>* queue = new lfqueue<int>(10);
     
-    printf("At first, is_empty() = %d\n", queue->is_empty());
+    //test & assert
+    if(queue->is_empty() == false) {
+        printf("test_is_empty failed.\n");
+        exit(0);
+    }
     queue->enqueue(1);
-    printf("enqueue 1, is_empty() = %d\n", queue->is_empty());
+    if(queue->is_empty() == true) {
+        printf("test_is_empty failed.\n");
+        exit(0);
+    }
     queue->dequeue();
-    printf("dequeue 1, is_empty() = %d\n", queue->is_empty());
+    if(queue->is_empty() == false) {
+        printf("test_is_empty failed.\n");
+        exit(0);
+    }
+    printf("test_is_empty passed.\n");
 
+    //clean
     delete queue;
 }
 
 void test_get_size()
 {
-    printf("\nTest get_size\n");
+    //init
     lfqueue<int>* queue = new lfqueue<int>(10);
     
-    printf("At first, get_size() = %d\n", queue->get_size());
+    //test & assert
+    if(queue->get_size() != 0) {
+        printf("test_get_size failed.\n");
+        exit(0);
+    }
     queue->enqueue(1);
-    printf("enqueue 1, get_size() = %d\n", queue->get_size());
+    if(queue->get_size() != 1) {
+        printf("test_get_size failed.\n");
+        exit(0);
+    }
     queue->enqueue(2);
-    printf("enqueue 2, get_size() = %d\n", queue->get_size());
+    if(queue->get_size() != 2) {
+        printf("test_get_size failed.\n");
+        exit(0);
+    }
     queue->dequeue();
-    printf("dequeue 1, get_size() = %d\n", queue->get_size());
+    if(queue->get_size() != 1) {
+        printf("test_get_size failed.\n");
+        exit(0);
+    }
     queue->dequeue();
-    printf("dequeue 2, get_size() = %d\n", queue->get_size());
+    if(queue->get_size() != 0) {
+        printf("test_get_size failed.\n");
+        exit(0);
+    }
+    printf("test_get_size passed.\n");
 
+    //clean
     delete queue;
 }
 
@@ -99,12 +147,14 @@ void* consumer(void* arg)
 
 void test_concurrency()
 {
+    //init
     int i;
     int nthread = 10;
-
-    printf("\nTest concurrency(%d producers, %d consumers)\n", nthread, nthread);
+    printf("Test concurrency(%d producers, %d consumers) started.\n", nthread, nthread);
     queue1 = new lfqueue<int>(queuesize);
     queue2 = new lfqueue<int>(queuesize);
+
+    //test
     for(i=1; i<=queuesize; i++) {
         queue1->enqueue(i);
     }
@@ -125,21 +175,20 @@ void test_concurrency()
         pthread_join(c_thread[i], NULL);
     }
 
+    //assert
+    printf("Test concurrency(%d producers, %d consumers) passed.\n", nthread, nthread);
+
+    //clean
     delete queue1;
     delete queue2;
 }
 
 void test_lfqueue()
 {
+    printf("====================TEST nvm0lfqueue.cc====================\n");
     test_queue1();
     test_queue10();
     test_is_empty();
     test_get_size();
     test_concurrency();
-}
-
-//g++ -std=c++11 -o test_lfqueue test_lfqueue.cpp nvm0lfqueue.cpp -lpthread
-int main()
-{
-    test_lfqueue();
 }

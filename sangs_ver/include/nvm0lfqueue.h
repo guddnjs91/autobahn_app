@@ -27,9 +27,9 @@ class lfqueue
     uint32_t capacity;              //capacity of queue
 
   public:
-    lfqueue(uint32_t);
+    lfqueue(const uint32_t capacity);
     ~lfqueue();
-    void enqueue(T value);
+    void enqueue(const T value);
     T dequeue();
     bool is_empty();
     uint32_t get_size();

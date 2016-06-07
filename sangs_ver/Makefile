@@ -4,7 +4,7 @@ CC = g++
 CFLAGS = -g -Wall -std=c++11
  all : hw
 
-OBJS = ./src/nvm0avltree.o ./src/nvm0flush.o ./src/nvm0write.o ./src/nvm0nvm.o ./src/test/test1.o
+OBJS = ./src/nvm0avltree.o ./src/nvm0flush.o ./src/nvm0write.o ./src/nvm0nvm.o ./test/test1.o
 SRCS = ./src/$(OBJS:.o=.c)
 BIN = ./bin/
 LIB = ./lib

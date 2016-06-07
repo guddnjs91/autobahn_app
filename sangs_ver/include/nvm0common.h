@@ -5,13 +5,14 @@
 #define nvm0common_h
 
 #include <atomic>
-#include <cstdint.h>
+#include <cstdint>
 #include "nvm0types.h"
 #include "nvm0lfqueue.h"
+#include "../util/nvm0lfqueue.cc"
 #include "nvm0avltree.h"
-#include "nvm0volumetable.h"
+#include "nvm0volume.h"
 #include "nvm0inode.h"
-#include "nvm0meta.h"
+#include "nvm0metadata.h"
 #include "nvm0prototypes.h"
 
 #endif
