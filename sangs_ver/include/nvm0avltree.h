@@ -1,20 +1,21 @@
-#ifndef _NVM_AVL_TREE_H_
-#define _NVM_AVL_TREE_H_
-
-#include "nvm0inode.h"
-
 /**
  * AVL tree node.
  * Tree structure doesn't embedded in inode anymore.
  * T_node will be managed by AVL tree in MEMORY
  * Each T_node contins inode and its valid bit. */
-typedef struct _tree_node {
-   struct _nvm_inode* inode;
-   int valid; // Balloon thread change this and writer will delegate this node.
 
-   struct _tree_node* left;
-   struct _tree_node* right;
-   int height;
+#ifndef nvm0avltree_h
+#define nvm0avltree_h
+
+#include "nvm0inode.h"
+
+typedef struct tree_node {
+   struct inode_entry*  inode;
+   int                  valid; // Balloon thread change this and writer will delegate this node.
+
+   struct tree_node*    left;
+   struct tree_node*    right;
+   int                  height;
 } T_node;
 
 T_node* search_nvm_inode(T_node* root, unsigned int lbn);

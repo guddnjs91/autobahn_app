@@ -1,21 +1,18 @@
 /**
  * nvm0lfqueue.h - header file for nvm0lfqueue.cpp */
 
-#ifndef LFQUEUE_H
-#define LFQUEUE_H
-
-#include <atomic>
-#include <stdint.h>
+#ifndef nvm0lfqueue_h
+#define nvm0lfqueue_h
 
 using namespace std;
 
 /**
- * Concurrent Latch-Free Queue that supports multiple-producer-multiple-consumer.
- * This queue implementation has a capacity limit for the number of elements in a queue.
- * INVARIANT:
- *   The number of elements enqueued never exceeds the capacity of a queue.
- *   In other words, a queue will never overflow
- *   and enqueue operation will never have a case where it waits for a room for element. */
+ * Concurrent Latch-Free Queue that supports multiple-producers and multiple-consumers.
+ * It uses fixed data structure and it can only store limited number of elements.
+ * When a queue is full, enqueue will spinlock until it finds a space.
+ * When a queue is empty, dequeue will spinlock until it finds a new element.
+ * New enqueue might spinlock if the old element at the same index hasn't been dequeued.
+ * This happens if the consumer of the old element preempts in the middle of dequeue. */
 template <typename T> 
 class lfqueue
 {
