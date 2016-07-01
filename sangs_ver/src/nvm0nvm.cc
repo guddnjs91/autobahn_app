@@ -6,14 +6,14 @@
 
 #define SHM_KEY 1234
 
-// Declarations of global variables
+//Global field declarations
 struct nvm_metadata* nvm;
 lfqueue<uint32_t>* volume_free_queue;
 lfqueue<uint32_t>* volume_inuse_queue;
 lfqueue<uint32_t>* inode_free_queue;
 lfqueue<uint32_t>* inode_dirty_queue;
 
-//private function declaration
+//local function declarations
 void print_nvm_info();
 nvm_metadata* create_nvm_in_shm();
 void remove_nvm_in_shm();
@@ -56,6 +56,11 @@ nvm_structure_build()
     nvm->volume_table       = (struct volume_entry*) (nvm + 1);
     nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
     nvm->datablock_table    = (char *)               (nvm->inode_table + nvm->max_inode_entry);
+
+    //Initialize all volume_entries
+    for(i = 0; i < nvm->max_volume_entry; i++) {
+        nvm->volume_table[i].fd = -1;
+    }
 
     //Initialize all inode_entries to state_free
     for(i = 0; i < nvm->max_inode_entry; i++)
@@ -110,7 +115,11 @@ nvm_system_close()
     delete volume_inuse_queue;
     delete inode_free_queue;
     delete inode_dirty_queue;
+}
 
+void
+nvm_structure_destroy()
+{
     remove_nvm_in_shm();
 }
 
