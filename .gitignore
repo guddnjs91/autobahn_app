@@ -1,4 +1,7 @@
 *.txt
+# Cscope file
+*.files
+
 # Created by https://www.gitignore.io/api/c
 
 ### C ###
