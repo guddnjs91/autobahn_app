@@ -1,8 +1,8 @@
-#ifndef _NVM_INODE_H_
-#define _NVM_INODE_H_
-
 /**
  * nvm0inode.h - header file for iNode */
+
+#ifndef nvm0inode_h
+#define nvm0inode_h
 
 /* State of inode */
 #define INODE_STATE_FREE        0
@@ -11,16 +11,13 @@
 #define INODE_STATE_SYNCED      3
 
 /* Represent one inode object */
-typedef struct _nvm_inode {
-    
-    unsigned int        lbn;      // logical block number
-    int                 state;    // state of block
-    struct _vt_entry*   vte;      // volume id (implicit filename)
-    
-} NVM_inode;
+struct inode_entry {
+    uint32_t                lbn;    // logical block number
+    int                     state;  // state of block
+    struct volume_entry*    volume; // volume id (implicit filename)
+};
 
-lfqueue<_nvm_inode*>*  INODE_FREE_LFQUEUE;
-lfqueue<_nvm_inode*>*  INODE_DIRTY_LFQUEUE;
-lfqueue<_nvm_inode*>*  INODE_SYNCED_LFQUEUE;
+extern lfqueue<uint32_t>*  inode_free_lfqueue;
+extern lfqueue<uint32_t>*  inode_dirty_lfqueue;
 
 #endif

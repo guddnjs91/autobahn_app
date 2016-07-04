@@ -1,38 +1,35 @@
 /**
  * nvm0lfqueue.h - header file for nvm0lfqueue.cpp */
 
-#ifndef LFQUEUE_H
-#define LFQUEUE_H
-
-#include <atomic>
-#include <stdint.h>
+#ifndef nvm0lfqueue_h
+#define nvm0lfqueue_h
 
 using namespace std;
 
 /**
- * Concurrent Latch-Free Queue that supports multiple-producer-multiple-consumer.
- * This queue implementation has a capacity limit for the number of elements in a queue.
- * INVARIANT:
- *   The number of elements enqueued never exceeds the capacity of a queue.
- *   In other words, a queue will never overflow
- *   and enqueue operation will never have a case where it waits for a room for element. */
+ * Concurrent Latch-Free Queue that supports multiple-producers and multiple-consumers.
+ * It uses fixed data structure and it can only store limited number of elements.
+ * When a queue is full, enqueue will spinlock until it finds a space.
+ * When a queue is empty, dequeue will spinlock until it finds a new element.
+ * New enqueue might spinlock if the old element at the same index hasn't been dequeued.
+ * This happens if the consumer of the old element preempts in the middle of dequeue. */
 template <typename T> 
 class lfqueue
 {
   private:
-    atomic<uint_fast64_t> p_count;  //global producer count
-    atomic<uint_fast64_t> c_count;  //global consumer count
+    atomic<uint_fast64_t>     p_count;  //global producer count
+    atomic<uint_fast64_t>     c_count;  //global consumer count
 
-    T* values;                      //value for each element in a queue
-    atomic<uint_fast64_t>* c_counts;//c_count for each element in a queue
-    atomic<uint_fast64_t>* p_counts;//p_count for each element in a queue
+    T*                        values;   //value for each element in a queue
+    atomic<uint_fast64_t>*    c_counts; //c_count for each element in a queue
+    atomic<uint_fast64_t>*    p_counts; //p_count for each element in a queue
 
-    uint32_t capacity;              //capacity of queue
+    uint32_t                  capacity; //capacity of queue
 
   public:
-    lfqueue(uint32_t);
+    lfqueue(const uint32_t capacity);
     ~lfqueue();
-    void enqueue(T value);
+    void enqueue(const T value);
     T dequeue();
     bool is_empty();
     uint32_t get_size();

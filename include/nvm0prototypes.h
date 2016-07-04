@@ -1,8 +1,12 @@
 /* in file nvm0nvm.c */
-
-
+void nvm_structure_build();
+void print_nvm_info();
+void nvm_system_init();
+void nvm_system_close();
 
 /* in file nvm0write.c */
+void nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);
+
 //void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);
 //VT_entry* get_vt_entry(unsigned int vid);
 //VT_entry* search_vt_entry(VT_entry* vt_root, unsigned int vid);
@@ -12,9 +16,9 @@
 //const char* get_filename(unsigned int vid);
 
 /* in file nvm0flush.c */
-//void* flush_thread_func(void* data);
+void* flush_thread_func(void* data);
+void* balloon_thread_func(void* data);
 //void nvm_flush(void);
-//void* reclaim_thread_func(void* data);
 
 /* in file nvm0avltree.c */
 //NVM_inode* search_nvm_inode(NVM_inode* root, unsigned int lbn);
