@@ -1,0 +1,417 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ASSUME	src/old/rbtree/misc.h	50;"	d
+ASSUME	src/old/rbtree/misc.h	52;"	d
+Assert	src/old/rbtree/misc.h	/^inline void Assert(int assertion, char* error) {$/;"	f
+BILLION	src/old/test/file_rw_test.c	10;"	d	file:
+BILLION	src/old/test/nvm_rw_test1.c	10;"	d	file:
+BILLION	src/old/test/nvm_rw_test2.c	10;"	d	file:
+BILLION	src/old/test/nvm_rw_test3.c	10;"	d	file:
+BIN	Makefile	/^BIN = .\/bin\/$/;"	m
+BIN	sangs_ver/Makefile	/^BIN = .\/bin\/$/;"	m
+BIN	test/Makefile	/^BIN = .\/unit_test\/$/;"	m
+BLOCK_SIZE	include/nvm0metadata.h	17;"	d
+BLOCK_SIZE	sangs_ver/include/nvm0metadata.h	17;"	d
+Bottom	src/old/rbtree/TemplateStack.h	/^  inline Type * Bottom() const$/;"	f	class:TemplateStack
+CC	Makefile	/^CC = g++$/;"	m
+CC	sangs_ver/Makefile	/^CC = g++$/;"	m
+CC	sangs_ver/test/unit_test/Makefile	/^CC = g++$/;"	m
+CC	test/Makefile	/^CC = g++$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -g -Wall -std=c++11$/;"	m
+CFLAGS	sangs_ver/Makefile	/^CFLAGS = -g -Wall -std=c++11$/;"	m
+CFLAGS	sangs_ver/test/unit_test/Makefile	/^CFLAGS = -std=c++11 -lpthread $(INCLUDE)$/;"	m
+CFLAGS	test/Makefile	/^CFLAGS = -std=c++11 -g -W -Wall$/;"	m
+Capacity	src/old/rbtree/TemplateStack.h	/^  inline int Capacity() const $/;"	f	class:TemplateStack
+CheckAssumptions	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::CheckAssumptions() const {$/;"	f	class:RedBlackTree
+Clear	src/old/rbtree/TemplateStack.h	/^  inline void Clear() { currentSize = 0;} \/\/ clears the TemplateStack$/;"	f	class:TemplateStack
+Clear	src/old/rbtree/TemplateStack.h	/^  inline void Clear(void (*DestFunc)(Type ) ) $/;"	f	class:TemplateStack
+DEFAULT_INITIAL_SIZE	src/old/rbtree/TemplateStack.h	9;"	d
+DELETE	src/old/rbtree/avl_ver_pointer.c	375;"	d	file:
+DeleteAtPosition	src/old/rbtree/TemplateStack.h	/^  void DeleteAtPosition(const int position, const int size)$/;"	f	class:TemplateStack
+DeleteAtPosition	src/old/rbtree/TemplateStack.h	/^  void DeleteAtPosition(int position) $/;"	f	class:TemplateStack
+DeleteFixUp	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::DeleteFixUp(RedBlackTreeNode* x) {$/;"	f	class:RedBlackTree
+DeleteNode	src/old/rbtree/RedBlackTree.cc	/^RedBlackEntry * RedBlackTree::DeleteNode(RedBlackTreeNode * z){$/;"	f	class:RedBlackTree
+DeleteTop	src/old/rbtree/TemplateStack.h	/^  inline void DeleteTop()$/;"	f	class:TemplateStack
+Destroy	src/old/rbtree/TemplateStack.h	/^  void Destroy(void (*DestFunc)(Type) )$/;"	f	class:TemplateStack
+E_REDBLACK_TREE	src/old/rbtree/RedBlackTree.h	2;"	d
+E_TEMPLATE_STACK	src/old/rbtree/TemplateStack.h	2;"	d
+Empty	src/old/rbtree/TemplateStack.h	/^  inline int Empty() const$/;"	f	class:TemplateStack
+Enumerate	src/old/rbtree/RedBlackTree.cc	/^TemplateStack<RedBlackTreeNode *> * RedBlackTree::Enumerate(int low, $/;"	f	class:RedBlackTree
+ExitProgramMacro	src/old/rbtree/misc.h	33;"	d
+FILE_SIZE	sangs_ver/test/test_nvm0write.c	16;"	d	file:
+FILE_SIZE	src/test/test_nvm0write.c	16;"	d	file:
+FILE_SIZE	test/test_nvm0write.c	16;"	d	file:
+ForEachItemDo	src/old/rbtree/TemplateStack.h	/^  inline void ForEachItemDo(void (*function)(Type)) const$/;"	f	class:TemplateStack
+ForEachItemDo	src/old/rbtree/TemplateStack.h	/^  inline void ForEachItemDo(void (*function)(Type, void * controller),$/;"	f	class:TemplateStack
+GetAddressOfArray	src/old/rbtree/TemplateStack.h	/^  inline Type * GetAddressOfArray() const { return arrayData; }$/;"	f	class:TemplateStack
+GetEntry	src/old/rbtree/RedBlackTree.cc	/^RedBlackEntry * RedBlackTreeNode::GetEntry() const {return storedEntry;}$/;"	f	class:RedBlackTreeNode
+GetIndexOf	src/old/rbtree/TemplateStack.h	/^  inline int GetIndexOf(Type const & possibleMemberOfStack) const$/;"	f	class:TemplateStack
+GetPredecessorOf	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode * RedBlackTree::GetPredecessorOf(RedBlackTreeNode * x) const {$/;"	f	class:RedBlackTree
+GetSuccessorOf	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode * RedBlackTree::GetSuccessorOf(RedBlackTreeNode * x) const$/;"	f	class:RedBlackTree
+INCLUDE	Makefile	/^INCLUDE = .\/include$/;"	m
+INCLUDE	sangs_ver/Makefile	/^INCLUDE = .\/include$/;"	m
+INCLUDE	sangs_ver/test/unit_test/Makefile	/^INCLUDE = -I..\/..\/include$/;"	m
+INCLUDE	test/Makefile	/^INCLUDE = ..\/include$/;"	m
+INC_E_MISC_DOT_H	src/old/rbtree/misc.h	2;"	d
+INODE_STATE_ALLOCATED	include/nvm0inode.h	9;"	d
+INODE_STATE_ALLOCATED	sangs_ver/include/nvm0inode.h	9;"	d
+INODE_STATE_DIRTY	include/nvm0inode.h	10;"	d
+INODE_STATE_DIRTY	sangs_ver/include/nvm0inode.h	10;"	d
+INODE_STATE_FREE	include/nvm0inode.h	8;"	d
+INODE_STATE_FREE	sangs_ver/include/nvm0inode.h	8;"	d
+INODE_STATE_SYNCED	include/nvm0inode.h	11;"	d
+INODE_STATE_SYNCED	sangs_ver/include/nvm0inode.h	11;"	d
+INSERT	src/old/rbtree/avl_ver_pointer.c	374;"	d	file:
+IndexOfTop	src/old/rbtree/TemplateStack.h	/^  inline int IndexOfTop() const$/;"	f	class:TemplateStack
+Insert	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode * RedBlackTree::Insert(RedBlackEntry * newEntry)$/;"	f	class:RedBlackTree
+InsertAtPosition	src/old/rbtree/TemplateStack.h	/^  void InsertAtPosition(const  int position,$/;"	f	class:TemplateStack
+InsertAtPosition	src/old/rbtree/TemplateStack.h	/^  void InsertAtPosition(const int position, const Type itemToInsert)$/;"	f	class:TemplateStack
+ItemAtTop	src/old/rbtree/TemplateStack.h	/^  inline Type & ItemAtTop() const $/;"	f	class:TemplateStack
+LIB	Makefile	/^LIB = .\/lib$/;"	m
+LIB	sangs_ver/Makefile	/^LIB = .\/lib$/;"	m
+LIBNAME	Makefile	/^LIBNAME = -lpthread -lrt$/;"	m
+LIBNAME	sangs_ver/Makefile	/^LIBNAME = -lpthread -lrt$/;"	m
+LIBNAME	test/Makefile	/^LIBNAME = -lpthread$/;"	m
+LeftRotate	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::LeftRotate(RedBlackTreeNode* x) {$/;"	f	class:RedBlackTree
+MAX_BUF_SIZE	sangs_ver/test/test1.c	/^unsigned int MAX_BUF_SIZE = 512*1024*1024;$/;"	v
+MAX_BUF_SIZE	src/old/test/file_rw_test.c	11;"	d	file:
+MAX_BUF_SIZE	src/old/test/nvm_rw_test1.c	11;"	d	file:
+MAX_BUF_SIZE	src/old/test/nvm_rw_test2.c	11;"	d	file:
+MAX_BUF_SIZE	src/old/test/nvm_rw_test3.c	11;"	d	file:
+MAX_BUF_SIZE	src/test/test1.c	/^unsigned int MAX_BUF_SIZE = 512*1024*1024;$/;"	v
+MAX_BUF_SIZE	test/test1.c	/^unsigned int MAX_BUF_SIZE = 512*1024*1024;$/;"	v
+MAX_INT	src/old/rbtree/RedBlackTree.h	26;"	d
+MAX_THREAD	sangs_ver/test/test_nvm0write.c	17;"	d	file:
+MAX_THREAD	src/test/test_nvm0write.c	17;"	d	file:
+MAX_THREAD	test/test_nvm0write.c	17;"	d	file:
+MAX_VOLUME_ENTRY	include/nvm0metadata.h	16;"	d
+MAX_VOLUME_ENTRY	sangs_ver/include/nvm0metadata.h	16;"	d
+MIN_INT	src/old/rbtree/RedBlackTree.cc	/^const int MIN_INT=-MAX_INT;$/;"	v
+Max	sangs_ver/src/nvm0avltree.c	/^Max($/;"	f
+Max	src/nvm0avltree.c	/^Max($/;"	f
+Max	src/old/rbtree/avl_ver_pointer.c	/^int Max(int a, int b) { return a > b ? a : b; }$/;"	f
+Member	src/old/rbtree/TemplateStack.h	/^  inline Type * Member(Type const & possibleMemberOfStack)$/;"	f	class:TemplateStack
+NVM_SIZE	include/nvm0metadata.h	15;"	d
+NVM_SIZE	sangs_ver/include/nvm0metadata.h	15;"	d
+NotEmpty	src/old/rbtree/TemplateStack.h	/^  inline int NotEmpty() const$/;"	f	class:TemplateStack
+NullFunction	src/old/rbtree/misc.h	/^inline void NullFunction(const void * ) { ; }$/;"	f
+NullFunction	src/old/rbtree/misc.h	/^inline void NullFunction(void * ) { ; }$/;"	f
+OBJS	Makefile	/^OBJS = .\/src\/nvm0avltree.o .\/src\/nvm0flush.o .\/src\/nvm0write.o .\/src\/nvm0nvm.o .\/src\/test\/test1.o$/;"	m
+OBJS	sangs_ver/Makefile	/^OBJS = .\/src\/nvm0avltree.o .\/src\/nvm0flush.o .\/src\/nvm0write.o .\/src\/nvm0nvm.o .\/test\/test1.o$/;"	m
+PRINTFREELIST	src/old/rbtree/avl_ver_pointer.c	376;"	d	file:
+PRINTTREE	src/old/rbtree/avl_ver_pointer.c	377;"	d	file:
+Pop	src/old/rbtree/TemplateStack.h	/^  inline Type Pop()$/;"	f	class:TemplateStack
+Print	src/old/rbtree/RedBlackTree.cc	/^void RedBlackEntry::Print() const {$/;"	f	class:RedBlackEntry
+Print	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::Print() const {$/;"	f	class:RedBlackTree
+Print	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTreeNode::Print(RedBlackTreeNode * nil,$/;"	f	class:RedBlackTreeNode
+PrintTree	src/old/rbtree/avl_ver_pointer.c	/^void PrintTree(struct node *root) {$/;"	f
+Push	src/old/rbtree/TemplateStack.h	/^  void Push(Type newInfo)$/;"	f	class:TemplateStack
+Push	src/old/rbtree/TemplateStack.h	/^  void Push(const TemplateStack<Type> & stackToAdd)$/;"	f	class:TemplateStack
+Push	src/old/rbtree/TemplateStack.h	/^  void Push(const TemplateStack<Type> * const stackToAdd)$/;"	f	class:TemplateStack
+QUIT	src/old/rbtree/avl_ver_pointer.c	378;"	d	file:
+RedBlackEntry	src/old/rbtree/RedBlackTree.cc	/^RedBlackEntry::RedBlackEntry(){$/;"	f	class:RedBlackEntry
+RedBlackEntry	src/old/rbtree/RedBlackTree.h	/^class RedBlackEntry {$/;"	c
+RedBlackTree	src/old/rbtree/RedBlackTree.cc	/^RedBlackTree::RedBlackTree()$/;"	f	class:RedBlackTree
+RedBlackTree	src/old/rbtree/RedBlackTree.h	/^class RedBlackTree {$/;"	c
+RedBlackTreeNode	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode::RedBlackTreeNode(){$/;"	f	class:RedBlackTreeNode
+RedBlackTreeNode	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode::RedBlackTreeNode(RedBlackEntry * newEntry)$/;"	f	class:RedBlackTreeNode
+RedBlackTreeNode	src/old/rbtree/RedBlackTree.h	/^class RedBlackTreeNode {$/;"	c
+RemoveAtIndex	src/old/rbtree/TemplateStack.h	/^  inline void RemoveAtIndex(int position)$/;"	f	class:TemplateStack
+RightRotate	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::RightRotate(RedBlackTreeNode* y) {$/;"	f	class:RedBlackTree
+SHM_KEY	sangs_ver/src/nvm0nvm.cc	7;"	d	file:
+SHM_KEY	src/nvm0nvm.cc	7;"	d	file:
+SHM_KEY	src/test/config.h	9;"	d
+SHM_SIZE	src/test/config.h	10;"	d
+SRC	sangs_ver/test/unit_test/Makefile	/^SRC = ..\/..\/src\/nvm0nvm.cc$/;"	m
+SRCS	Makefile	/^SRCS = .\/src\/$(OBJS:.o=.c)$/;"	m
+SRCS	sangs_ver/Makefile	/^SRCS = .\/src\/$(OBJS:.o=.c)$/;"	m
+SafeCalloc	src/old/rbtree/misc.h	/^inline void * SafeCalloc(int numberOfElements , size_t size) {$/;"	f
+SafeMalloc	src/old/rbtree/misc.h	/^inline void * SafeMalloc(size_t size) {$/;"	f
+SetCurrentSize	src/old/rbtree/TemplateStack.h	/^  inline void SetCurrentSize(const int newSize)$/;"	f	class:TemplateStack
+Size	src/old/rbtree/TemplateStack.h	/^  inline int Size() const $/;"	f	class:TemplateStack
+SpecialRealloc	src/old/rbtree/TemplateStack.h	/^  inline Type * SpecialRealloc(Type * arrayData, int size) $/;"	f	class:TemplateStack
+SwapTwoElements	src/old/rbtree/TemplateStack.h	/^  inline void SwapTwoElements(int first , int second)$/;"	f	class:TemplateStack
+T_node	sangs_ver/include/nvm0avltree.h	/^} T_node;$/;"	t	typeref:struct:tree_node
+TemplateStack	src/old/rbtree/TemplateStack.h	/^  TemplateStack(TemplateStack const & originalStack)$/;"	f	class:TemplateStack
+TemplateStack	src/old/rbtree/TemplateStack.h	/^  TemplateStack(int size = DEFAULT_INITIAL_SIZE)$/;"	f	class:TemplateStack
+TemplateStack	src/old/rbtree/TemplateStack.h	/^class TemplateStack {$/;"	c
+Top	src/old/rbtree/TemplateStack.h	/^  inline Type * Top() const$/;"	f	class:TemplateStack
+TreeInsertHelp	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::TreeInsertHelp(RedBlackTreeNode* z) {$/;"	f	class:RedBlackTree
+TreePrintHelper	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::TreePrintHelper( RedBlackTreeNode* x) const {$/;"	f	class:RedBlackTree
+VERIFY	src/old/rbtree/misc.h	43;"	d
+__CONFIG_H_	src/test/config.h	2;"	d
+alloc_nvm_inode	sangs_ver/src/nvm0write.c	/^alloc_nvm_inode($/;"	f
+alloc_nvm_inode	src/nvm0write.cc	/^alloc_nvm_inode($/;"	f
+alloc_vt_entry	sangs_ver/src/nvm0write.c	/^alloc_vt_entry($/;"	f
+alloc_vt_entry	src/nvm0write.cc	/^alloc_vt_entry($/;"	f
+allocateNode	src/old/rbtree/avl_ver_pointer.c	/^struct node *allocateNode(int vid)$/;"	f
+arrayData	src/old/rbtree/TemplateStack.h	/^  Type * arrayData;$/;"	m	class:TemplateStack
+balloon_thread_func	sangs_ver/src/nvm0flush.c	/^balloon_thread_func($/;"	f
+block_size	include/nvm0metadata.h	/^    uint32_t    block_size;$/;"	m	struct:nvm_metadata
+block_size	sangs_ver/include/nvm0metadata.h	/^    uint32_t    block_size;$/;"	m	struct:nvm_metadata
+c_count	include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>     c_count;  \/\/global consumer count$/;"	m	class:lfqueue
+c_count	sangs_ver/include/nvm0lfqueue.h	/^    atomic<uint_fast64_t> c_count;  \/\/global consumer count$/;"	m	class:lfqueue
+c_counts	include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>*    c_counts; \/\/c_count for each element in a queue$/;"	m	class:lfqueue
+c_counts	sangs_ver/include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>* c_counts;\/\/c_count for each element in a queue$/;"	m	class:lfqueue
+capacity	include/nvm0lfqueue.h	/^    uint32_t                  capacity; \/\/capacity of queue$/;"	m	class:lfqueue
+capacity	sangs_ver/include/nvm0lfqueue.h	/^    uint32_t capacity;              \/\/capacity of queue$/;"	m	class:lfqueue
+consumer	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void* consumer(void* arg)$/;"	f
+consumer	test/test_nvm0lfqueue.cc	/^void* consumer(void* arg)$/;"	f
+create_buffer	sangs_ver/test/test_nvm0write.c	/^void create_buffer()$/;"	f
+create_buffer	src/test/test_nvm0write.c	/^void create_buffer()$/;"	f
+create_buffer	test/test_nvm0write.c	/^void create_buffer()$/;"	f
+create_files	sangs_ver/test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
+create_files	src/test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
+create_files	test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
+create_nvm_in_shm	sangs_ver/src/nvm0nvm.cc	/^create_nvm_in_shm()$/;"	f
+create_nvm_in_shm	src/nvm0nvm.cc	/^create_nvm_in_shm()$/;"	f
+currentSize	src/old/rbtree/TemplateStack.h	/^  int currentSize;$/;"	m	class:TemplateStack
+data_dump	util/dumpcode.h	/^data_dump($/;"	f
+datablock_table	include/nvm0metadata.h	/^    char*           datablock_table;$/;"	m	struct:nvm_metadata
+datablock_table	sangs_ver/include/nvm0metadata.h	/^    char*           datablock_table;$/;"	m	struct:nvm_metadata
+deallocateNode	src/old/rbtree/avl_ver_pointer.c	/^void deallocateNode(struct node *root)$/;"	f
+deallocate_node	sangs_ver/src/nvm0avltree.c	/^deallocate_node($/;"	f
+deallocate_node	src/nvm0avltree.c	/^deallocate_node($/;"	f
+delete	src/old/rbtree/avl_ver_pointer.c	/^struct node* delete(struct node* root, struct node* vte)$/;"	f
+delete_files	sangs_ver/test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
+delete_files	src/test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
+delete_files	test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
+delete_nvm_inode	sangs_ver/src/nvm0avltree.c	/^delete_nvm_inode($/;"	f
+delete_nvm_inode	src/nvm0avltree.c	/^delete_nvm_inode($/;"	f
+dequeue	sangs_ver/util/nvm0lfqueue.cc	/^T lfqueue<T>::dequeue()$/;"	f	class:lfqueue
+dequeue	util/nvm0lfqueue.cc	/^T lfqueue<T>::dequeue()$/;"	f	class:lfqueue
+enqueue	sangs_ver/util/nvm0lfqueue.cc	/^void lfqueue<T>::enqueue(const T value)$/;"	f	class:lfqueue
+enqueue	util/nvm0lfqueue.cc	/^void lfqueue<T>::enqueue(const T value)$/;"	f	class:lfqueue
+fd	include/nvm0volume.h	/^    int                 fd;     \/\/ file descriptor (useless when recovery)$/;"	m	struct:volume_entry
+fd	sangs_ver/include/nvm0volume.h	/^    int                 fd;     \/\/ file descriptor (useless when recovery)$/;"	m	struct:volume_entry
+fd	src/old/test/file_rw_test.c	/^int fd;$/;"	v
+fd	src/old/test/nvm_rw_test1.c	/^int fd;$/;"	v
+fd	src/old/test/nvm_rw_test2.c	/^int fd;$/;"	v
+fd	src/old/test/nvm_rw_test3.c	/^int fd;$/;"	v
+filename	src/old/test/file_rw_test.c	/^char* filename = "VOL0000.txt";$/;"	v
+filename	src/old/test/nvm_rw_test1.c	/^char* filename = "VOL0001.txt";$/;"	v
+filename	src/old/test/nvm_rw_test2.c	/^char* filename = "VOL0002.txt";$/;"	v
+filename	src/old/test/nvm_rw_test3.c	/^char* filename = "VOL0003.txt";$/;"	v
+fill_buf	sangs_ver/test/test1.c	/^fill_buf($/;"	f
+fill_buf	src/old/test/file_rw_test.c	/^void fill_buf(char *buf, int size)$/;"	f
+fill_buf	src/old/test/nvm_rw_test1.c	/^void fill_buf(char *buf, int size)$/;"	f
+fill_buf	src/old/test/nvm_rw_test2.c	/^void fill_buf(char *buf, int size)$/;"	f
+fill_buf	src/old/test/nvm_rw_test3.c	/^void fill_buf(char *buf, int size)$/;"	f
+fill_buf	src/test/test1.c	/^fill_buf($/;"	f
+fill_buf	test/test1.c	/^fill_buf($/;"	f
+find	src/old/rbtree/avl_ver_pointer.c	/^struct node *find(struct node *root, int vid)$/;"	f
+flush_thread_func	sangs_ver/src/nvm0flush.c	/^flush_thread_func($/;"	f
+flush_thread_func	src/nvm0flush.c	/^flush_thread_func($/;"	f
+freeList	src/old/rbtree/avl_ver_pointer.c	/^struct node *freeList;$/;"	v	typeref:struct:node
+freeList_head	src/old/rbtree/avl_ver_pointer.c	/^struct node *freeList_head;$/;"	v	typeref:struct:node
+getBalance	sangs_ver/src/nvm0avltree.c	/^getBalance($/;"	f
+getBalance	src/nvm0avltree.c	/^getBalance($/;"	f
+getBalance	src/old/rbtree/avl_ver_pointer.c	/^int getBalance(struct node *N)$/;"	f
+get_filename	sangs_ver/src/nvm0write.c	/^get_filename($/;"	f
+get_filename	src/nvm0write.cc	/^get_filename($/;"	f
+get_nvm_inode	sangs_ver/src/nvm0write.c	/^get_nvm_inode($/;"	f
+get_nvm_inode	src/nvm0write.cc	/^get_nvm_inode($/;"	f
+get_size	sangs_ver/util/nvm0lfqueue.cc	/^uint32_t lfqueue<T>::get_size()$/;"	f	class:lfqueue
+get_size	util/nvm0lfqueue.cc	/^uint32_t lfqueue<T>::get_size()$/;"	f	class:lfqueue
+get_vt_entry	sangs_ver/src/nvm0write.c	/^get_vt_entry($/;"	f
+get_vt_entry	src/nvm0write.cc	/^get_vt_entry($/;"	f
+height	include/nvm0avltree.h	/^   int                    height;$/;"	m	struct:tree_node
+height	sangs_ver/include/nvm0avltree.h	/^   int                  height;$/;"	m	struct:tree_node
+height	sangs_ver/src/nvm0avltree.c	/^height($/;"	f
+height	src/nvm0avltree.c	/^height($/;"	f
+height	src/old/rbtree/avl_ver_pointer.c	/^	int height;$/;"	m	struct:node	file:
+height	src/old/rbtree/avl_ver_pointer.c	/^int height(struct node *N)$/;"	f
+initFreeList	src/old/rbtree/avl_ver_pointer.c	/^void initFreeList(void)$/;"	f
+inode	include/nvm0avltree.h	/^   struct inode_entry*    inode;$/;"	m	struct:tree_node	typeref:struct:tree_node::inode_entry
+inode	sangs_ver/include/nvm0avltree.h	/^   struct inode_entry*  inode;$/;"	m	struct:tree_node	typeref:struct:tree_node::inode_entry
+inode_dirty_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_dirty_lfqueue;$/;"	v
+inode_dirty_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_dirty_queue;$/;"	v
+inode_entry	include/nvm0inode.h	/^struct inode_entry {$/;"	s
+inode_entry	sangs_ver/include/nvm0inode.h	/^struct inode_entry {$/;"	s
+inode_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_free_lfqueue;$/;"	v
+inode_free_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_free_queue;$/;"	v
+inode_table	include/nvm0metadata.h	/^    inode_entry*    inode_table;$/;"	m	struct:nvm_metadata
+inode_table	sangs_ver/include/nvm0metadata.h	/^    inode_entry*    inode_table;$/;"	m	struct:nvm_metadata
+insert	src/old/rbtree/avl_ver_pointer.c	/^struct node* insert(struct node *node, struct node *vte)$/;"	f
+insert_nvm_inode	sangs_ver/src/nvm0avltree.c	/^insert_nvm_inode($/;"	f
+insert_nvm_inode	src/nvm0avltree.c	/^insert_nvm_inode($/;"	f
+is_empty	sangs_ver/util/nvm0lfqueue.cc	/^bool lfqueue<T>::is_empty()$/;"	f	class:lfqueue
+is_empty	util/nvm0lfqueue.cc	/^bool lfqueue<T>::is_empty()$/;"	f	class:lfqueue
+key	src/old/rbtree/RedBlackTree.h	/^  int key;$/;"	m	class:RedBlackTreeNode
+key	src/old/rbtree/avl_ver_pointer.c	/^	int key; \/\/ can be vid or lbn$/;"	m	struct:node	file:
+lbn	include/nvm0inode.h	/^    uint32_t                lbn;    \/\/ logical block number$/;"	m	struct:inode_entry
+lbn	sangs_ver/include/nvm0inode.h	/^    uint32_t                lbn;    \/\/ logical block number$/;"	m	struct:inode_entry
+left	include/nvm0avltree.h	/^   struct tree_node*      left;$/;"	m	struct:tree_node	typeref:struct:tree_node::tree_node
+left	sangs_ver/include/nvm0avltree.h	/^   struct tree_node*    left;$/;"	m	struct:tree_node	typeref:struct:tree_node::tree_node
+left	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * left;$/;"	m	class:RedBlackTreeNode
+left	src/old/rbtree/avl_ver_pointer.c	/^	struct node *left;$/;"	m	struct:node	typeref:struct:node::node	file:
+leftRotate	sangs_ver/src/nvm0avltree.c	/^leftRotate($/;"	f
+leftRotate	src/nvm0avltree.c	/^leftRotate($/;"	f
+leftRotate	src/old/rbtree/avl_ver_pointer.c	/^struct node *leftRotate(struct node *x)$/;"	f
+lfqueue	include/nvm0lfqueue.h	/^class lfqueue$/;"	c
+lfqueue	sangs_ver/include/nvm0lfqueue.h	/^class lfqueue$/;"	c
+lfqueue	sangs_ver/util/nvm0lfqueue.cc	/^lfqueue<T>::lfqueue(const uint32_t capacity)$/;"	f	class:lfqueue
+lfqueue	util/nvm0lfqueue.cc	/^lfqueue<T>::lfqueue(const uint32_t capacity)$/;"	f	class:lfqueue
+main	sangs_ver/test/shm-remove.c	/^main()$/;"	f
+main	sangs_ver/test/test1.c	/^main($/;"	f
+main	sangs_ver/test/test_nvm0write.c	/^int main()$/;"	f
+main	sangs_ver/test/unit_test/test_all.cc	/^int main()$/;"	f
+main	src/old/rbtree/avl_ver_pointer.c	/^int main()$/;"	f
+main	src/old/test/file_rw_test.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/old/test/nvm_rw_test1.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/old/test/nvm_rw_test2.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/old/test/nvm_rw_test3.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/test/shm-remove.c	/^main()$/;"	f
+main	src/test/test1.c	/^main($/;"	f
+main	src/test/test_nvm0write.c	/^int main()$/;"	f
+main	test/test1.c	/^main($/;"	f
+main	test/test_all.cc	/^int main()$/;"	f
+main	test/test_nvm0lfqueue.cc	/^int main()$/;"	f
+main	test/test_nvm0nvm.cc	/^int main(void)$/;"	f
+main	test/test_nvm0write.c	/^int main()$/;"	f
+maxSize	src/old/rbtree/TemplateStack.h	/^  int maxSize;$/;"	m	class:TemplateStack
+max_inode_entry	include/nvm0metadata.h	/^    uint32_t    max_inode_entry;$/;"	m	struct:nvm_metadata
+max_inode_entry	sangs_ver/include/nvm0metadata.h	/^    uint32_t    max_inode_entry;$/;"	m	struct:nvm_metadata
+max_volume_entry	include/nvm0metadata.h	/^    uint32_t    max_volume_entry;$/;"	m	struct:nvm_metadata
+max_volume_entry	sangs_ver/include/nvm0metadata.h	/^    uint32_t    max_volume_entry;$/;"	m	struct:nvm_metadata
+minValueNode	src/old/rbtree/avl_ver_pointer.c	/^struct node* minValueNode(struct node* node)$/;"	f
+min_value_node	sangs_ver/src/nvm0avltree.c	/^min_value_node($/;"	f
+min_value_node	src/nvm0avltree.c	/^min_value_node($/;"	f
+mutex	src/old/test/file_rw_test.c	/^pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+mutex	src/old/test/nvm_rw_test1.c	/^pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+mutex	src/old/test/nvm_rw_test2.c	/^pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+mutex	src/old/test/nvm_rw_test3.c	/^pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+newNode	src/old/rbtree/avl_ver_pointer.c	/^struct node* newNode(int key)$/;"	f
+next	src/old/rbtree/avl_ver_pointer.c	/^	struct node *next; \/\/ freelist$/;"	m	struct:node	typeref:struct:node::node	file:
+nid	sangs_ver/include/nvm0types.h	/^typedef uint32_t    nid;$/;"	t
+nil	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * nil;$/;"	m	class:RedBlackTree
+node	src/old/rbtree/avl_ver_pointer.c	/^struct node$/;"	s	file:
+nvm	sangs_ver/src/nvm0nvm.cc	/^struct nvm_metadata* nvm;$/;"	v	typeref:struct:nvm_metadata
+nvm	src/nvm0nvm.cc	/^struct nvm_metadata* nvm;$/;"	v	typeref:struct:nvm_metadata
+nvm0avltree_h	include/nvm0avltree.h	8;"	d
+nvm0avltree_h	sangs_ver/include/nvm0avltree.h	8;"	d
+nvm0common_h	include/nvm0common.h	5;"	d
+nvm0common_h	sangs_ver/include/nvm0common.h	5;"	d
+nvm0inode_h	include/nvm0inode.h	5;"	d
+nvm0inode_h	sangs_ver/include/nvm0inode.h	5;"	d
+nvm0lfqueue_h	include/nvm0lfqueue.h	5;"	d
+nvm0lfqueue_h	sangs_ver/include/nvm0lfqueue.h	5;"	d
+nvm0metadata_h	include/nvm0metadata.h	12;"	d
+nvm0metadata_h	sangs_ver/include/nvm0metadata.h	12;"	d
+nvm0types_h	sangs_ver/include/nvm0types.h	9;"	d
+nvm0volume_h	include/nvm0volume.h	5;"	d
+nvm0volume_h	sangs_ver/include/nvm0volume.h	5;"	d
+nvm_atomic_write	sangs_ver/src/nvm0write.c	/^nvm_atomic_write($/;"	f
+nvm_atomic_write	src/nvm0write.cc	/^nvm_atomic_write($/;"	f
+nvm_flush	sangs_ver/src/nvm0flush.c	/^nvm_flush()$/;"	f
+nvm_flush	src/nvm0flush.c	/^nvm_flush($/;"	f
+nvm_metadata	include/nvm0metadata.h	/^struct nvm_metadata {$/;"	s
+nvm_metadata	sangs_ver/include/nvm0metadata.h	/^struct nvm_metadata {$/;"	s
+nvm_size	include/nvm0metadata.h	/^    uint64_t    nvm_size;$/;"	m	struct:nvm_metadata
+nvm_size	sangs_ver/include/nvm0metadata.h	/^    uint64_t    nvm_size;$/;"	m	struct:nvm_metadata
+nvm_structure_build	sangs_ver/src/nvm0nvm.cc	/^nvm_structure_build()$/;"	f
+nvm_structure_build	src/nvm0nvm.cc	/^nvm_structure_build()$/;"	f
+nvm_system_close	sangs_ver/src/nvm0nvm.cc	/^nvm_system_close()$/;"	f
+nvm_system_close	src/nvm0nvm.cc	/^nvm_system_close()$/;"	f
+nvm_system_init	sangs_ver/src/nvm0nvm.cc	/^nvm_system_init()$/;"	f
+nvm_system_init	src/nvm0nvm.cc	/^nvm_system_init()$/;"	f
+operator <<	src/old/rbtree/TemplateStack.h	/^ostream & operator<<(ostream & s, TemplateStack<Type> & theStack) $/;"	f
+operator =	src/old/rbtree/TemplateStack.h	/^  TemplateStack const & operator=(TemplateStack const & stackToCopy)$/;"	f	class:TemplateStack
+operator []	src/old/rbtree/TemplateStack.h	/^  inline Type & operator[](int k) const$/;"	f	class:TemplateStack
+p_count	include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>     p_count;  \/\/global producer count$/;"	m	class:lfqueue
+p_count	sangs_ver/include/nvm0lfqueue.h	/^    atomic<uint_fast64_t> p_count;  \/\/global producer count$/;"	m	class:lfqueue
+p_counts	include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>*    p_counts; \/\/p_count for each element in a queue$/;"	m	class:lfqueue
+p_counts	sangs_ver/include/nvm0lfqueue.h	/^    atomic<uint_fast64_t>* p_counts;\/\/p_count for each element in a queue$/;"	m	class:lfqueue
+parent	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * parent;$/;"	m	class:RedBlackTreeNode
+printFreeList	src/old/rbtree/avl_ver_pointer.c	/^void printFreeList()$/;"	f
+print_nvm_info	sangs_ver/src/nvm0nvm.cc	/^print_nvm_info()$/;"	f
+print_nvm_info	src/nvm0nvm.cc	/^print_nvm_info()$/;"	f
+printchar	util/dumpcode.h	/^printchar($/;"	f
+producer	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void* producer(void* arg)$/;"	f
+producer	test/test_nvm0lfqueue.cc	/^void* producer(void* arg)$/;"	f
+queue1	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^lfqueue<int>* queue1;$/;"	v
+queue1	test/test_nvm0lfqueue.cc	/^lfqueue<int>* queue1;$/;"	v
+queue2	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^lfqueue<int>* queue2;$/;"	v
+queue2	test/test_nvm0lfqueue.cc	/^lfqueue<int>* queue2;$/;"	v
+queuesize	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^int queuesize = 10000;$/;"	v
+queuesize	test/test_nvm0lfqueue.cc	/^int queuesize = 10000;$/;"	v
+reclaim_cond	sangs_ver/src/nvm0flush.c	/^pthread_cond_t reclaim_cond;  \/* between write_thread and reclain_thread.  *\/$/;"	v
+reclaim_lock	sangs_ver/src/nvm0flush.c	/^pthread_mutex_t reclaim_lock; \/* Lock and Condition Variable for signaling *\/$/;"	v
+reclaim_thread_func	src/nvm0flush.c	/^reclaim_thread_func($/;"	f
+red	src/old/rbtree/RedBlackTree.h	/^  int red; \/* if red=0 then the node is black *\/$/;"	m	class:RedBlackTreeNode
+remove_nvm_in_shm	sangs_ver/src/nvm0nvm.cc	/^void remove_nvm_in_shm()$/;"	f
+remove_nvm_in_shm	src/nvm0nvm.cc	/^void remove_nvm_in_shm()$/;"	f
+right	include/nvm0avltree.h	/^   struct tree_node*      right;$/;"	m	struct:tree_node	typeref:struct:tree_node::tree_node
+right	sangs_ver/include/nvm0avltree.h	/^   struct tree_node*    right;$/;"	m	struct:tree_node	typeref:struct:tree_node::tree_node
+right	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * right;$/;"	m	class:RedBlackTreeNode
+right	src/old/rbtree/avl_ver_pointer.c	/^	struct node *right;$/;"	m	struct:node	typeref:struct:node::node	file:
+rightRotate	sangs_ver/src/nvm0avltree.c	/^rightRotate($/;"	f
+rightRotate	src/nvm0avltree.c	/^rightRotate($/;"	f
+rightRotate	src/old/rbtree/avl_ver_pointer.c	/^struct node *rightRotate(struct node *y)$/;"	f
+root	include/nvm0volume.h	/^    struct tree_node*   root;   \/\/ inode AVL tree root$/;"	m	struct:volume_entry	typeref:struct:volume_entry::tree_node
+root	sangs_ver/include/nvm0volume.h	/^    struct tree_node*   root;   \/\/ inode AVL tree root$/;"	m	struct:volume_entry	typeref:struct:volume_entry::tree_node
+root	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * root;$/;"	m	class:RedBlackTree
+search_nvm_inode	sangs_ver/src/nvm0avltree.c	/^search_nvm_inode($/;"	f
+search_nvm_inode	src/nvm0avltree.c	/^search_nvm_inode($/;"	f
+search_vt_entry	sangs_ver/src/nvm0write.c	/^search_vt_entry($/;"	f
+search_vt_entry	src/nvm0write.cc	/^search_vt_entry($/;"	f
+state	include/nvm0inode.h	/^    int                     state;  \/\/ state of block$/;"	m	struct:inode_entry
+state	sangs_ver/include/nvm0inode.h	/^    int                     state;  \/\/ state of block$/;"	m	struct:inode_entry
+state	src/old/rbtree/avl_ver_pointer.c	/^	int state; \/\/ allocated or not$/;"	m	struct:node	file:
+storedEntry	src/old/rbtree/RedBlackTree.h	/^  RedBlackEntry * storedEntry;$/;"	m	class:RedBlackTreeNode
+test_concurrency	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_concurrency()$/;"	f
+test_concurrency	test/test_nvm0lfqueue.cc	/^void test_concurrency()$/;"	f
+test_get_size	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_get_size()$/;"	f
+test_get_size	test/test_nvm0lfqueue.cc	/^void test_get_size()$/;"	f
+test_is_empty	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_is_empty()$/;"	f
+test_is_empty	test/test_nvm0lfqueue.cc	/^void test_is_empty()$/;"	f
+test_nvm0lfqueue	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_nvm0lfqueue()$/;"	f
+test_nvm0nvm	sangs_ver/test/unit_test/test_nvm0nvm.cc	/^void test_nvm0nvm()$/;"	f
+test_nvmwrite	sangs_ver/test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
+test_nvmwrite	src/test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
+test_nvmwrite	test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
+test_queue1	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_queue1()$/;"	f
+test_queue1	test/test_nvm0lfqueue.cc	/^void test_queue1()$/;"	f
+test_queue10	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_queue10()$/;"	f
+test_queue10	test/test_nvm0lfqueue.cc	/^void test_queue10()$/;"	f
+thread_func	src/old/test/file_rw_test.c	/^void *thread_func(void *data)$/;"	f
+thread_func	src/old/test/nvm_rw_test1.c	/^void *thread_func(void *data)$/;"	f
+thread_func	src/old/test/nvm_rw_test2.c	/^void *thread_func(void *data)$/;"	f
+thread_func	src/old/test/nvm_rw_test3.c	/^void *thread_func(void *data)$/;"	f
+thread_sync_func	sangs_ver/test/test1.c	/^thread_sync_func($/;"	f
+thread_sync_func	src/test/test1.c	/^thread_sync_func($/;"	f
+thread_sync_func	test/test1.c	/^thread_sync_func($/;"	f
+thread_write_func	sangs_ver/test/test1.c	/^*thread_write_func($/;"	f
+thread_write_func	src/test/test1.c	/^*thread_write_func($/;"	f
+thread_write_func	test/test1.c	/^*thread_write_func($/;"	f
+timeout	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^int timeout;$/;"	v
+timeout	test/test_nvm0lfqueue.cc	/^int timeout;$/;"	v
+tree_node	include/nvm0avltree.h	/^struct tree_node {$/;"	s
+tree_node	sangs_ver/include/nvm0avltree.h	/^typedef struct tree_node {$/;"	s
+valid	include/nvm0avltree.h	/^   int                    valid; \/\/ Balloon thread change this and writer will delegate this node.$/;"	m	struct:tree_node
+valid	sangs_ver/include/nvm0avltree.h	/^   int                  valid; \/\/ Balloon thread change this and writer will delegate this node.$/;"	m	struct:tree_node
+values	include/nvm0lfqueue.h	/^    T*                        values;   \/\/value for each element in a queue$/;"	m	class:lfqueue
+values	sangs_ver/include/nvm0lfqueue.h	/^    T* values;                      \/\/value for each element in a queue$/;"	m	class:lfqueue
+vid	include/nvm0volume.h	/^    uint32_t            vid;    \/\/ volume id (implicit filename)$/;"	m	struct:volume_entry
+vid	sangs_ver/include/nvm0types.h	/^typedef uint32_t    vid;$/;"	t
+vid	sangs_ver/include/nvm0volume.h	/^    uint32_t            vid;    \/\/ volume id (implicit filename)$/;"	m	struct:volume_entry
+volume	include/nvm0inode.h	/^    struct volume_entry*    volume; \/\/ volume id (implicit filename)$/;"	m	struct:inode_entry	typeref:struct:inode_entry::volume_entry
+volume	sangs_ver/include/nvm0inode.h	/^    struct volume_entry*    volume; \/\/ volume id (implicit filename)$/;"	m	struct:inode_entry	typeref:struct:inode_entry::volume_entry
+volume_entry	include/nvm0volume.h	/^struct volume_entry {$/;"	s
+volume_entry	sangs_ver/include/nvm0volume.h	/^struct volume_entry {$/;"	s
+volume_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_free_lfqueue;$/;"	v
+volume_free_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_free_queue;$/;"	v
+volume_inuse_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_inuse_lfqueue;$/;"	v
+volume_inuse_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_inuse_queue;$/;"	v
+volume_table	include/nvm0metadata.h	/^    volume_entry*   volume_table;$/;"	m	struct:nvm_metadata
+volume_table	sangs_ver/include/nvm0metadata.h	/^    volume_entry*   volume_table;$/;"	m	struct:nvm_metadata
+~RedBlackEntry	src/old/rbtree/RedBlackTree.cc	/^RedBlackEntry::~RedBlackEntry(){$/;"	f	class:RedBlackEntry
+~RedBlackTree	src/old/rbtree/RedBlackTree.cc	/^RedBlackTree::~RedBlackTree() {$/;"	f	class:RedBlackTree
+~RedBlackTreeNode	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode::~RedBlackTreeNode(){$/;"	f	class:RedBlackTreeNode
+~TemplateStack	src/old/rbtree/TemplateStack.h	/^  ~TemplateStack()$/;"	f	class:TemplateStack
+~lfqueue	sangs_ver/util/nvm0lfqueue.cc	/^lfqueue<T>::~lfqueue()$/;"	f	class:lfqueue
+~lfqueue	util/nvm0lfqueue.cc	/^lfqueue<T>::~lfqueue()$/;"	f	class:lfqueue

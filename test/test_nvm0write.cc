@@ -1,4 +1,3 @@
-#pragma pack(1)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <unistd.h>
@@ -10,7 +9,6 @@
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
-#include "config.h"
 #include "nvm0common.h"
 
 #define FILE_SIZE 80 * 1024 * 1024 * 1024

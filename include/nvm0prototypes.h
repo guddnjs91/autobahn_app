@@ -8,12 +8,12 @@ void nvm_system_close();
 void nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);
 
 //void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);
-//VT_entry* get_vt_entry(unsigned int vid);
-//VT_entry* search_vt_entry(VT_entry* vt_root, unsigned int vid);
-//VT_entry* alloc_vt_entry(unsigned int vid);
-//NVM_inode* get_nvm_inode(VT_entry* vte, unsigned int lbn);
-//NVM_inode* alloc_nvm_inode(unsigned int lbn);
-//const char* get_filename(unsigned int vid);
+volume_entry* get_volume_entry(uint32_t vid);
+volume_entry* search_volume_entry(volume_entry* vt_base, uint32_t vid);
+volume_entry* alloc_volume_entry(uint32_t vid);
+inode_entry* get_inode_entry(volume_entry* ve, uint32_t lbn);
+inode_entry* alloc_inode_entry(uint32_t lbn);
+const char* get_filename(uint32_t vid);
 
 /* in file nvm0flush.c */
 void* flush_thread_func(void* data);
