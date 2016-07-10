@@ -1,33 +1,36 @@
-/* in file nvm0nvm.c */
+/* in file nvm0nvm.cc */
 void nvm_structure_build();
 void print_nvm_info();
 void nvm_system_init();
 void nvm_system_close();
 
-/* in file nvm0write.c */
-void nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);
+/* in file nvm0avltree.cc */
 
-//void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);
-volume_entry* get_volume_entry(uint32_t vid);
-volume_entry* search_volume_entry(volume_entry* vt_base, uint32_t vid);
-volume_entry* alloc_volume_entry(uint32_t vid);
-inode_entry* get_inode_entry(volume_entry* ve, uint32_t lbn);
-inode_entry* alloc_inode_entry(uint32_t lbn);
+tree_node* search_tree_node(tree_node* root, uint32_t lbn);
+tree_node* insert_tree_node(tree_node* root, tree_node* node);
+tree_node* delete_tree_node(tree_node* root, tree_node* node);
+tree_node* allocate_tree_node(inode_entry* inode);
+void deallocate_tree_node(tree_node* node);
+tree_node* min_value_node(tree_node* node);
+int max_height(int a, int b);
+int get_height(tree_node* node);
+int get_balance(tree_node* node);
+tree_node* right_rotate(tree_node* y);
+tree_node* left_rotate(tree_node* x);
+
+/* in file nvm0write.c */
+volume_idx_t get_volume_entry_idx(uint32_t vid);
+volume_idx_t search_volume_entry_idx(uint32_t vid);
+volume_idx_t alloc_volume_entry_idx(uint32_t vid);
 const char* get_filename(uint32_t vid);
+//inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
+//inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
+
+//void nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);
+//void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);
 
 /* in file nvm0flush.c */
-void* flush_thread_func(void* data);
-void* balloon_thread_func(void* data);
+//void* flush_thread_func(void* data);
+//void* balloon_thread_func(void* data);
 //void nvm_flush(void);
 
-/* in file nvm0avltree.c */
-//NVM_inode* search_nvm_inode(NVM_inode* root, unsigned int lbn);
-//NVM_inode* insert_nvm_inode(NVM_inode* root, NVM_inode* inode);
-//int Max(int a, int b);
-//int height(NVM_inode* N);
-//int getBalance(NVM_inode* N);
-//NVM_inode* rightRotate(NVM_inode* y);
-//NVM_inode* leftRotate(NVM_inode* y);
-//NVM_inode* delete_nvm_inode(NVM_node* root, NVM_inode* inode);
-//NVM_inode* min_value_node(NVM_inode* inode);
-//void deallocate_node(NVM_inode* inode);

@@ -8,10 +8,11 @@
 
 // Declarations of global variables
 struct nvm_metadata* nvm;
-lfqueue<uint32_t>* volume_free_lfqueue;
-lfqueue<uint32_t>* volume_inuse_lfqueue;
-lfqueue<uint32_t>* inode_free_lfqueue;
-lfqueue<uint32_t>* inode_dirty_lfqueue;
+lfqueue<volume_idx_t>* volume_free_lfqueue;
+lfqueue<volume_idx_t>* volume_inuse_lfqueue;
+lfqueue<inode_idx_t>* inode_free_lfqueue;
+lfqueue<inode_idx_t>* inode_inuse_lfqueue;
+lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 
 //private function declaration
 void print_nvm_info();
@@ -78,18 +79,17 @@ nvm_structure_build()
 void
 nvm_system_init()
 {
-    uint32_t i;
-
-    volume_free_lfqueue = new lfqueue<uint32_t>(nvm->max_volume_entry);
-    volume_inuse_lfqueue = new lfqueue<uint32_t>(nvm->max_volume_entry);
-    for(i = 0; i < nvm->max_volume_entry; i++)
+    volume_free_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
+    volume_inuse_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
     {
         volume_free_lfqueue->enqueue(i);
     }
 
-    inode_free_lfqueue = new lfqueue<uint32_t>(nvm->max_inode_entry);
-    inode_dirty_lfqueue = new lfqueue<uint32_t>(nvm->max_inode_entry);
-    for(i = 0; i < nvm->max_inode_entry; i++)
+    inode_free_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    inode_inuse_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++)
     {
         inode_free_lfqueue->enqueue(i);
     }
@@ -142,6 +142,7 @@ print_nvm_info()
             (long long unsigned int) nvm->datablock_table - (long long unsigned int) nvm);
     printf("Block Table Size  : %llu\n", (long long unsigned int) nvm->block_size * 
                                          (long long unsigned int) nvm->max_inode_entry);
+    printf("====================NVM Information====================\n");
 }
 
 struct nvm_metadata*

@@ -16,6 +16,7 @@ BIN	sangs_ver/Makefile	/^BIN = .\/bin\/$/;"	m
 BIN	test/Makefile	/^BIN = .\/unit_test\/$/;"	m
 BLOCK_SIZE	include/nvm0metadata.h	17;"	d
 BLOCK_SIZE	sangs_ver/include/nvm0metadata.h	17;"	d
+BUFFER	test/test_nvm0write.cc	/^char BUFFER[MAX_BUF_SIZE];$/;"	v
 Bottom	src/old/rbtree/TemplateStack.h	/^  inline Type * Bottom() const$/;"	f	class:TemplateStack
 CC	Makefile	/^CC = g++$/;"	m
 CC	sangs_ver/Makefile	/^CC = g++$/;"	m
@@ -44,7 +45,7 @@ Enumerate	src/old/rbtree/RedBlackTree.cc	/^TemplateStack<RedBlackTreeNode *> * R
 ExitProgramMacro	src/old/rbtree/misc.h	33;"	d
 FILE_SIZE	sangs_ver/test/test_nvm0write.c	16;"	d	file:
 FILE_SIZE	src/test/test_nvm0write.c	16;"	d	file:
-FILE_SIZE	test/test_nvm0write.c	16;"	d	file:
+FILE_SIZE	test/test_nvm0write.cc	15;"	d	file:
 ForEachItemDo	src/old/rbtree/TemplateStack.h	/^  inline void ForEachItemDo(void (*function)(Type)) const$/;"	f	class:TemplateStack
 ForEachItemDo	src/old/rbtree/TemplateStack.h	/^  inline void ForEachItemDo(void (*function)(Type, void * controller),$/;"	f	class:TemplateStack
 GetAddressOfArray	src/old/rbtree/TemplateStack.h	/^  inline Type * GetAddressOfArray() const { return arrayData; }$/;"	f	class:TemplateStack
@@ -55,7 +56,7 @@ GetSuccessorOf	src/old/rbtree/RedBlackTree.cc	/^RedBlackTreeNode * RedBlackTree:
 INCLUDE	Makefile	/^INCLUDE = .\/include$/;"	m
 INCLUDE	sangs_ver/Makefile	/^INCLUDE = .\/include$/;"	m
 INCLUDE	sangs_ver/test/unit_test/Makefile	/^INCLUDE = -I..\/..\/include$/;"	m
-INCLUDE	test/Makefile	/^INCLUDE = ..\/include$/;"	m
+INCLUDE	test/Makefile	/^INCLUDE = ..\/include\/$/;"	m
 INC_E_MISC_DOT_H	src/old/rbtree/misc.h	2;"	d
 INODE_STATE_ALLOCATED	include/nvm0inode.h	9;"	d
 INODE_STATE_ALLOCATED	sangs_ver/include/nvm0inode.h	9;"	d
@@ -84,10 +85,11 @@ MAX_BUF_SIZE	src/old/test/nvm_rw_test2.c	11;"	d	file:
 MAX_BUF_SIZE	src/old/test/nvm_rw_test3.c	11;"	d	file:
 MAX_BUF_SIZE	src/test/test1.c	/^unsigned int MAX_BUF_SIZE = 512*1024*1024;$/;"	v
 MAX_BUF_SIZE	test/test1.c	/^unsigned int MAX_BUF_SIZE = 512*1024*1024;$/;"	v
+MAX_BUF_SIZE	test/test_nvm0write.cc	17;"	d	file:
 MAX_INT	src/old/rbtree/RedBlackTree.h	26;"	d
 MAX_THREAD	sangs_ver/test/test_nvm0write.c	17;"	d	file:
 MAX_THREAD	src/test/test_nvm0write.c	17;"	d	file:
-MAX_THREAD	test/test_nvm0write.c	17;"	d	file:
+MAX_THREAD	test/test_nvm0write.cc	16;"	d	file:
 MAX_VOLUME_ENTRY	include/nvm0metadata.h	16;"	d
 MAX_VOLUME_ENTRY	sangs_ver/include/nvm0metadata.h	16;"	d
 MIN_INT	src/old/rbtree/RedBlackTree.cc	/^const int MIN_INT=-MAX_INT;$/;"	v
@@ -144,10 +146,10 @@ TreeInsertHelp	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::TreeInsertHel
 TreePrintHelper	src/old/rbtree/RedBlackTree.cc	/^void RedBlackTree::TreePrintHelper( RedBlackTreeNode* x) const {$/;"	f	class:RedBlackTree
 VERIFY	src/old/rbtree/misc.h	43;"	d
 __CONFIG_H_	src/test/config.h	2;"	d
+alloc_inode_entry	src/nvm0write.cc	/^alloc_inode_entry($/;"	f
 alloc_nvm_inode	sangs_ver/src/nvm0write.c	/^alloc_nvm_inode($/;"	f
-alloc_nvm_inode	src/nvm0write.cc	/^alloc_nvm_inode($/;"	f
+alloc_volume_entry	src/nvm0write.cc	/^alloc_volume_entry($/;"	f
 alloc_vt_entry	sangs_ver/src/nvm0write.c	/^alloc_vt_entry($/;"	f
-alloc_vt_entry	src/nvm0write.cc	/^alloc_vt_entry($/;"	f
 allocateNode	src/old/rbtree/avl_ver_pointer.c	/^struct node *allocateNode(int vid)$/;"	f
 arrayData	src/old/rbtree/TemplateStack.h	/^  Type * arrayData;$/;"	m	class:TemplateStack
 balloon_thread_func	sangs_ver/src/nvm0flush.c	/^balloon_thread_func($/;"	f
@@ -163,10 +165,10 @@ consumer	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void* consumer(void* arg
 consumer	test/test_nvm0lfqueue.cc	/^void* consumer(void* arg)$/;"	f
 create_buffer	sangs_ver/test/test_nvm0write.c	/^void create_buffer()$/;"	f
 create_buffer	src/test/test_nvm0write.c	/^void create_buffer()$/;"	f
-create_buffer	test/test_nvm0write.c	/^void create_buffer()$/;"	f
+create_buffer	test/test_nvm0write.cc	/^void create_buffer()$/;"	f
 create_files	sangs_ver/test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
 create_files	src/test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
-create_files	test/test_nvm0write.c	/^void create_files(int n_thread)$/;"	f
+create_files	test/test_nvm0write.cc	/^void create_files(int n_thread)$/;"	f
 create_nvm_in_shm	sangs_ver/src/nvm0nvm.cc	/^create_nvm_in_shm()$/;"	f
 create_nvm_in_shm	src/nvm0nvm.cc	/^create_nvm_in_shm()$/;"	f
 currentSize	src/old/rbtree/TemplateStack.h	/^  int currentSize;$/;"	m	class:TemplateStack
@@ -179,7 +181,7 @@ deallocate_node	src/nvm0avltree.c	/^deallocate_node($/;"	f
 delete	src/old/rbtree/avl_ver_pointer.c	/^struct node* delete(struct node* root, struct node* vte)$/;"	f
 delete_files	sangs_ver/test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
 delete_files	src/test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
-delete_files	test/test_nvm0write.c	/^delete_files(int n_thread)$/;"	f
+delete_files	test/test_nvm0write.cc	/^void delete_files(int n_thread)$/;"	f
 delete_nvm_inode	sangs_ver/src/nvm0avltree.c	/^delete_nvm_inode($/;"	f
 delete_nvm_inode	src/nvm0avltree.c	/^delete_nvm_inode($/;"	f
 dequeue	sangs_ver/util/nvm0lfqueue.cc	/^T lfqueue<T>::dequeue()$/;"	f	class:lfqueue
@@ -213,12 +215,12 @@ getBalance	src/nvm0avltree.c	/^getBalance($/;"	f
 getBalance	src/old/rbtree/avl_ver_pointer.c	/^int getBalance(struct node *N)$/;"	f
 get_filename	sangs_ver/src/nvm0write.c	/^get_filename($/;"	f
 get_filename	src/nvm0write.cc	/^get_filename($/;"	f
+get_inode_entry	src/nvm0write.cc	/^get_inode_entry($/;"	f
 get_nvm_inode	sangs_ver/src/nvm0write.c	/^get_nvm_inode($/;"	f
-get_nvm_inode	src/nvm0write.cc	/^get_nvm_inode($/;"	f
 get_size	sangs_ver/util/nvm0lfqueue.cc	/^uint32_t lfqueue<T>::get_size()$/;"	f	class:lfqueue
 get_size	util/nvm0lfqueue.cc	/^uint32_t lfqueue<T>::get_size()$/;"	f	class:lfqueue
+get_volume_entry_idx	src/nvm0write.cc	/^get_volume_entry_idx($/;"	f
 get_vt_entry	sangs_ver/src/nvm0write.c	/^get_vt_entry($/;"	f
-get_vt_entry	src/nvm0write.cc	/^get_vt_entry($/;"	f
 height	include/nvm0avltree.h	/^   int                    height;$/;"	m	struct:tree_node
 height	sangs_ver/include/nvm0avltree.h	/^   int                  height;$/;"	m	struct:tree_node
 height	sangs_ver/src/nvm0avltree.c	/^height($/;"	f
@@ -228,12 +230,13 @@ height	src/old/rbtree/avl_ver_pointer.c	/^int height(struct node *N)$/;"	f
 initFreeList	src/old/rbtree/avl_ver_pointer.c	/^void initFreeList(void)$/;"	f
 inode	include/nvm0avltree.h	/^   struct inode_entry*    inode;$/;"	m	struct:tree_node	typeref:struct:tree_node::inode_entry
 inode	sangs_ver/include/nvm0avltree.h	/^   struct inode_entry*  inode;$/;"	m	struct:tree_node	typeref:struct:tree_node::inode_entry
-inode_dirty_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_dirty_lfqueue;$/;"	v
+inode_dirty_lfqueue	src/nvm0nvm.cc	/^lfqueue<inode_entry*>* inode_dirty_lfqueue;$/;"	v
 inode_dirty_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_dirty_queue;$/;"	v
 inode_entry	include/nvm0inode.h	/^struct inode_entry {$/;"	s
 inode_entry	sangs_ver/include/nvm0inode.h	/^struct inode_entry {$/;"	s
-inode_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_free_lfqueue;$/;"	v
+inode_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<inode_entry*>* inode_free_lfqueue;$/;"	v
 inode_free_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* inode_free_queue;$/;"	v
+inode_inuse_lfqueue	src/nvm0nvm.cc	/^lfqueue<inode_entry*>* inode_inuse_lfqueue;$/;"	v
 inode_table	include/nvm0metadata.h	/^    inode_entry*    inode_table;$/;"	m	struct:nvm_metadata
 inode_table	sangs_ver/include/nvm0metadata.h	/^    inode_entry*    inode_table;$/;"	m	struct:nvm_metadata
 insert	src/old/rbtree/avl_ver_pointer.c	/^struct node* insert(struct node *node, struct node *vte)$/;"	f
@@ -272,7 +275,7 @@ main	test/test1.c	/^main($/;"	f
 main	test/test_all.cc	/^int main()$/;"	f
 main	test/test_nvm0lfqueue.cc	/^int main()$/;"	f
 main	test/test_nvm0nvm.cc	/^int main(void)$/;"	f
-main	test/test_nvm0write.c	/^int main()$/;"	f
+main	test/test_nvm0write.cc	/^int main()$/;"	f
 maxSize	src/old/rbtree/TemplateStack.h	/^  int maxSize;$/;"	m	class:TemplateStack
 max_inode_entry	include/nvm0metadata.h	/^    uint32_t    max_inode_entry;$/;"	m	struct:nvm_metadata
 max_inode_entry	sangs_ver/include/nvm0metadata.h	/^    uint32_t    max_inode_entry;$/;"	m	struct:nvm_metadata
@@ -357,14 +360,16 @@ root	sangs_ver/include/nvm0volume.h	/^    struct tree_node*   root;   \/\/ inode
 root	src/old/rbtree/RedBlackTree.h	/^  RedBlackTreeNode * root;$/;"	m	class:RedBlackTree
 search_nvm_inode	sangs_ver/src/nvm0avltree.c	/^search_nvm_inode($/;"	f
 search_nvm_inode	src/nvm0avltree.c	/^search_nvm_inode($/;"	f
+search_volume_entry	src/nvm0write.cc	/^search_volume_entry($/;"	f
 search_vt_entry	sangs_ver/src/nvm0write.c	/^search_vt_entry($/;"	f
-search_vt_entry	src/nvm0write.cc	/^search_vt_entry($/;"	f
 state	include/nvm0inode.h	/^    int                     state;  \/\/ state of block$/;"	m	struct:inode_entry
 state	sangs_ver/include/nvm0inode.h	/^    int                     state;  \/\/ state of block$/;"	m	struct:inode_entry
 state	src/old/rbtree/avl_ver_pointer.c	/^	int state; \/\/ allocated or not$/;"	m	struct:node	file:
 storedEntry	src/old/rbtree/RedBlackTree.h	/^  RedBlackEntry * storedEntry;$/;"	m	class:RedBlackTreeNode
+test_alloc_volume_entry	test/test_nvm0write.cc	/^void test_alloc_volume_entry()$/;"	f
 test_concurrency	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_concurrency()$/;"	f
 test_concurrency	test/test_nvm0lfqueue.cc	/^void test_concurrency()$/;"	f
+test_create_and_delete_files	test/test_nvm0write.cc	/^void test_create_and_delete_files()$/;"	f
 test_get_size	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_get_size()$/;"	f
 test_get_size	test/test_nvm0lfqueue.cc	/^void test_get_size()$/;"	f
 test_is_empty	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_is_empty()$/;"	f
@@ -373,7 +378,6 @@ test_nvm0lfqueue	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_nvm0lf
 test_nvm0nvm	sangs_ver/test/unit_test/test_nvm0nvm.cc	/^void test_nvm0nvm()$/;"	f
 test_nvmwrite	sangs_ver/test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
 test_nvmwrite	src/test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
-test_nvmwrite	test/test_nvm0write.c	/^void test_nvmwrite()$/;"	f
 test_queue1	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_queue1()$/;"	f
 test_queue1	test/test_nvm0lfqueue.cc	/^void test_queue1()$/;"	f
 test_queue10	sangs_ver/test/unit_test/test_nvm0lfqueue.cc	/^void test_queue10()$/;"	f
@@ -403,9 +407,9 @@ volume	include/nvm0inode.h	/^    struct volume_entry*    volume; \/\/ volume id 
 volume	sangs_ver/include/nvm0inode.h	/^    struct volume_entry*    volume; \/\/ volume id (implicit filename)$/;"	m	struct:inode_entry	typeref:struct:inode_entry::volume_entry
 volume_entry	include/nvm0volume.h	/^struct volume_entry {$/;"	s
 volume_entry	sangs_ver/include/nvm0volume.h	/^struct volume_entry {$/;"	s
-volume_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_free_lfqueue;$/;"	v
+volume_free_lfqueue	src/nvm0nvm.cc	/^lfqueue<volume_entry*>* volume_free_lfqueue;$/;"	v
 volume_free_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_free_queue;$/;"	v
-volume_inuse_lfqueue	src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_inuse_lfqueue;$/;"	v
+volume_inuse_lfqueue	src/nvm0nvm.cc	/^lfqueue<volume_entry*>* volume_inuse_lfqueue;$/;"	v
 volume_inuse_queue	sangs_ver/src/nvm0nvm.cc	/^lfqueue<uint32_t>* volume_inuse_queue;$/;"	v
 volume_table	include/nvm0metadata.h	/^    volume_entry*   volume_table;$/;"	m	struct:nvm_metadata
 volume_table	sangs_ver/include/nvm0metadata.h	/^    volume_entry*   volume_table;$/;"	m	struct:nvm_metadata
