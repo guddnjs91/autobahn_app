@@ -108,10 +108,8 @@ void test_create_and_delete_files()
 void test_alloc_volume_entry_idx()
 {
     puts("\n[UNIT TEST] : alloc_volume_entry_idx()");
-    //create_files(1); //tested
     nvm_structure_build(); //tested
     nvm_system_init(); //tested
-    //create_buffer(); //tested
     print_nvm_info(); 
     
     volume_entry* vt = nvm->volume_table;
@@ -121,16 +119,13 @@ void test_alloc_volume_entry_idx()
     printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
 
     nvm_system_close(); //tested
-    //delete_files(1); //tested
 }
 
 void test_search_volume_entry_idx()
 {
     puts("\n[UNIT TEST] : search_volume_entry_idx()");
-    //create_files(1); //tested
     nvm_structure_build(); //tested
     nvm_system_init(); //tested
-    //create_buffer(); //tested
     
     print_nvm_info(); 
     volume_entry* vt = nvm->volume_table;
@@ -147,17 +142,13 @@ void test_search_volume_entry_idx()
     printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
     
     nvm_system_close(); //tested
-    //delete_files(1); //tested
 }
 
 void test_get_volume_entry_idx()
 {
     puts("\n[UNIT TEST] : search_volume_entry_idx()");
-    //create_files(1); //tested
     nvm_structure_build(); //tested
     nvm_system_init(); //tested
-    //create_buffer(); //tested
-    
     print_nvm_info(); 
     volume_entry* vt = nvm->volume_table;
     volume_idx_t i = get_volume_entry_idx(1);
@@ -165,13 +156,48 @@ void test_get_volume_entry_idx()
     printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
     
     nvm_system_close(); //tested
-    //delete_files(1); //tested
 }
+
+void test_alloc_inode_entry_idx()
+{
+    puts("\n[UNIT TEST] : alloc_inode_entry_idx()");
+    nvm_structure_build(); //tested
+    nvm_system_init(); //tested
+    print_nvm_info();
+
+    inode_idx_t idx1 = alloc_inode_entry_idx(10);
+    inode_idx_t idx2 = alloc_inode_entry_idx(20);
+    printf("allocated idx : %u %u\n", idx1, idx2);
+    printf("%d %d\n", nvm->inode_table[idx1].lbn, nvm->inode_table[idx2].lbn);
+    
+    nvm_system_close(); //tested
+}
+
+void test_get_inode_entry_idx()
+{
+    puts("\n[UNIT TEST] : get_inode_entry_idx()");
+    nvm_structure_build(); //tested
+    nvm_system_init(); //tested
+    print_nvm_info(); 
+    volume_entry* vt = nvm->volume_table;
+    volume_idx_t v = get_volume_entry_idx(1);
+    
+    inode_idx_t idx1 = get_inode_entry_idx(&vt[v], 30);
+    inode_idx_t idx2 = get_inode_entry_idx(&vt[v], 40);
+    inode_idx_t idx3 = get_inode_entry_idx(&vt[v], 50);
+    inode_idx_t idx4 = get_inode_entry_idx(&vt[v], 30);
+    printf("%u %u %u %u\n", idx1, idx2, idx3, idx4);
+
+    nvm_system_close(); //tested
+}
+
 
 int main()
 {
-    //test_create_and_delete_files();
-    //test_alloc_volume_entry_idx();
-    //test_search_volume_entry_idx();
-    //test_get_volume_entry_idx();
+    //test_create_and_delete_files(); //OK
+    //test_alloc_volume_entry_idx();  //OK
+    //test_search_volume_entry_idx(); //OK
+    //test_get_volume_entry_idx();    //OK
+    //test_alloc_inode_entry_idx();   //OK
+    test_get_inode_entry_idx();       //NOT DONE
 }

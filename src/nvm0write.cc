@@ -129,26 +129,29 @@ alloc_volume_entry_idx(
  * Get inode_entry object for lbn.
  * @return inode */
 inode_idx_t
-get_inode_entry(
+get_inode_entry_idx(
     volume_entry* ve, /* !<in: volume that contains inodes we are looking for */
     uint32_t lbn)     /* !<in: find inode which has this lbn */
 {
     inode_idx_t idx;
+    tree_node* tnode;
     inode_entry* inode;
 
     // 1. Search from inode tree
-    inode = search_inode_entry(ve->root, lbn);
+    tnode  = search_tree_node(ve->root, lbn);
 
     // 2. If search found inode, return it
-    if(inode != NULL) {
+    if(tnode != nullptr) {
+        inode = tnode->inode;
         idx = inode - nvm->inode_table;
         return idx;
     } else {
         // 3. If not found, allocate new inode
-        idx = alloc_inode_entry(lbn);
-        inode = nvm->inode_table[idx];
+        idx = alloc_inode_entry_idx(lbn);
+        inode = &nvm->inode_table[idx];
         inode->volume = ve;
-        ve->root = insert_inode_entry(ve->root, inode);
+        tnode = alloc_tree_node(inode);
+        ve->root = insert_tree_node(ve->root, tnode);
     }
 
     return idx;
@@ -158,7 +161,7 @@ get_inode_entry(
  * Allocate new volume_entry from free-list of ve.
  * @return inode */
 inode_idx_t
-alloc_inode_entry(
+alloc_inode_entry_idx(
     uint32_t lbn) /* !<in: lbn to new allocating inode */
 {
     /**

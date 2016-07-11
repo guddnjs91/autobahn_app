@@ -13,7 +13,7 @@ LIBNAME = -lpthread
 
 CFLAGS += -I$(INCLUDE)
 
-all: nvm0nvm nvm0lfqueue nvm0avltree
+all: nvm0nvm nvm0lfqueue nvm0avltree nvm0write
 
 nvm0nvm: ./test_nvm0nvm.cc ../src/nvm0nvm.cc
 	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
@@ -24,8 +24,8 @@ nvm0lfqueue: ./test_nvm0lfqueue.cc ../util/nvm0lfqueue.cc
 nvm0avltree: ./test_nvm0avltree.cc ../src/nvm0avltree.cc
 	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
 
-#nvm0write: ./test_nvm0write.cc ../src/nvm0nvm.cc ../src/nvm0write.cc
-#	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+nvm0write: ./test_nvm0write.cc ../src/nvm0nvm.cc ../src/nvm0write.cc ../src/nvm0avltree.cc
+	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
 
 clean:
 	rm $(BIN)*

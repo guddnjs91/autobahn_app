@@ -128,7 +128,7 @@ delete_tree_node(
                 *root = *temp;
             }
 
-            deallocate_tree_node(temp);
+            dealloc_tree_node(temp);
         } 
         else
         {
@@ -206,7 +206,7 @@ min_value_node(
 }
 
 tree_node*
-allocate_tree_node(
+alloc_tree_node(
     inode_entry* inode)
 {
     tree_node* t = (tree_node*)malloc(sizeof(tree_node));
@@ -222,7 +222,7 @@ allocate_tree_node(
 /**
  * Deallocate tree's inode structure */
 void
-deallocate_tree_node(
+dealloc_tree_node(
     tree_node* node)
 {
     // Re-initialization

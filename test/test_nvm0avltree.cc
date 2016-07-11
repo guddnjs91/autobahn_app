@@ -10,10 +10,28 @@ int main()
     for(int i = 0; i < 100; i++)
     {
         inode[i].lbn = i;
-        tree_node* t =  allocate_tree_node(&inode[i]);
+        tree_node* t =  alloc_tree_node(&inode[i]);
         root = insert_tree_node(root, t);
     }
 
-    tree_node* t = search_tree_node(root, 30);
-    printf("tree node lbn : %u\n", t->inode->lbn);
+    while(1)
+    {
+        int lbn;
+        printf("Search lbn (0 to exit): ");
+        scanf("%d", &lbn);
+        printf("lbn is %d\n", lbn);
+        if(lbn == 0)
+            break;
+        tree_node* t = search_tree_node(root, lbn);
+        if(t == nullptr)
+        {
+            printf("There are no such tree node\n");
+        }
+        else
+        {
+            printf("Searched Tree node lbn : %u\n", t->inode->lbn);
+            root = delete_tree_node(root, t);
+            printf("Deleted\n");
+        }
+    }
 }
