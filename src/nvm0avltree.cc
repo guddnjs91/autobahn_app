@@ -15,15 +15,15 @@ search_tree_node(
 
     while(local_root != NULL) 
     {
-        if(lbn == local_root->inode->lbn)
+        if(lbn == local_root->lbn)
         {
             return local_root;
         }
-        else if(lbn < local_root->inode->lbn) 
+        else if(lbn < local_root->lbn) 
         {
             local_root = local_root->left;
         }
-        else if(lbn > local_root->inode->lbn)
+        else if(lbn > local_root->lbn)
         {
             local_root = local_root->right;
         }
@@ -46,7 +46,7 @@ insert_tree_node(
         return root;
     }
 
-    if (node->inode->lbn < root->inode->lbn)
+    if (node->lbn < root->lbn)
     {
         root->left = insert_tree_node(root->left, node);
     }
@@ -62,26 +62,26 @@ insert_tree_node(
     int balance = get_balance(root);
     
     // LL
-    if (balance > 1 && node->inode->lbn < root->left->inode->lbn)
+    if (balance > 1 && node->lbn < root->left->lbn)
     {
         return right_rotate(root);
     }
     
     // LR
-    if (balance > 1 && node->inode->lbn > root->left->inode->lbn)
+    if (balance > 1 && node->lbn > root->left->lbn)
     {
         root->left = left_rotate(root->left);
         return right_rotate(root);
     }   
     
     // RR
-    if (balance < -1 && node->inode->lbn > root->right->inode->lbn)
+    if (balance < -1 && node->lbn > root->right->lbn)
     {
         return left_rotate(root);
     }
     
     // RL
-    if (balance < -1 && node->inode->lbn < root->right->inode->lbn)
+    if (balance < -1 && node->lbn < root->right->lbn)
     {
         root->right = right_rotate(root->right);
         return left_rotate(root);
@@ -103,11 +103,11 @@ delete_tree_node(
         return root;
     }
     
-    if (node->inode->lbn < root->inode->lbn)
+    if (node->lbn < root->lbn)
     {
         root->left = delete_tree_node(root->left, node);
     }
-    else if (node->inode->lbn > root->inode->lbn)
+    else if (node->lbn > root->lbn)
     {
         root->right = delete_tree_node(root->right, node);
     }
@@ -128,7 +128,8 @@ delete_tree_node(
                 *root = *temp;
             }
 
-            dealloc_tree_node(temp);
+            free(temp);
+
         } 
         else
         {
@@ -137,9 +138,8 @@ delete_tree_node(
             
             // copy the inorder successor's data
             ///////////////////////////////////////////////////////////////////////////////////////
-            root->inode->lbn = temp->inode->lbn;
-            root->inode->state = temp->inode->state;
-            root->inode->volume = temp->inode->volume;
+            root->inode = temp->inode;
+            root->lbn = temp->lbn;
             root->valid = temp->valid;
             ///////////////////////////////////////////////////////////////////////////////////////
             
@@ -211,6 +211,7 @@ alloc_tree_node(
 {
     tree_node* t = (tree_node*)malloc(sizeof(tree_node));
     t->inode = inode;
+    t->lbn = inode->lbn;
     t->valid = TREE_VALID;
     t->left = nullptr;
     t->right = nullptr;

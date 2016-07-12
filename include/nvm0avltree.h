@@ -14,6 +14,7 @@
 
 struct tree_node {
    struct inode_entry*    inode;
+   uint32_t               lbn; // key
    int                    valid; // Balloon thread change this and writer will delegate this node.
 
    struct tree_node*      left;
