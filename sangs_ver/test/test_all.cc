@@ -26,5 +26,5 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 int main()
 {
     test_write_performance(test_write);
-    test_write_performance(test_nvm_write);
+//    test_write_performance(test_nvm_write);
 }
