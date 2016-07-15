@@ -12,7 +12,15 @@
 #define TREE_VALID 0
 #define TREE_INVALID 1
 
-struct tree_node {
+struct tree_root
+{
+    struct tree_node *root;
+    int count_total;
+    int count_invalid;
+};
+
+struct tree_node 
+{
    struct inode_entry*    inode;
    uint32_t               lbn; // key
    int                    valid; // Balloon thread change this and writer will delegate this node.

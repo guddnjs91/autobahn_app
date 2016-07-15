@@ -8,10 +8,10 @@
  @return tree node with inode's lbn from avl-tree */
 tree_node*
 search_tree_node(
-    tree_node* root,
+    tree_root* tree,
     uint32_t lbn)
 {
-    tree_node* local_root = root;
+    tree_node* local_root = tree->root;
 
     while(local_root != NULL) 
     {
@@ -32,6 +32,15 @@ search_tree_node(
     return nullptr;
 }
 
+void
+insert_tree_node(
+    tree_root* tree,
+    tree_node* node)
+{
+    tree->root = insert_tree_node(tree->root, node);
+    tree->count_total++;
+}   
+
 /**
  * Insert tree node object to avl tree
  @return root node of avl-tree*/
@@ -50,6 +59,7 @@ insert_tree_node(
     {
         root->left = insert_tree_node(root->left, node);
     }
+    
     else
     {
         root->right = insert_tree_node(root->right, node);
@@ -88,6 +98,38 @@ insert_tree_node(
     }
 
     return root;
+}
+/**
+ * Change validity of tree node from avl tree
+ **/
+void
+logical_delete_tree_node(
+    tree_root* tree,
+    tree_node* node)
+{
+    tree_node* local_root = tree->root;
+
+    while(local_root != NULL) 
+    {
+        if(node->lbn == local_root->lbn)
+        {
+            if(local_root->valid == TREE_VALID)
+            {
+                local_root->valid = TREE_INVALID;
+                tree->count_invalid++;
+            }
+
+            break;
+        }
+        else if(node->lbn < local_root->lbn) 
+        {
+            local_root = local_root->left;
+        }
+        else if(node->lbn > local_root->lbn)
+        {
+            local_root = local_root->right;
+        }
+    }
 }
 
 /**
@@ -129,8 +171,8 @@ delete_tree_node(
             }
 
             free(temp);
+        }
 
-        } 
         else
         {
             // 2 children
@@ -188,6 +230,43 @@ delete_tree_node(
     return root;
 }
 
+void
+rebalance_tree_node(
+    tree_root* tree)
+{
+    while(tree->count_invalid > 0)
+    {
+        tree_node *invalid_node = find_invalid_tree_node(tree->root);
+        tree->root = delete_tree_node(tree->root, invalid_node);
+        tree->count_invalid--;
+    }
+}
+
+tree_node*
+find_invalid_tree_node(
+    tree_node* node)
+{
+    tree_node *local_root = node;
+    
+    while(local_root)
+    {
+        if(local_root->valid == TREE_INVALID)
+            break;
+
+        else if(local_root->left)
+        {
+            local_root = local_root->left;
+        }
+
+        else if(local_root->right)
+        {
+            local_root = local_root->right;
+        }
+    }
+
+    return local_root;
+}
+
 /**
  * Find the minimum key from AVL tree.
  * @return tree node that has minimum key value in tree.*/
@@ -206,7 +285,7 @@ min_value_node(
 }
 
 tree_node*
-alloc_tree_node(
+init_tree_node(
     inode_entry* inode)
 {
     tree_node* t = (tree_node*)malloc(sizeof(tree_node));
@@ -218,22 +297,6 @@ alloc_tree_node(
     t->height = 1;
     
     return t;
-}
-
-/**
- * Deallocate tree's inode structure */
-void
-dealloc_tree_node(
-    tree_node* node)
-{
-    // Re-initialization
-    node->inode->lbn = 0;
-    node->inode->state = INODE_STATE_FREE;
-    node->inode->volume = nullptr;
-    node->valid = TREE_INVALID;
-    node->height = 1;
-    node->left = nullptr;
-    node->right = nullptr;
 }
 
 /**
