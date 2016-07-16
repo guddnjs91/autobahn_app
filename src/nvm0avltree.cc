@@ -137,8 +137,8 @@ logical_delete_tree_node(
  * @return tree after deleting the node */
 tree_node*
 delete_tree_node(
-    tree_node* root,  /* !<out: sub-tree root after deleting node */
-    tree_node* node) /* !<in: node to be deleted */
+    tree_node* root,
+    tree_node* node)
 {
     if (root == nullptr)
     {
@@ -179,11 +179,9 @@ delete_tree_node(
             tree_node* temp =  min_value_node(root->right);
             
             // copy the inorder successor's data
-            ///////////////////////////////////////////////////////////////////////////////////////
             root->inode = temp->inode;
             root->lbn = temp->lbn;
             root->valid = temp->valid;
-            ///////////////////////////////////////////////////////////////////////////////////////
             
             // Delete the inorder successor
             root->right = delete_tree_node(root->right, temp);

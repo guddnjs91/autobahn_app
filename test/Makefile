@@ -13,7 +13,7 @@ LIBNAME = -lpthread
 
 CFLAGS += -I$(INCLUDE)
 
-all: nvm0nvm nvm0lfqueue nvm0avltree
+all: nvm0nvm nvm0lfqueue nvm0avltree nvm0write
 
 nvm0nvm: ./test_nvm0nvm.cc ../src/nvm0nvm.cc
 	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
