@@ -2,6 +2,7 @@
 void nvm_structure_build();
 void nvm_system_init();
 void nvm_system_close();
+void nvm_structure_destroy();
 
 /* in file nvm0write.c */
 void nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);

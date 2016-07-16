@@ -1,16 +1,15 @@
 #include <stdio.h>
 #include "nvm0common.h"
-#include "nvm0avltree.h"
 
 /**
  * Search tree node object from avl tree root
  @return tree node with inode's lbn from avl-tree */
-T_node*
+tree_node*
 search_nvm_inode(
-    T_node* root,
-    unsigned int lbn)
+    tree_node* root,
+    uint32_t lbn)
 {
-    T_node* localRoot = root;
+    tree_node* localRoot = root;
 
     while(localRoot != NULL) {
         if(lbn == localRoot->inode->lbn) {
@@ -27,10 +26,10 @@ search_nvm_inode(
 /**
  * Insert tree node object to avl tree
  @return root node of avl-tree*/
-T_node*
+tree_node*
 insert_nvm_inode(
-    T_node* root,
-    T_node* node)
+    tree_node* root,
+    tree_node* node)
 {
     if (root == NULL) {
         root = node;
@@ -77,10 +76,10 @@ insert_nvm_inode(
 /**
  * Delete tree node object from avl tree 
  * @return tree after deleting the node */
-T_node*
+tree_node*
 delete_nvm_inode(
-    T_node* root,  /* !<out: sub-tree root after deleting node */
-    T_node* node) /* !<in: node to be deleted */
+    tree_node* root,  /* !<out: sub-tree root after deleting node */
+    tree_node* node) /* !<in: node to be deleted */
 {
     if (root == NULL) {
         return root;
@@ -93,27 +92,27 @@ delete_nvm_inode(
     } else {
         // 1 child || no child
         if ((root->left == NULL) || (root->right == NULL)) {
-            T_node* temp = root->left ? root->left : root->right;
+            tree_node* temp = root->left ? root->left : root->right;
             
             if (temp == NULL) { // no child
                 temp = root;
                 root = NULL;
             } else  { // 1 child, copy the contents of the non-empty child
-		*root = *temp;
+                *root = *temp;
             }
 
             deallocate_node(temp);
         } else {
             
             // 2 children
-            T_node* temp =  min_value_node(root->right);
+            tree_node* temp =  min_value_node(root->right);
             
             // copy the inorder successor's data
             root->inode->lbn = temp->inode->lbn;
             
             // Delete the inorder successor
             root->right = delete_nvm_inode(root->right, temp);
-	}
+        }
     }
     
     if (root == NULL) {
@@ -154,11 +153,11 @@ delete_nvm_inode(
 /**
  * Find the minimum key from AVL tree.
  * @return tree node that has minimum key value in tree.*/
-T_node*
+tree_node*
 min_value_node(
-    T_node* node)
+    tree_node* node)
 {
-    T_node* current = node;
+    tree_node* current = node;
     
     while (current->left != NULL) {
         current = current->left;
@@ -171,7 +170,7 @@ min_value_node(
  * Deallocate tree's inode structure */
 void
 deallocate_node(
-    T_node* node)
+    tree_node* node)
 {
     // Re-initialization
     node->inode->lbn = 0;
@@ -187,7 +186,7 @@ deallocate_node(
  @return height */
 int
 height(
-    T_node* node)
+    tree_node* node)
 {
     if (node == NULL) {
         return 0;
@@ -205,7 +204,7 @@ Max(
 
 int
 getBalance(
-    T_node* inode)
+    tree_node* inode)
 {
     if (inode == NULL) {
         return 0;
@@ -214,12 +213,12 @@ getBalance(
     return height(inode->left) - height(inode->right);
 }
 
-T_node*
+tree_node*
 rightRotate(
-    T_node* y)
+    tree_node* y)
 {
-    T_node* x = y->left;
-    T_node* T2 = x->right;
+    tree_node* x = y->left;
+    tree_node* T2 = x->right;
 
     // Perform rotation
     x->right = y;
@@ -233,12 +232,12 @@ rightRotate(
     return x;
 }
 
-T_node*
+tree_node*
 leftRotate(
-    T_node* x)
+    tree_node* x)
 {
-    T_node* y = x->right;
-    T_node* T2 = y->left;
+    tree_node* y = x->right;
+    tree_node* T2 = y->left;
 
     // Perform rotation
     y->left = x;
