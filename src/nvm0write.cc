@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <string>
 #include "nvm0common.h"
@@ -119,8 +120,11 @@ alloc_volume_entry_idx(
      * Initialize root NULL which would contain
      * the logical blocks of inodes for its volume(file) */
     nvm->volume_table[idx].vid = vid;
-    nvm->volume_table[idx].fd = open(get_filename(vid), O_WRONLY| O_CREAT, 0644);
-    nvm->volume_table[idx].root = NULL;
+    nvm->volume_table[idx].fd = open(get_filename(vid), O_RDWR| O_CREAT, 0644);
+    nvm->volume_table[idx].tree = (struct tree_root*)malloc(sizeof(struct tree_root));
+    nvm->volume_table[idx].tree->root = nullptr;
+    nvm->volume_table[idx].tree->count_total = 0;
+    nvm->volume_table[idx].tree->count_invalid = 0;
 
     return idx;
 }
@@ -138,7 +142,7 @@ get_inode_entry_idx(
     inode_entry* inode;
 
     // 1. Search from inode tree
-    tnode  = search_tree_node(ve->root, lbn);
+    tnode  = search_tree_node(ve->tree, lbn);
 
     // 2. If search found inode, return it
     if(tnode != nullptr) {
@@ -150,8 +154,8 @@ get_inode_entry_idx(
         idx = alloc_inode_entry_idx(lbn);
         inode = &nvm->inode_table[idx];
         inode->volume = ve;
-        tnode = alloc_tree_node(inode);
-        ve->root = insert_tree_node(ve->root, tnode);
+        tnode = init_tree_node(inode);
+        insert_tree_node(ve->tree, tnode);
     }
 
     return idx;
@@ -176,6 +180,8 @@ alloc_inode_entry_idx(
      * Give inode its lbn, and make its state as ALLOCATED */
     nvm->inode_table[idx].lbn = lbn;
     nvm->inode_table[idx].state = INODE_STATE_ALLOCATED;
+    nvm->inode_table[idx].volume = nullptr;
+
     return idx;
 }
 

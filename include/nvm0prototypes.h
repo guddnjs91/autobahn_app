@@ -23,15 +23,15 @@ int get_height(tree_node* node);
 int get_balance(tree_node* node);
 tree_node* right_rotate(tree_node* y);
 tree_node* left_rotate(tree_node* x);
-//double get_invalid_ratio(tree_root *tree);
+double get_invalid_ratio(tree_root *tree);
 
 /* in file nvm0write.c */
-//volume_idx_t get_volume_entry_idx(uint32_t vid);
-//volume_idx_t search_volume_entry_idx(uint32_t vid);
-//volume_idx_t alloc_volume_entry_idx(uint32_t vid);
-//const char* get_filename(uint32_t vid);
-//inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
-//inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
+volume_idx_t get_volume_entry_idx(uint32_t vid);
+volume_idx_t search_volume_entry_idx(uint32_t vid);
+volume_idx_t alloc_volume_entry_idx(uint32_t vid);
+const char* get_filename(uint32_t vid);
+inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
+inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
 
 //size_t nvm_write(uint32_t vid, off_t ofs, const void* ptr, size_t len);
 //void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);

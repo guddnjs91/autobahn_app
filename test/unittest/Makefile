@@ -1,0 +1,31 @@
+# Main suffixes for auto compile by dependencies
+.SUFFIXES : .cc .o
+
+# Compiler and Compile options
+CC = g++
+CFLAGS = -std=c++11 -g -W -Wall
+
+#OBJS = ../src/nvm0nvm.o ../src/nvm0lfqueue.o
+#SRCS = ../src/$(OBJS: .o=.cc)
+BIN = ./bin/
+INCLUDE = ../../include/
+LIBNAME = -lpthread
+
+CFLAGS += -I$(INCLUDE)
+
+all: nvm0nvm nvm0lfqueue nvm0avltree nvm0write
+
+nvm0nvm: ./test_nvm0nvm.cc ../../src/nvm0nvm.cc
+	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+
+nvm0lfqueue: ./test_nvm0lfqueue.cc ../../util/nvm0lfqueue.cc
+	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+
+nvm0avltree: ./test_nvm0avltree.cc ../../src/nvm0avltree.cc
+	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+
+nvm0write: ./test_nvm0write.cc ../../src/nvm0nvm.cc ../../src/nvm0write.cc ../../src/nvm0avltree.cc
+	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+
+clean:
+	rm $(BIN)*

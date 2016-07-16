@@ -116,7 +116,7 @@ void test_alloc_volume_entry_idx()
     
     volume_idx_t i = alloc_volume_entry_idx(1);
     printf("\nAllocated volume entry : %p\n", &vt[i]);
-    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
+    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].tree);
 
     nvm_system_close(); //tested
 }
@@ -135,11 +135,11 @@ void test_search_volume_entry_idx()
 
     i = alloc_volume_entry_idx(1);
     printf("Allocated volume entry : %p\n", &vt[i]);
-    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
+    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].tree);
     
     i = search_volume_entry_idx(1);
     printf("searched volume entry : %p\n", &vt[i]);
-    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
+    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].tree);
     
     nvm_system_close(); //tested
 }
@@ -153,7 +153,7 @@ void test_get_volume_entry_idx()
     volume_entry* vt = nvm->volume_table;
     volume_idx_t i = get_volume_entry_idx(1);
     printf("searched volume entry : %p\n", &vt[i]);
-    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].root);
+    printf("[vid : %5u | fd : %5d | root: %p]\n", vt[i].vid, vt[i].fd, vt[i].tree);
     
     nvm_system_close(); //tested
 }
@@ -195,9 +195,9 @@ void test_get_inode_entry_idx()
 int main()
 {
     //test_create_and_delete_files(); //OK
-    //test_alloc_volume_entry_idx();  //OK
+    test_alloc_volume_entry_idx();  //OK
     //test_search_volume_entry_idx(); //OK
     //test_get_volume_entry_idx();    //OK
     //test_alloc_inode_entry_idx();   //OK
-    test_get_inode_entry_idx();       //NOT DONE
+    //test_get_inode_entry_idx();       //OK
 }

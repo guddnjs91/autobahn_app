@@ -1,9 +1,8 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <fcntl.h>
-#include <string>
+#include <string.h>
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
@@ -39,21 +38,6 @@ fill_buf(
     buf[size-1] = '\0';
 }
 
-void remove_files(int n)
-{
-    int i;
-    for(i = 1; i <= n; i++)
-    {
-        string filename = "VOL_";
-        filename += to_string(n);
-        filename += ".txt";
-
-        int x = remove(filename.c_str());
-        if(x == -1)
-            printf("remove fail\n");
-    }
-}
-
 ///////////////////////////////
 //////////APPEND TEST//////////
 ///////////////////////////////
@@ -62,7 +46,7 @@ void remove_files(int n)
  * Write thread fills in buffer and write it to nvm */
 void
 *thread_write_append(
-   void *data)
+    void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
     long long unsigned int i;
@@ -70,10 +54,8 @@ void
 
     clock_t start = clock();
 
-    int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-
     for(i = 0; i < n; i++) {
-        write(fd, buffer, nbytes);
+        nvm_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -114,12 +96,9 @@ void
 
     clock_t start = clock();
 
-    int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
-        lseek(fd, (off_t) rand(), SEEK_SET);
-        write(tid, buffer, nbytes);
+        nvm_write(tid, (off_t) rand() , buffer, nbytes);
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -146,7 +125,7 @@ test_random()
     }
 }
 void
-test_write(
+test_nvm_write(
     long long unsigned int file_size,
     int n_thread,
     size_t n_bytes,
@@ -160,10 +139,18 @@ test_write(
     buffer = (char*) malloc(nbytes);
     fill_buf(buffer, nbytes);
 
+    //nvm init
+    nvm_structure_build();
+    nvm_system_init();
+
     //test
     if(type == _WRITE_APPEND_) {
         test_append();
     } else if(type == _WRITE_RANDOM_) {
         test_random();
     }
+    
+    //nvm close
+    nvm_system_close();
+    nvm_structure_destroy();
 }

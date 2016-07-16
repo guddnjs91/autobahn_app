@@ -7,25 +7,15 @@ CFLAGS = -std=c++11 -g -W -Wall
 
 #OBJS = ../src/nvm0nvm.o ../src/nvm0lfqueue.o
 #SRCS = ../src/$(OBJS: .o=.cc)
-BIN = ./unit_test/
 INCLUDE = ../include/
 LIBNAME = -lpthread
 
 CFLAGS += -I$(INCLUDE)
 
-all: nvm0nvm nvm0lfqueue nvm0avltree nvm0write
+all: write-test
 
-nvm0nvm: ./test_nvm0nvm.cc ../src/nvm0nvm.cc
-	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
-
-nvm0lfqueue: ./test_nvm0lfqueue.cc ../util/nvm0lfqueue.cc
-	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
-
-nvm0avltree: ./test_nvm0avltree.cc ../src/nvm0avltree.cc
-	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
-
-nvm0write: ./test_nvm0write.cc ../src/nvm0nvm.cc ../src/nvm0write.cc ../src/nvm0avltree.cc
-	$(CC) -o $(BIN)$@ $^ $(CFLAGS) $(LIBNAME)
+write-test: ./test_all.cc ./test_write.cc ./test.h
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBNAME)
 
 clean:
-	rm $(BIN)*
+	rm write-test *.txt

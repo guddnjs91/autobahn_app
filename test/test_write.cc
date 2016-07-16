@@ -45,7 +45,7 @@ void remove_files(int n)
     for(i = 1; i <= n; i++)
     {
         string filename = "VOL_";
-        filename += to_string(n);
+        filename += to_string(i);
         filename += ".txt";
 
         int x = remove(filename.c_str());
@@ -76,7 +76,11 @@ void
         write(fd, buffer, nbytes);
     }
 
+    close(fd);
+
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    return NULL;
 }
 
 void
@@ -122,7 +126,11 @@ void
         write(tid, buffer, nbytes);
     }
 
+    close(fd);
+
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    return NULL;
 }
 
 void
