@@ -3,6 +3,7 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 #include "nvm0common.h"
+#include <pthread.h>
 
 #define SHM_KEY 1234
 
@@ -13,6 +14,14 @@ lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_free_lfqueue;
 lfqueue<inode_idx_t>* inode_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_dirty_lfqueue;
+
+/* Global pthread variables for ballooning */
+pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
+pthread_cond_t       g_balloon_cond;     // global balloon condition variable
+pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
+
+/* System termination variable */
+int sys_terminate; // 1 : terminate yes
 
 //private function declaration
 void print_nvm_info();
@@ -94,7 +103,17 @@ nvm_system_init()
         inode_free_lfqueue->enqueue(i);
     }
 
+    pthread_rwlock_init(&g_balloon_rwlock, NULL);
+    pthread_cond_init(&g_balloon_cond, NULL);
+    pthread_mutex_init(&g_balloon_mutex, NULL);
+
     //TODO: create  flush thread & balloom thread
+    sys_terminate = 0;
+    pthread_t flush_thread;
+    pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
+
+    pthread_t balloon_thread;
+    pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
 }
 
 /**
@@ -103,6 +122,10 @@ void
 nvm_system_close()
 {
     //TODO: terminate flush thread & balloon thread
+    sys_terminate = 1;
+
+    pthread_join(flush_thread, NULL);
+    pthread_join(balloon_thread, NULL);
 
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;

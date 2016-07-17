@@ -11,6 +11,8 @@ Created 2016/06/07 Sang Rhee
 #ifndef nvm0metadata_h
 #define nvm0metadata_h
 
+#include <pthread.h>
+
 //config (make changes here ONLY)
 #define NVM_SIZE            1 * 1024 * 1024 * 1024LLU
 #define MAX_VOLUME_ENTRY    1024
@@ -32,5 +34,13 @@ struct nvm_metadata {
 
 /* Global variable that can access every NVM area */
 extern struct nvm_metadata* nvm;
+
+/* Global pthread variables for ballooning */
+extern pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
+extern pthread_cond_t       g_balloon_cond;     // global balloon condition variable
+extern pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
+
+/* System termination condition variables */
+extern int sys_terminate;
 
 #endif

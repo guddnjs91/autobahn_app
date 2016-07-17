@@ -11,52 +11,108 @@ extern lfqueue<uint32_t>* volume_inuse_lfqueue;
 extern lfqueue<uint32_t>* inode_free_lfqueue;
 extern lfqueue<uint32_t>* inode_dirty_lfqueue;
 
-///**
-// * Atomically write data to nvm 
-// - get ve
-// - calculate how many inode need
-// - get inode and memcpy data block
-// - insert inode to sync-list */
-//void
-//nvm_atomic_write(
-//    uint32_t vid, /* !<in: volume ID */
-//    off_t    ofs, /* !<in: volume offset */ 
-//    const void* ptr, /* !<in: buffer */
-//    size_t   len) /* !<in: size of buffer to be written */
-//{
-//    // get ve with vid
-//    volume_entry* ve = get_volume_entry(vid);
-//    
-//    // calculate total size for writing by offset and length
-//    uint32_t lbn_start   = ofs / BLOCK_SIZE;
-//    uint32_t lbn_end     = (ofs + len) / BLOCK_SIZE;
-//    uint32_t write_bytes = 0;
-//    uint32_t offset      = ofs % BLOCK_SIZE;
-//    
-//    for (uint32_t i = 0; i < lbn_end - lbn_start + 1; i++) {
-//        // get inode with its lbn
-//        inode_entry* inode = get_inode_entry(ve, lbn_start + i);
-//        
-//        // calculate how many bytes to write
-//        write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
-//        
-//        // write data to the NVM data block space
-//        uint32_t idx = get_inode_entry_idx(inode);
-//        char* data_dst = NVM->DATA_START + BLOCK_SIZE * idx + offset; 
-//        memcpy(data_dst, ptr, write_bytes);
-//        inode->state = INODE_STATE_DIRTY; // state changed to DIRTY.
-//        
-//        printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
-//        
-//        // Insert written inode to dirty_inode_lfqueue.
-//        // Enqueud inode would be flushed by flush_thread at certain time.
-//        inode_dirty_lfqueue->enqueue(inode);
-//        
-//        // Re-inintialize offset and len
-//        offset = 0;
-//        len -= write_bytes;
-//    }
-//}
+/**
+Write out len bytes data pointed by ptr to nvm structure.
+After writing out to nvm, data blocks are enqueued to dirty LFQ.
+@return the byte size of data written to nvm */
+size_t
+nvm_write(
+    uint32_t vid,       /* !<in: volume ID */
+    off_t    ofs,       /* !<in: volume offset */ 
+    const void* ptr,    /* !<in: buffer */
+    size_t   len)       /* !<in: size of buffer to be written */
+{
+    /* Get the volume entry index from the nvm volume table.
+    The volume entry contains the tree structure, representing one file. */
+    volume_idx_t v_idx = get_volume_entry_idx(vid);
+    volume_entry* ve = &nvm->volume_table[v_idx];
+
+    /* Calculate how many blocks needed for writing */
+    uint32_t lbn_start   = ofs / BLOCK_SIZE;
+    uint32_t lbn_end     = (ofs + len) / BLOCK_SIZE;
+    uint32_t offset      = ofs % BLOCK_SIZE;
+    
+    /* Each loop write one data block to nvm */
+    for(uint32_t lbn = lbn_start; lbn < lbn_end + 1; lbn) {
+        
+        /* Writing one data block to nvm is protected to
+        global balloon_thread by read-lock. */
+        pthread_rwlock_rdlock(&g_balloon_rwlock);
+
+        /* If the ratio of invalid tree node are below 70 %,
+        rebalance the whole tree before writing. */
+        if(get_invalid_ratio(ve->tree) < 70)
+        {
+            rebalance_tree_node(ve->tree);
+        }
+
+        /* Searches the tree node from ve with its lbn */
+        tree_node* tnode = search_tree_node(ve->tree, lbn);
+        
+        /* If there is no tree node with lbn found or is invalid,
+        get free inode from free inode LFQ. */
+        if(tnode == nullptr || tnode->valid == TREE_INVALID)
+        {
+            /* If the ration of free inode LFQ is below 10 %, 
+            wake up balloon thread for reclaiming inodes */
+            if(inode_free_lfqueue->get_size() < 0.1 * nvm->max_inode_entry)
+            {
+                if(inode_free_lfqueue->get_size() == 0)
+                {
+                    // avoid deadlock here
+                }
+                pthread_mutex_lock(&g_balloon_mutex);
+                pthread_cond_signal(&g_balloon_cond);
+                pthread_mutex_unlock(&g_balloon_mutex);
+            }
+
+            /* Get inode from inode_free_lfqueue. */
+            inode_idx_t idx = alloc_inode_entry_idx(lbn);
+            inode_entry* inode = &nvm->inode_table[idx];
+
+            if(tnode == nullptr)
+            {
+                /* Initialize tree node and insert to tree */
+                tnode = init_tree_node(inode);
+                insert_tree_node(ve->tree, tnode);
+            }
+            else if(tnode->valid == TREE_INVALID)
+            {
+                /* Reassign inode and make tree node valid */
+                tnode->inode = inode;
+                tnode->valid = TREE_VALID;
+            }
+        }
+
+        /* Protect from flush_thread by inode lock */
+        pthread_mutex_lock(&tnode->inode->lock);
+
+        /* Write out one data block to the NVM */
+        uint32_t write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
+        inode_idx_t idx = (inode_idx_t)(tnode->inode - nvm->inode_table);
+        char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
+        memcpy(data_dst, ptr, write_bytes);
+        // need cache line write guarantee
+        printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
+
+        /* Change the state of inode to DIRTY */
+        tnode->inode->state = INODE_STATE_DIRTY;
+        
+        /* Insert written inode to dirty_inode_lfqueue.
+        Enqueud inode would be flushed by flush_thread at certain time. */
+        inode_dirty_lfqueue->enqueue(idx);
+
+        /* Unlock inode lock */
+        pthread_mutex_unlock(&tnode->inode->lock);
+
+        /* Re-inintialize offset and len*/
+        offset = 0;
+        len -= write_bytes;
+
+        /* Unlock read-lock */
+        pthread_rwlock_unlock(&g_balloon_rwlock);
+    }
+}
 
 /**
  * Get volume_entry object which has vid.
@@ -179,9 +235,8 @@ alloc_inode_entry_idx(
      * Setting up the acquired inode.
      * Give inode its lbn, and make its state as ALLOCATED */
     nvm->inode_table[idx].lbn = lbn;
-    nvm->inode_table[idx].state = INODE_STATE_ALLOCATED;
     nvm->inode_table[idx].volume = nullptr;
-
+    nvm->inode_table[idx].lock = PTHREAD_MUTEX_INITIALIZER;
     return idx;
 }
 
