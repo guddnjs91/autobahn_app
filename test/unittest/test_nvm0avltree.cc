@@ -1,5 +1,5 @@
-#include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "nvm0common.h"
 
@@ -34,7 +34,9 @@ void test_tree_insert(struct tree_root *tree)
         struct tree_node *node = init_tree_node(&inode[i]);
         insert_tree_node(tree, node);
 
-        printf("inserting nodes in tree...(%6d/%6d)\r", i+1, NUMBER_OF_TEST);
+        printf("lbn:%d, total count :%d, invalid count :%d, invalid ratio:%.3f%%  inserting...(%6d/%6d)\r", 
+                node->lbn, tree->count_total, tree->count_invalid, get_invalid_ratio(tree) * 100, i+1, NUMBER_OF_TEST);
+        
 
         if(!search_tree_node(tree,node->lbn))
         {
@@ -60,7 +62,8 @@ void test_tree_logical_delete(struct tree_root *tree)
 
         if(searched_node->valid == TREE_INVALID)
         {
-            printf("logical deleting node in tree...(%6d/%6d)\r", i+1, NUMBER_OF_TEST);
+            printf("lbn:%d, total count :%d, invalid count :%d, invalid ratio:%.3f%%  deleting...(%6d/%6d)\r",
+                    searched_node->lbn, tree->count_total, tree->count_invalid, get_invalid_ratio(tree) * 100, i+1, NUMBER_OF_TEST);
         }            
 
         else
@@ -73,6 +76,12 @@ void test_tree_logical_delete(struct tree_root *tree)
     printf("\n---------- logical delete test done ----------\n");
 }
 
+void test_tree_rebalance(struct tree_root *tree)
+{
+    printf("\n---------- rebalance test start ----------\n");
+    rebalance_tree_node(tree);
+    printf("\n---------- rebalance test done ----------\n");
+}
 void test_tree_physical_delete(struct tree_root *tree)
 {
     printf("\n---------- physical delete test start ----------\n");
@@ -81,12 +90,13 @@ void test_tree_physical_delete(struct tree_root *tree)
     {
         int random_index = rand() % NUMBER_OF_TEST;
         struct tree_node *node = init_tree_node(&inode[random_index]);
-        // tree->root = delete_tree_node(tree, node); // COMPILE ERROR
+            printf("lbn:%d, total count :%d, invalid count :%d, invalid ratio:%f  deleting...(%6d/%6d)\r",
+                    node->lbn, tree->count_total, tree->count_invalid, get_invalid_ratio(tree), i+1, NUMBER_OF_TEST);
+        tree->root = physical_delete_tree_node(tree->root, node);
         tree_node *searched_node = search_tree_node(tree, node->lbn);
 
         if(!searched_node)
         {
-            printf("physical deleting node in tree...(%6d/%6d)\r", i+1, NUMBER_OF_TEST);
         }            
 
         else
@@ -99,17 +109,15 @@ void test_tree_physical_delete(struct tree_root *tree)
     printf("\n---------- physical delete test done ----------\n");
 }
 
-
-
 int main()
 {
     struct tree_root TestTree;
     TestTree.root = NULL;
 
     system("clear");
+
     test_tree_insert(&TestTree);
     test_tree_logical_delete(&TestTree);
-    test_tree_physical_delete(&TestTree);
-
+    test_tree_rebalance(&TestTree);
     return 0;
 }

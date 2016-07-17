@@ -100,7 +100,7 @@ test_append()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        printf("%f\n", durations[i]);
     }
 }
 
@@ -150,7 +150,7 @@ test_random()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        printf("%f\n", durations[i]);
     }
 }
 void
