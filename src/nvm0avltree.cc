@@ -135,9 +135,9 @@ logical_delete_tree_node(
  * Delete tree node object from avl tree 
  * @return tree after deleting the node */
 tree_node*
-delete_tree_node(
-    tree_node* root,
-    tree_node* node)
+physical_delete_tree_node(
+        tree_node* root,
+        tree_node* node)
 {
     if (root == nullptr)
     {
@@ -146,11 +146,11 @@ delete_tree_node(
     
     if (node->lbn < root->lbn)
     {
-        root->left = delete_tree_node(root->left, node);
+        root->left = physical_delete_tree_node(root->left, node);
     }
     else if (node->lbn > root->lbn)
     {
-        root->right = delete_tree_node(root->right, node);
+        root->right = physical_delete_tree_node(root->right, node);
     }
     else
     {
@@ -183,7 +183,7 @@ delete_tree_node(
             root->valid = temp->valid;
             
             // Delete the inorder successor
-            root->right = delete_tree_node(root->right, temp);
+            root->right = physical_delete_tree_node(root->right, temp);
         }
     }
     
@@ -234,8 +234,11 @@ rebalance_tree_node(
     while(tree->count_invalid > 0)
     {
         tree_node *invalid_node = find_invalid_tree_node(tree->root);
-        tree->root = delete_tree_node(tree->root, invalid_node);
+        tree->root = physical_delete_tree_node(tree->root, invalid_node);
+        tree->count_total--;
         tree->count_invalid--;
+        printf("count_total: %5d, count_invalid: %5d, invalid ratio : %.3f%%\r",
+                tree->count_total, tree->count_invalid, get_invalid_ratio(tree) * 100);
     }
 }
 
@@ -244,25 +247,29 @@ find_invalid_tree_node(
     tree_node* node)
 {
     tree_node *local_root = node;
-    
-    while(local_root)
+
+    if(local_root != nullptr)
     {
         if(local_root->valid == TREE_INVALID)
-            break;
+            return local_root;
 
-        else if(local_root->left)
+        else
         {
-            local_root = local_root->left;
-        }
+            tree_node *left, *right;
+            left = find_invalid_tree_node(local_root->left);
+            if(left != nullptr)
+                return local_root = left;
 
-        else if(local_root->right)
-        {
-            local_root = local_root->right;
+            right = find_invalid_tree_node(local_root->right);
+            if(right != nullptr)
+                return local_root = right;
         }
     }
+    
+    return nullptr;
 
-    return local_root;
 }
+
 
 /**
  * Find the minimum key from AVL tree.
@@ -367,3 +374,11 @@ left_rotate(
     // Return new root
     return y;
 }
+
+double
+get_invalid_ratio(
+        tree_root *tree)
+{
+    return (double)tree->count_invalid/(double)tree->count_total; 
+}
+

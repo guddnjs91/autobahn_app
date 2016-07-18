@@ -11,7 +11,7 @@ void nvm_system_close();
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);
 void insert_tree_node(tree_root* tree, tree_node* node);
 tree_node* insert_tree_node(tree_node* root, tree_node* node);
-tree_node* delete_tree_node(tree_root* tree, tree_node* node);
+tree_node* physical_delete_tree_node(tree_node* root, tree_node* node);
 void logical_delete_tree_node(tree_root* tree, tree_node* node);
 void rebalance_tree_node(tree_root* tree);
 tree_node* find_invalid_tree_node(tree_node* node);
