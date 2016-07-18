@@ -1,21 +1,28 @@
 # Main suffixes for auto compile by dependencies
-.SUFFIXES : .cc .o
+#.SUFFIXES : .cc .o
 
 # Compiler and Compile options
-CC = g++
-CFLAGS = -std=c++11 -g -W -Wall
+CXX = g++
 
-#OBJS = ../src/nvm0nvm.o ../src/nvm0lfqueue.o
-#SRCS = ../src/$(OBJS: .o=.cc)
-INCLUDE = ../include/
-LIBNAME = -lpthread
+
+# Pre-defined Macros 
+CPPFLAGS += -I../include
+CXXFLAGS += -std=c++11 -g -W -Wall
+
+CXX_SRCS := $(wildcard ./*cc)         \
+            $(wildcard ../src/*.cc)
+
+OBJS := $(CXX_SRCS:.cc=.o)
+SRCS = ../src/$(OBJS: .o=.cc)
+INCLUDE = ../include
+LIBNAME = -lpthread -lrt
 
 CFLAGS += -I$(INCLUDE)
 
-all: write-test
+all: test
 
-write-test: ./test_all.cc ./test_write.cc ./test.h
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBNAME)
+test: $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBNAME)
 
 clean:
-	rm write-test *.txt
+	rm $(OBJS) test

@@ -20,6 +20,10 @@ pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 
+/* Global pthread flush thread and balloon thread. */
+pthread_t flush_thread;
+pthread_t balloon_thread;
+
 /* System termination variable */
 int sys_terminate; // 1 : terminate yes
 
@@ -103,17 +107,18 @@ nvm_system_init()
         inode_free_lfqueue->enqueue(i);
     }
 
+    printf("Created system latch-free-queue ...\n");
+
     pthread_rwlock_init(&g_balloon_rwlock, NULL);
     pthread_cond_init(&g_balloon_cond, NULL);
     pthread_mutex_init(&g_balloon_mutex, NULL);
 
     //TODO: create  flush thread & balloom thread
     sys_terminate = 0;
-    pthread_t flush_thread;
     pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
-
-    pthread_t balloon_thread;
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
+
+    printf("Created flush thread and balloon thread ...\n");
 }
 
 /**
@@ -123,6 +128,9 @@ nvm_system_close()
 {
     //TODO: terminate flush thread & balloon thread
     sys_terminate = 1;
+    pthread_mutex_lock(&g_balloon_mutex);
+    pthread_cond_signal(&g_balloon_cond);
+    pthread_mutex_unlock(&g_balloon_mutex);
 
     pthread_join(flush_thread, NULL);
     pthread_join(balloon_thread, NULL);
@@ -132,6 +140,12 @@ nvm_system_close()
     delete inode_free_lfqueue;
     delete inode_dirty_lfqueue;
 
+    remove_nvm_in_shm();
+}
+
+void
+nvm_structure_destroy()
+{
     remove_nvm_in_shm();
 }
 

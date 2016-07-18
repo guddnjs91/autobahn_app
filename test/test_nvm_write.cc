@@ -9,35 +9,6 @@
 #include "nvm0common.h"
 #include "test.h"
 
-long long unsigned int filesize;
-int nthread;
-size_t nbytes;
-char* buffer;
-double* durations;
-
-/**
- * Fill in buffer with given size 
- * write each element with random characters */
-void
-fill_buf(
-    char *buf,
-    size_t size)
-{
-    int i;
-    for(i = 0; i < (int)size - 1; i++) {
-        if(rand()%10 == 0) {
-            buf[i] = '\n';
-        }
-        else if(rand()%5 == 0) {
-            buf[i] = ' ';
-        } else {
-            buf[i] = rand() % 26 + 'A';
-        }
-    }
-    
-    buf[size-1] = '\0';
-}
-
 ///////////////////////////////
 //////////APPEND TEST//////////
 ///////////////////////////////
@@ -45,7 +16,7 @@ fill_buf(
 /**
  * Write thread fills in buffer and write it to nvm */
 void
-*thread_write_append(
+*thread_nvm_write_append(
     void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -59,10 +30,12 @@ void
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    return NULL;
 }
 
 void
-test_append()
+test_nvm_write_append()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -71,7 +44,7 @@ test_append()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_nvm_write_append, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
@@ -87,7 +60,7 @@ test_append()
 ///////////////////////////////
 
 void
-*thread_write_random(
+*thread_nvm_write_random(
     void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -102,10 +75,12 @@ void
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    return NULL;
 }
 
 void
-test_random()
+test_nvm_write_random()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -114,7 +89,7 @@ test_random()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_nvm_write_append, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
@@ -142,12 +117,13 @@ test_nvm_write(
     //nvm init
     nvm_structure_build();
     nvm_system_init();
+    print_nvm_info();
 
     //test
     if(type == _WRITE_APPEND_) {
-        test_append();
+        test_nvm_write_append();
     } else if(type == _WRITE_RANDOM_) {
-        test_random();
+        test_nvm_write_random();
     }
     
     //nvm close

@@ -10,49 +10,6 @@
 #include "nvm0common.h"
 #include "test.h"
 
-long long unsigned int filesize;
-int nthread;
-size_t nbytes;
-char* buffer;
-double* durations;
-
-/**
- * Fill in buffer with given size 
- * write each element with random characters */
-void
-fill_buf(
-    char *buf,
-    size_t size)
-{
-    int i;
-    for(i = 0; i < (int)size - 1; i++) {
-        if(rand()%10 == 0) {
-            buf[i] = '\n';
-        }
-        else if(rand()%5 == 0) {
-            buf[i] = ' ';
-        } else {
-            buf[i] = rand() % 26 + 'A';
-        }
-    }
-    
-    buf[size-1] = '\0';
-}
-
-void remove_files(int n)
-{
-    int i;
-    for(i = 1; i <= n; i++)
-    {
-        string filename = "VOL_";
-        filename += to_string(i);
-        filename += ".txt";
-
-        int x = remove(filename.c_str());
-        if(x == -1)
-            printf("remove fail\n");
-    }
-}
 
 ///////////////////////////////
 //////////APPEND TEST//////////
@@ -84,7 +41,7 @@ void
 }
 
 void
-test_append()
+test_write_append()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -134,7 +91,7 @@ void
 }
 
 void
-test_random()
+test_write_random()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -170,8 +127,8 @@ test_write(
 
     //test
     if(type == _WRITE_APPEND_) {
-        test_append();
+        test_write_append();
     } else if(type == _WRITE_RANDOM_) {
-        test_random();
+        test_write_random();
     }
 }

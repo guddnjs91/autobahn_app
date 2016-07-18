@@ -11,11 +11,15 @@ void*
 balloon_thread_func(
     void* data)
 {
+    printf("Balloon thread running.....\n");
+    
     while(sys_terminate == 0)
     {
         nvm_balloon();
     }
 
+    printf("Balloon thread terminated.....\n");
+    
     return NULL;
 }
 
@@ -30,6 +34,11 @@ nvm_balloon(
     pthread_mutex_lock(&g_balloon_mutex);
     pthread_cond_wait(&g_balloon_cond, &g_balloon_mutex);
     pthread_mutex_unlock(&g_balloon_mutex);
+
+    if(sys_terminate)
+    {
+        return ;
+    }
 
     /* Lock write-lock to be mutually exclusive to write threads. */
     pthread_rwlock_wrlock(&g_balloon_rwlock);

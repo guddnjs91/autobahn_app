@@ -40,6 +40,10 @@ extern pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write loc
 extern pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 extern pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 
+/* Global pthread flush thread and balloon thread */
+extern pthread_t flush_thread;
+extern pthread_t balloon_thread;
+
 /* System termination condition variables */
 extern int sys_terminate;
 

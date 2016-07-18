@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <unistd.h>
 #include "nvm0lfqueue.h"
-#include "../util/nvm0lfqueue.cc"
+#include "../src/nvm0lfqueue.cc"
 #include "nvm0avltree.h"
 #include "nvm0volume.h"
 #include "nvm0inode.h"

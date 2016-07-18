@@ -6,6 +6,7 @@ void nvm_structure_build();
 void print_nvm_info();
 void nvm_system_init();
 void nvm_system_close();
+void nvm_structure_destroy();
 
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);

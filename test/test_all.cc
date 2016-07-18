@@ -2,6 +2,12 @@
 #include <stdio.h>
 #include "test.h"
 
+long long unsigned int filesize;
+int nthread;
+size_t nbytes;
+char* buffer;
+double* durations;
+
 void test_write(long long unsigned int, int, size_t, int);
 void test_nvm_write(long long unsigned int, int, size_t, int);
 void remove_files(int);
@@ -31,6 +37,8 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 
 int main()
 {
-    test_write_performance(test_write);
-//    test_write_performance(test_nvm_write);
+//    printf("\n[write test]\n");
+//    test_write_performance(test_write);
+    printf("\n[nvm write test]\n");
+    test_write_performance(test_nvm_write);
 }

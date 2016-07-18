@@ -10,11 +10,15 @@ void*
 flush_thread_func(
     void* data)
 {
+    printf("Flush thread running.....\n");
+    
     while(sys_terminate == 0)
     {
         /* Proactively call nvm_flush(). */
         nvm_flush();
     }
+
+    printf("Flush thread terminated.....\n");
 
     return NULL;
 }
@@ -25,20 +29,25 @@ void
 nvm_flush(
     void)
 {
-        /* Pick dirty inodes in dirty inode LFQ. */
-        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
-        inode_entry* inode = &nvm->inode_table[idx];
-        
-        /* Flushing one data block is locked with inode lock. */
-        pthread_mutex_lock(&inode->lock);
+    if(!inode_dirty_lfqueue->get_size())
+    {
+        return ;
+    }
 
-        /* Write one data block from nvm to disk 
-        and make inode state CLEAN. */
-        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-        inode->state = INODE_STATE_CLEAN;
+    /* Pick dirty inodes in dirty inode LFQ. */
+    inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+    inode_entry* inode = &nvm->inode_table[idx];
+    
+    /* Flushing one data block is locked with inode lock. */
+    pthread_mutex_lock(&inode->lock);
 
-        /* Unlock inode lock. */
-        pthread_mutex_unlock(&inode->lock);
+    /* Write one data block from nvm to disk 
+    and make inode state CLEAN. */
+    write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    inode->state = INODE_STATE_CLEAN;
+
+    /* Unlock inode lock. */
+    pthread_mutex_unlock(&inode->lock);
 }
 
 ///**

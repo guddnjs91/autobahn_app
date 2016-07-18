@@ -31,9 +31,10 @@ nvm_write(
     uint32_t lbn_start   = ofs / BLOCK_SIZE;
     uint32_t lbn_end     = (ofs + len) / BLOCK_SIZE;
     uint32_t offset      = ofs % BLOCK_SIZE;
-    
+    size_t written_bytes = 0;
+
     /* Each loop write one data block to nvm */
-    for(uint32_t lbn = lbn_start; lbn < lbn_end + 1; lbn) {
+    for(uint32_t lbn = lbn_start; lbn < lbn_end + 1; lbn++) {
         
         /* Writing one data block to nvm is protected to
         global balloon_thread by read-lock. */
@@ -108,10 +109,13 @@ nvm_write(
         /* Re-inintialize offset and len*/
         offset = 0;
         len -= write_bytes;
+        written_bytes += write_bytes;
 
         /* Unlock read-lock */
         pthread_rwlock_unlock(&g_balloon_rwlock);
     }
+
+    return written_bytes;
 }
 
 /**
