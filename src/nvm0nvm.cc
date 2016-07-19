@@ -26,7 +26,7 @@ pthread_t flush_thread;
 pthread_t balloon_thread;
 
 /* System termination variable */
-int sys_terminate; // 1 : terminate yes
+volatile int sys_terminate; // 1 : terminate yes
 
 //private function declaration
 void print_nvm_info();
@@ -148,8 +148,6 @@ nvm_system_close()
     delete volume_inuse_lfqueue;
     delete inode_free_lfqueue;
     delete inode_dirty_lfqueue;
-
-    remove_nvm_in_shm();
 }
 
 void

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <time.h>
+#include <sys/time.h>
+#include <errno.h>
 #include <stack>
 #include "nvm0common.h"
 
@@ -30,9 +33,16 @@ void
 nvm_balloon(
     void)
 {
+    int rc;
+    struct timeval now;
+    struct timespec timeout;
+    gettimeofday(&now, NULL);
+    timeout.tv_sec = now.tv_sec + 10;
+    timeout.tv_nsec = now.tv_usec * 1000;
+
     /* Wait signal from nvm_write() function. */
     pthread_mutex_lock(&g_balloon_mutex);
-    pthread_cond_wait(&g_balloon_cond, &g_balloon_mutex);
+    rc = pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
     pthread_mutex_unlock(&g_balloon_mutex);
 
     if(sys_terminate)
@@ -42,6 +52,23 @@ nvm_balloon(
 
     /* Lock write-lock to be mutually exclusive to write threads. */
     pthread_rwlock_wrlock(&g_balloon_rwlock);
+
+    switch(rc)
+    {
+        case 0:
+        printf("\nballoon thread wakes up by write thread\n");
+        break;
+        
+        case ETIMEDOUT:
+        printf("\nballoon thread periodically wakes up \n");
+        break;
+
+        default:
+        printf("\nsystem signaled balloon thread to wake up\n");
+        break;
+    }
+
+    printf("ballooning...\n");
 
     /* Traverse volume table that each entry has one tree structure. */
     for(volume_idx_t v = 0;
@@ -67,6 +94,8 @@ nvm_balloon(
                 /* Reclaim to free inode LFQ. */
                 inode_idx_t idx = (inode_idx_t)(tnode->inode - nvm->inode_table);
                 inode_free_lfqueue->enqueue(idx);
+
+                printf("reclaimed inode entry [%u]\r", idx);
             }
 
             if(tnode->right != nullptr)
@@ -79,7 +108,6 @@ nvm_balloon(
             }
         }
     }
-
 
     /* Unlock write-lock. */
     pthread_rwlock_unlock(&g_balloon_rwlock);

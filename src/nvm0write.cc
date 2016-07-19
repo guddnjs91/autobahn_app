@@ -58,13 +58,18 @@ nvm_write(
             wake up balloon thread for reclaiming inodes */
             if(inode_free_lfqueue->get_size() < 0.1 * nvm->max_inode_entry)
             {
-                if(inode_free_lfqueue->get_size() == 0)
-                {
-                    // avoid deadlock here
-                }
                 pthread_mutex_lock(&g_balloon_mutex);
                 pthread_cond_signal(&g_balloon_cond);
                 pthread_mutex_unlock(&g_balloon_mutex);
+                
+//                if(inode_free_lfqueue->get_size() == 0)
+//                {
+                    // possible deadlock might happens here
+//                    printf("DEAD LOCK HERE !!\n");
+                    pthread_rwlock_unlock(&g_balloon_rwlock);
+                    lbn--;
+                    continue;
+//                }
             }
 
             /* Get inode from inode_free_lfqueue. */

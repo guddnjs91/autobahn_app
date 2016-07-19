@@ -45,6 +45,6 @@ extern pthread_t flush_thread;
 extern pthread_t balloon_thread;
 
 /* System termination condition variables */
-extern int sys_terminate;
+extern volatile int sys_terminate;
 
 #endif

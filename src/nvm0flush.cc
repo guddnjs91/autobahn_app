@@ -29,10 +29,11 @@ void
 nvm_flush(
     void)
 {
-    if(!inode_dirty_lfqueue->get_size())
-    {
-        return ;
-    }
+//    if(!inode_dirty_lfqueue->get_size())
+//    {
+//        printf("nothing to flush ...\r");
+//        return ;
+//    }
 
     /* Pick dirty inodes in dirty inode LFQ. */
     inode_idx_t idx = inode_dirty_lfqueue->dequeue();
@@ -44,35 +45,9 @@ nvm_flush(
     /* Write one data block from nvm to disk 
     and make inode state CLEAN. */
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    printf("%u Bytes Data flushed to VOL_%u.txt from inode_entry[%u]\r", nvm->block_size, inode->volume->vid, idx);
     inode->state = INODE_STATE_CLEAN;
 
     /* Unlock inode lock. */
     pthread_mutex_unlock(&inode->lock);
 }
-
-///**
-// * Reclaim thread function.
-// * When threads are waken up, get the number of inodes which are
-// * in synced_inode_lfqueue, and reclaim those inodes. */
-//void*
-//reclaim_thread_func(
-//    void* data)
-//{
-//    /**
-//     * Policy : Wakes up and get the number of inodes for reclamation, 
-//     * reclaim them and sleeps again. */
-//     while(1) {
-//         pthread_mutex_lock(&reclaim_lock);
-//         pthread_cond_wait(&reclaim_cond, &reclaim_lock); // wait
-//         /* When wake up */
-//         uint32_t size = INODE_SYNCED_LFQUEUE->get_size(); // get size
-//         while(size) {
-//             NVM_inode* inode = INODE_SYNCED_LFQUEUE->dequeue(); // get synced inode
-//             inode->vte = delete_nvm_inode(inode->vte, inode); // delete from AVL tree
-//             inode->state = INODE_STATE_FREE; // change state
-//             INODE_FREE_LFQUEUE->enqueue(inode); // enqueue inode to free-inode-lfqueue.
-//             size = size - 1;
-//         }
-//         pthread_mutex_unlock(&reclaim_lock);
-//     }
-//}
