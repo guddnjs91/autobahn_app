@@ -19,7 +19,7 @@ size_t
 nvm_write(
     uint32_t vid,       /* !<in: volume ID */
     off_t    ofs,       /* !<in: volume offset */ 
-    const void* ptr,    /* !<in: buffer */
+    const char* ptr,    /* !<in: buffer */
     size_t   len)       /* !<in: size of buffer to be written */
 {
     /* Get the volume entry index from the nvm volume table.
@@ -28,9 +28,9 @@ nvm_write(
     volume_entry* ve = &nvm->volume_table[v_idx];
 
     /* Calculate how many blocks needed for writing */
-    uint32_t lbn_start   = ofs / BLOCK_SIZE;
-    uint32_t lbn_end     = (ofs + len) / BLOCK_SIZE;
-    uint32_t offset      = ofs % BLOCK_SIZE;
+    uint32_t lbn_start   = ofs / nvm->block_size;
+    uint32_t lbn_end     = (ofs + len) / nvm->block_size;
+    uint32_t offset      = ofs % nvm->block_size;
     size_t written_bytes = 0;
 
     /* Each loop write one data block to nvm */
@@ -40,9 +40,9 @@ nvm_write(
         global balloon_thread by read-lock. */
         pthread_rwlock_rdlock(&g_balloon_rwlock);
 
-        /* If the ratio of invalid tree node are below 70 %,
+        /* If the ratio of invalid tree node are over 70 %,
         rebalance the whole tree before writing. */
-        if(get_invalid_ratio(ve->tree) < 70)
+        if(get_invalid_ratio(ve->tree) > 70)
         {
             rebalance_tree_node(ve->tree);
         }
@@ -70,6 +70,7 @@ nvm_write(
             /* Get inode from inode_free_lfqueue. */
             inode_idx_t idx = alloc_inode_entry_idx(lbn);
             inode_entry* inode = &nvm->inode_table[idx];
+            inode->volume = ve;
 
             if(tnode == nullptr)
             {
@@ -94,7 +95,7 @@ nvm_write(
         char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
         memcpy(data_dst, ptr, write_bytes);
         // need cache line write guarantee
-        printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
+        //printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
 
         /* Change the state of inode to DIRTY */
         tnode->inode->state = INODE_STATE_DIRTY;
@@ -251,7 +252,7 @@ const char*
 get_filename(
     uint32_t vid) /* !<in: vid representing its own filename */
 {
-    std::string filename = "VOL";
+    std::string filename = "VOL_";
     filename += std::to_string(vid);
     filename += ".txt";
 

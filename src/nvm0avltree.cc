@@ -379,6 +379,8 @@ double
 get_invalid_ratio(
         tree_root *tree)
 {
+    if(tree->count_total == 0)
+        return 0;
     return (double)tree->count_invalid/(double)tree->count_total; 
 }
 
