@@ -117,7 +117,7 @@ test_nvm_write(
     //nvm init
     nvm_structure_build();
     nvm_system_init();
-    print_nvm_info();
+//    print_nvm_info();
 
     //test
     if(type == _WRITE_APPEND_) {

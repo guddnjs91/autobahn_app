@@ -97,12 +97,15 @@ nvm_write(
         // need cache line write guarantee
         //printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
 
-        /* Change the state of inode to DIRTY */
-        tnode->inode->state = INODE_STATE_DIRTY;
-        
-        /* Insert written inode to dirty_inode_lfqueue.
-        Enqueud inode would be flushed by flush_thread at certain time. */
-        inode_dirty_lfqueue->enqueue(idx);
+        if(tnode->inode->state != INODE_STATE_DIRTY)
+        {
+            /* Change the state of inode to DIRTY */
+            tnode->inode->state = INODE_STATE_DIRTY;
+            
+            /* Insert written inode to dirty_inode_lfqueue.
+            Enqueud inode would be flushed by flush_thread at certain time. */
+            inode_dirty_lfqueue->enqueue(idx);
+        }
 
         /* Unlock inode lock */
         pthread_mutex_unlock(&tnode->inode->lock);

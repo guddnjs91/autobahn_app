@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -134,6 +135,14 @@ nvm_system_close()
 
     pthread_join(flush_thread, NULL);
     pthread_join(balloon_thread, NULL);
+
+    while(volume_inuse_lfqueue->get_size() != 0)
+    {
+        volume_idx_t v = volume_inuse_lfqueue->dequeue();
+        volume_entry* ve = &nvm->volume_table[v];
+
+        close(ve->fd);
+    }
 
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;

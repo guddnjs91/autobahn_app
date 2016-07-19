@@ -27,7 +27,7 @@ test: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(BIN)$@ $^ $(LIBNAME)
 
 clean:
-	rm $(BIN)test $(OBJS) *.txt
+	rm $(BIN)test $(OBJS) *.txt *.swp
 
 ##.SUFFIXES : .cc .o
 #CXX = g++
