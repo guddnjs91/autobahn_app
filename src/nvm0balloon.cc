@@ -20,8 +20,6 @@ balloon_thread_func(
     {
         nvm_balloon();
     }
-
-    printf("Balloon thread terminated.....\n");
     
     return NULL;
 }
@@ -56,19 +54,17 @@ nvm_balloon(
     switch(rc)
     {
         case 0:
-        printf("\nballoon thread wakes up by write thread\n");
+        printf("\nballoon thread wakes up by write thread ...\n");
         break;
         
         case ETIMEDOUT:
-        printf("\nballoon thread periodically wakes up \n");
+        printf("\nballoon thread periodically wakes up ...\n");
         break;
 
         default:
-        printf("\nsystem signaled balloon thread to wake up\n");
+        printf("\nsystem signaled balloon thread to wake up ...\n");
         break;
     }
-
-    printf("ballooning...\n");
 
     /* Traverse volume table that each entry has one tree structure. */
     for(volume_idx_t v = 0;
@@ -92,10 +88,10 @@ nvm_balloon(
                 tree->count_invalid++;
 
                 /* Reclaim to free inode LFQ. */
-                inode_idx_t idx = (inode_idx_t)(tnode->inode - nvm->inode_table);
+                inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table) / sizeof(inode_entry);
                 inode_free_lfqueue->enqueue(idx);
 
-                printf("reclaimed inode entry [%u]\r", idx);
+//                printf("reclaimed nvm->inode_table[%u]\n", idx);
             }
 
             if(tnode->right != nullptr)

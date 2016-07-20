@@ -22,7 +22,6 @@ struct inode_entry {
 };
 
 extern lfqueue<inode_idx_t>* inode_free_lfqueue;
-extern lfqueue<inode_idx_t>* inode_inuse_lfqueue;
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 
 #endif

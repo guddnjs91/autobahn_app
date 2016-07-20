@@ -42,8 +42,9 @@ nvm_write(
 
         /* If the ratio of invalid tree node are over 70 %,
         rebalance the whole tree before writing. */
-        if(get_invalid_ratio(ve->tree) > 70)
+        if(get_invalid_ratio(ve->tree) > 0.7)
         {
+            printf("volume tree %u rebalancing ...\n", ve->vid);
             rebalance_tree_node(ve->tree);
         }
 
@@ -95,15 +96,15 @@ nvm_write(
         pthread_mutex_lock(&tnode->inode->lock);
 
         /* Write out one data block to the NVM */
-        uint32_t write_bytes = (len > BLOCK_SIZE - offset) ? (BLOCK_SIZE - offset) : len;
-        inode_idx_t idx = (inode_idx_t)(tnode->inode - nvm->inode_table);
+        uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
+        inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
         char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
         memcpy(data_dst, ptr, write_bytes);
         // need cache line write guarantee
-        //printf("Data Written %d Bytes to %p\n", write_bytes, data_dst);
 
         if(tnode->inode->state != INODE_STATE_DIRTY)
         {
+
             /* Change the state of inode to DIRTY */
             tnode->inode->state = INODE_STATE_DIRTY;
             

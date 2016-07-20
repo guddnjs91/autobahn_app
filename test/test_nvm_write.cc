@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -71,7 +72,7 @@ void
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
-        nvm_write(tid, (off_t) rand() , buffer, nbytes);
+        nvm_write(tid, (off_t) rand() % (filesize / nthread - nbytes) , buffer, nbytes);
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -89,7 +90,7 @@ test_nvm_write_random()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_nvm_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_nvm_write_random, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
@@ -117,7 +118,7 @@ test_nvm_write(
     //nvm init
     nvm_structure_build();
     nvm_system_init();
-    print_nvm_info();
+//    print_nvm_info();
 
     //test
     if(type == _WRITE_APPEND_) {
@@ -125,7 +126,7 @@ test_nvm_write(
     } else if(type == _WRITE_RANDOM_) {
         test_nvm_write_random();
     }
-    
+
     //nvm close
     nvm_system_close();
     nvm_structure_destroy();

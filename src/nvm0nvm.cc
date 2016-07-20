@@ -13,7 +13,6 @@ struct nvm_metadata* nvm;
 lfqueue<volume_idx_t>* volume_free_lfqueue;
 lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_free_lfqueue;
-lfqueue<inode_idx_t>* inode_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 
 /* Global pthread variables for ballooning */
@@ -101,7 +100,6 @@ nvm_system_init()
     }
 
     inode_free_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-    inode_inuse_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++)
     {
@@ -136,6 +134,16 @@ nvm_system_close()
     pthread_join(flush_thread, NULL);
     pthread_join(balloon_thread, NULL);
 
+    printf("Terminated flush thread and balloon thread ...\n");
+
+    while(inode_dirty_lfqueue->get_size() != 0)
+    {
+        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+        inode_entry* inode = &nvm->inode_table[idx];
+
+        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    }
+
     while(volume_inuse_lfqueue->get_size() != 0)
     {
         volume_idx_t v = volume_inuse_lfqueue->dequeue();
@@ -143,6 +151,7 @@ nvm_system_close()
 
         close(ve->fd);
     }
+
 
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
@@ -170,22 +179,20 @@ print_nvm_info()
     printf("Data Block Size   : %d\n", (int) nvm->block_size);
     printf("Max Inode Entry   : %u\n", nvm->max_inode_entry);
     printf("\n");
-    printf("SHM Start Address : %p\n", nvm);
-    //printf("Volume Table Addr : %p\n", nvm->volume_table);
-    //printf("Inode Table Addr  : %p\n", nvm->inode_table);
-    //printf("Data Block Table  : %p\n", nvm->datablock_table);
-    //printf("\n");
-    printf("NVM Start Address : 0\n");
-    printf("Volume Table Addr : %llu\n", 
-            (long long unsigned int) nvm->volume_table - (long long unsigned int) nvm);
+    printf("NVM Start Address : %p\n", nvm);
+    printf("Volume Table Addr : %p\n", nvm->volume_table);
     printf("Volume Table Size : %u\n", (unsigned int) sizeof(struct volume_entry) * nvm->max_volume_entry);
-    printf("Inode Table Addr  : %llu\n", 
-            (long long unsigned int) nvm->inode_table - (long long unsigned int) nvm);
+    printf("Inode Table Addr  : %p\n", nvm->inode_table);
     printf("Inode Table Size  : %u\n", (unsigned int) sizeof(struct inode_entry) * nvm->max_inode_entry);
-    printf("Data Block Table  : %llu\n", 
-            (long long unsigned int) nvm->datablock_table - (long long unsigned int) nvm);
+    printf("Data Block Table  : %p\n", nvm->datablock_table);
     printf("Block Table Size  : %llu\n", (long long unsigned int) nvm->block_size * 
                                          (long long unsigned int) nvm->max_inode_entry);
+//    printf("Volume Table Addr : %llu\n", 
+//            (long long unsigned int) nvm->volume_table - (long long unsigned int) nvm);
+//    printf("Inode Table Addr  : %llu\n", 
+//            (long long unsigned int) nvm->inode_table - (long long unsigned int) nvm);
+//    printf("Data Block Table  : %llu\n", 
+//            (long long unsigned int) nvm->datablock_table - (long long unsigned int) nvm);
     printf("====================NVM Information====================\n");
 }
 

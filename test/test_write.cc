@@ -27,10 +27,11 @@ void
 
     clock_t start = clock();
 
-    int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open( ("GVOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
     for(i = 0; i < n; i++) {
         write(fd, buffer, nbytes);
+        //printf("thread %u writes %u Bytes to VOL_%u.txt\r", tid, nbytes, tid);
     }
 
     close(fd);
@@ -57,7 +58,7 @@ test_write_append()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("%f\n", durations[i]);
+        printf("file %d took %f seconds\n", i+1, durations[i]);
     }
 }
 
@@ -75,12 +76,13 @@ void
 
     clock_t start = clock();
 
-    int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open(("GVOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
-        lseek(fd, (off_t) rand(), SEEK_SET);
-        write(tid, buffer, nbytes);
+        lseek(fd, (off_t) rand() % (filesize / nthread - nbytes), SEEK_SET);
+        write(fd, buffer, nbytes);
+        //printf("thread %u writes %u Bytes to VOL_%u.txt\r", tid, nbytes, tid);
     }
 
     close(fd);
@@ -100,14 +102,14 @@ test_write_random()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_write_random, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 
     for(i=0; i<nthread; i++) {
-        printf("%f\n", durations[i]);
+        printf("file %d took %f seconds\n", i+1, durations[i]);
     }
 }
 void

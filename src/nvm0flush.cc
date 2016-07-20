@@ -18,8 +18,6 @@ flush_thread_func(
         nvm_flush();
     }
 
-    printf("Flush thread terminated.....\n");
-
     return NULL;
 }
 
@@ -29,12 +27,6 @@ void
 nvm_flush(
     void)
 {
-//    if(!inode_dirty_lfqueue->get_size())
-//    {
-//        printf("nothing to flush ...\r");
-//        return ;
-//    }
-
     /* Pick dirty inodes in dirty inode LFQ. */
     inode_idx_t idx = inode_dirty_lfqueue->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
@@ -45,7 +37,7 @@ nvm_flush(
     /* Write one data block from nvm to disk 
     and make inode state CLEAN. */
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-    printf("%u Bytes Data flushed to VOL_%u.txt from inode_entry[%u]\r", nvm->block_size, inode->volume->vid, idx);
+//    printf("%u Bytes Data flushed to VOL_%u.txt from nvm->inode_table[%u]\n", nvm->block_size, inode->volume->vid, idx);
     inode->state = INODE_STATE_CLEAN;
 
     /* Unlock inode lock. */
