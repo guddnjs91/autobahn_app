@@ -27,11 +27,11 @@ void
 
     clock_t start = clock();
 
-    int fd = open( ("GVOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+
 
     for(i = 0; i < n; i++) {
         write(fd, buffer, nbytes);
-        //printf("thread %u writes %u Bytes to VOL_%u.txt\r", tid, nbytes, tid);
     }
 
     close(fd);
@@ -49,6 +49,8 @@ test_write_append()
     int tid[nthread];
     int i;
 
+    printf("%u * Thread writes %u Bytes * %llu to each VOL_X.txt\n", nthread, nbytes,filesize / nthread / nbytes);
+    
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
@@ -76,13 +78,14 @@ void
 
     clock_t start = clock();
 
-    int fd = open(("GVOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
-        lseek(fd, (off_t) rand() % (filesize / nthread - nbytes), SEEK_SET);
+        off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
+        lseek(fd, rand_pos, SEEK_SET);
         write(fd, buffer, nbytes);
-        //printf("thread %u writes %u Bytes to VOL_%u.txt\r", tid, nbytes, tid);
+        //printf("thread %u writes %u Bytes to VOL_%u.txt : %llu / %llu\r", tid, nbytes, tid, i, n);
     }
 
     close(fd);
@@ -133,4 +136,6 @@ test_write(
     } else if(type == _WRITE_RANDOM_) {
         test_write_random();
     }
+
+    free(buffer);
 }

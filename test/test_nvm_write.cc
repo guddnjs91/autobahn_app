@@ -25,8 +25,14 @@ void
     uint32_t tid = *((uint32_t *)data);
 
     clock_t start = clock();
+    
+//    printf("Thread %u writes %u Bytes * %llu to VOL_%u.txt\n", tid, nbytes, n, tid);
 
     for(i = 0; i < n; i++) {
+//        if(i == n-1)
+//        {
+//            printf("Here\n");
+//        }
         nvm_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
     }
 
@@ -72,7 +78,8 @@ void
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
-        nvm_write(tid, (off_t) rand() % (filesize / nthread - nbytes) , buffer, nbytes);
+        off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
+        nvm_write(tid, rand_pos , buffer, nbytes);
     }
 
     durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -130,4 +137,6 @@ test_nvm_write(
     //nvm close
     nvm_system_close();
     nvm_structure_destroy();
+
+    free(buffer);
 }

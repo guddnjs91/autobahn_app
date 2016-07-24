@@ -11,12 +11,15 @@ flush_thread_func(
     void* data)
 {
     printf("Flush thread running.....\n");
-    
+
     while(sys_terminate == 0)
     {
         /* Proactively call nvm_flush(). */
         nvm_flush();
+        //pthread_testcancel();
     }
+    
+    printf("Flush thread termintated.....\n");
 
     return NULL;
 }
@@ -36,8 +39,10 @@ nvm_flush(
 
     /* Write one data block from nvm to disk 
     and make inode state CLEAN. */
+    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+//    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-//    printf("%u Bytes Data flushed to VOL_%u.txt from nvm->inode_table[%u]\n", nvm->block_size, inode->volume->vid, idx);
+//    printf("%u Bytes Data flushed from nvm->inode_table[%u] ", nvm->block_size, idx);
     inode->state = INODE_STATE_CLEAN;
 
     /* Unlock inode lock. */

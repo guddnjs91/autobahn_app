@@ -21,6 +21,8 @@ balloon_thread_func(
         nvm_balloon();
     }
     
+    printf("Balloon thread terminated.....\n");
+    
     return NULL;
 }
 
@@ -90,7 +92,7 @@ nvm_balloon(
                 /* Reclaim to free inode LFQ. */
                 inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table) / sizeof(inode_entry);
                 inode_free_lfqueue->enqueue(idx);
-
+                tnode->inode->state = INODE_STATE_FREE;
 //                printf("reclaimed nvm->inode_table[%u]\n", idx);
             }
 

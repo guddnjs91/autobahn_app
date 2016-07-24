@@ -30,6 +30,10 @@ nvm_write(
     /* Calculate how many blocks needed for writing */
     uint32_t lbn_start   = ofs / nvm->block_size;
     uint32_t lbn_end     = (ofs + len) / nvm->block_size;
+    if((ofs + len) % nvm->block_size == 0)
+    {
+        lbn_end--; // To avoid dummy data block write
+    }
     uint32_t offset      = ofs % nvm->block_size;
     size_t written_bytes = 0;
 
@@ -59,6 +63,8 @@ nvm_write(
             wake up balloon thread for reclaiming inodes */
             if(inode_free_lfqueue->get_size() < 0.1 * nvm->max_inode_entry)
             {
+                    pthread_rwlock_unlock(&g_balloon_rwlock);
+                    lbn--;
                 pthread_mutex_lock(&g_balloon_mutex);
                 pthread_cond_signal(&g_balloon_cond);
                 pthread_mutex_unlock(&g_balloon_mutex);
@@ -67,8 +73,6 @@ nvm_write(
 //                {
                     // possible deadlock might happens here
 //                    printf("DEAD LOCK HERE !!\n");
-                    pthread_rwlock_unlock(&g_balloon_rwlock);
-                    lbn--;
                     continue;
 //                }
             }
@@ -189,12 +193,12 @@ alloc_volume_entry_idx(
      * Give ve its vid, fd from opening the file.
      * Initialize root NULL which would contain
      * the logical blocks of inodes for its volume(file) */
-    nvm->volume_table[idx].vid = vid;
     nvm->volume_table[idx].fd = open(get_filename(vid), O_RDWR| O_CREAT, 0644);
     nvm->volume_table[idx].tree = (struct tree_root*)malloc(sizeof(struct tree_root));
     nvm->volume_table[idx].tree->root = nullptr;
     nvm->volume_table[idx].tree->count_total = 0;
     nvm->volume_table[idx].tree->count_invalid = 0;
+    nvm->volume_table[idx].vid = vid;
 
     return idx;
 }

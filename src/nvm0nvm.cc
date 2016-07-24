@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <signal.h>
 #include <stdlib.h>
 #include "nvm0common.h"
 #include <pthread.h>
@@ -114,6 +115,7 @@ nvm_system_init()
 
     //TODO: create  flush thread & balloom thread
     sys_terminate = 0;
+    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
 
@@ -130,18 +132,39 @@ nvm_system_close()
     pthread_mutex_lock(&g_balloon_mutex);
     pthread_cond_signal(&g_balloon_cond);
     pthread_mutex_unlock(&g_balloon_mutex);
-
+    
+    /* For the busy-waiting flush thread. */
+    if(inode_dirty_lfqueue->get_size() == 0)
+    {
+        //printf("flush thread must be canceled\n");
+        //pthread_cancel(flush_thread);
+        
+        /* Select one CLEAN inode and add to dirty inode LFQ. (Not a good solution) */
+        for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++)
+        {
+            inode_entry* inode = &nvm->inode_table[idx];
+            if(inode->state == INODE_STATE_CLEAN)
+            {
+                inode_dirty_lfqueue->enqueue(idx);
+                break;
+            }
+        }
+    }
+        
     pthread_join(flush_thread, NULL);
     pthread_join(balloon_thread, NULL);
-
-    printf("Terminated flush thread and balloon thread ...\n");
 
     while(inode_dirty_lfqueue->get_size() != 0)
     {
         inode_idx_t idx = inode_dirty_lfqueue->dequeue();
         inode_entry* inode = &nvm->inode_table[idx];
 
-        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+//        printf("dirty inode LFQ cleaning\n");
+    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+//    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
+    write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+//    printf("%u Bytes Data flushed from nvm->inode_table[%u]\n", nvm->block_size, idx);
+    inode->state = INODE_STATE_CLEAN;
     }
 
     while(volume_inuse_lfqueue->get_size() != 0)

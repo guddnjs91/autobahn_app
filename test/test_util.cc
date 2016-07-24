@@ -13,17 +13,18 @@ fill_buf(char *buf, size_t size)
     int i;
 
     for(i = 0; i < (int)size - 1; i++) {
-        if(rand()%10 == 0) {
-            buf[i] = '\n';
-        }
-        else if(rand()%5 == 0) {
+//       if(rand()%10 == 0) {
+//            buf[i] = '\n';
+//        }
+//       else if(rand()%5 == 0) {
+       if(rand()%5 == 0) {
             buf[i] = ' ';
         } else {
             buf[i] = rand() % 26 + 'A';
         }
     }
     
-    buf[size-1] = '\0';
+    buf[size-1] = '\n';
 }
 
 void remove_files(int n)
@@ -37,6 +38,6 @@ void remove_files(int n)
 
         int x = remove(filename.c_str());
         if(x == -1)
-            printf("remove fail\n");
+            printf("%s file remove fail\n", filename.c_str());
     }
 }
