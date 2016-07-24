@@ -17,6 +17,8 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 {
     int nthread;
 
+    system("clear");
+ 
     /* write (WRITE_BYTES1) bytes at a time */
     for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
         printf("#-------- %d threads APPEND TEST -------\n", nthread);
