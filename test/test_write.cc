@@ -48,6 +48,7 @@ test_write_append()
     pthread_t write_thread[nthread];
     int tid[nthread];
     int i;
+    double averageDuration = 0.0;
 
     printf("%u * Thread writes %u Bytes * %llu to each VOL_X.txt\n", nthread, nbytes,filesize / nthread / nbytes);
     
@@ -60,8 +61,12 @@ test_write_append()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        averageDuration += durations[i];
     }
+
+    averageDuration /= nthread;
+
+    printf("average duration of %d thread : %f sec\n",nthread, averageDuration);
 }
 
 ///////////////////////////////
@@ -102,6 +107,7 @@ test_write_random()
     pthread_t write_thread[nthread];
     int tid[nthread];
     int i;
+    double averageDuration = 0.0;
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
@@ -112,9 +118,14 @@ test_write_random()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        averageDuration += durations[i];
     }
+
+    averageDuration /= nthread;
+
+    printf("average duration of %d thread : %f sec\n",nthread, averageDuration);
 }
+
 void
 test_write(
     long long unsigned int file_size,

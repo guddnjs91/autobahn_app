@@ -48,6 +48,7 @@ test_nvm_write_append()
     pthread_t write_thread[nthread];
     int tid[nthread];
     int i;
+    double averageDuration = 0.0;
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
@@ -58,8 +59,12 @@ test_nvm_write_append()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        averageDuration += durations[i];
     }
+
+    averageDuration /= nthread;
+
+    printf("average duration of %d thread : %f sec\n",nthread, averageDuration);
 }
 
 ///////////////////////////////
@@ -94,6 +99,7 @@ test_nvm_write_random()
     pthread_t write_thread[nthread];
     int tid[nthread];
     int i;
+    double averageDuration = 0.0;
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
@@ -104,8 +110,12 @@ test_nvm_write_random()
     }
 
     for(i=0; i<nthread; i++) {
-        printf("file %d took %f seconds\n", i+1, durations[i]);
+        averageDuration += durations[i];
     }
+
+    averageDuration /= nthread;
+
+    printf("average duration of %d thread : %f sec\n", nthread, averageDuration);
 }
 void
 test_nvm_write(

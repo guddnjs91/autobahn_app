@@ -237,8 +237,6 @@ rebalance_tree_node(
         tree->root = physical_delete_tree_node(tree->root, invalid_node);
         tree->count_total--;
         tree->count_invalid--;
-//        printf("count_total: %5d, count_invalid: %5d, invalid ratio : %.3f%%\r",
-//                tree->count_total, tree->count_invalid, get_invalid_ratio(tree) * 100);
     }
 }
 

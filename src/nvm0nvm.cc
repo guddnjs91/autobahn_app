@@ -8,6 +8,7 @@
 #include <pthread.h>
 
 #define SHM_KEY 1234
+void *shm_addr;
 
 // Declarations of global variables
 struct nvm_metadata* nvm;
@@ -223,7 +224,7 @@ struct nvm_metadata*
 create_nvm_in_shm()
 {
     int shm_id;
-    void* shm_addr;
+    struct shmid_ds shm_info;
 
     printf("Creating NVM in DRAM (shared memory)...\n");
 
@@ -246,7 +247,7 @@ create_nvm_in_shm()
 void remove_nvm_in_shm()
 {
     int     shm_id;
-    void    *shared_memory = (void *)0;
+    struct  shmid_ds shm_info;
 
     printf("Removing NVM from DRAM (shared memory)...\n");
 
@@ -258,15 +259,8 @@ void remove_nvm_in_shm()
         exit(0);
     }
 
-    // Attach Shared Memory to the Process.
-    shared_memory = shmat(shm_id, (void *)0, 0);
-    if(shared_memory == (void *)-1) {
-        perror("shmat failed : ");
-        exit(0);
-    }
-
     // Detach Shared Memory
-    if(shmdt(shared_memory) == -1) {
+    if(shmdt(shm_addr) == -1) {
         perror("shmdt failed : ");
         exit(0);
     }
