@@ -93,6 +93,7 @@ nvm_write(
                 /* Reassign inode and make tree node valid */
                 tnode->inode = inode;
                 tnode->valid = TREE_VALID;
+                ve->tree->count_invalid--;
             }
         }
 

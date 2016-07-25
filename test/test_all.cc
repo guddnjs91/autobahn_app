@@ -41,9 +41,10 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 
 int main()
 {
-    printf("\n[write test]\n");
-    test_write_performance(test_write);
-    remove_files(MAX_THREADS);
+//    printf("\n[write test]\n");
+//    test_write_performance(test_write);
+//    remove_files(MAX_THREADS);
     printf("\n[nvm write test]\n");
     test_write_performance(test_nvm_write);
+    remove_files(MAX_THREADS);
 }

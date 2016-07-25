@@ -233,10 +233,20 @@ rebalance_tree_node(
 {
     while(tree->count_invalid > 0)
     {
+        printf("total: %d, invalid: %d, ratio: %f\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree));
         tree_node *invalid_node = find_invalid_tree_node(tree->root);
-        tree->root = physical_delete_tree_node(tree->root, invalid_node);
-        tree->count_total--;
-        tree->count_invalid--;
+
+        if (invalid_node) 
+        {
+            tree->root = physical_delete_tree_node(tree->root, invalid_node);
+            tree->count_total--;
+            tree->count_invalid--;
+        }
+        
+        else
+        {
+            break;
+        }
     }
 }
 
