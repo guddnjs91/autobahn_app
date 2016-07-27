@@ -89,5 +89,5 @@ uint32_t lfqueue<T>::get_size()
 {
     uint_fast64_t pc = p_count.load();
     uint_fast64_t cc = c_count.load();
-    return (pc < cc) ? 0 : pc-cc;
+    return ((pc-cc) & (0x0U - (pc >= cc)));
 }
