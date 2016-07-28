@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stack>
 #include "nvm0common.h"
 
 /**
@@ -233,23 +234,44 @@ rebalance_tree_node(
 {
     while(tree->count_invalid > 0)
     {
-        printf("total: %d, invalid: %d, ratio: %f\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree));
+        printf("total: %5d, invalid: %5d, ratio: %3.0f%%\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
         tree_node *invalid_node = find_invalid_tree_node(tree->root);
+        tree->root = physical_delete_tree_node(tree->root, invalid_node);
+        tree->count_total--;
+        tree->count_invalid--;
+    }
 
-        if (invalid_node) 
+    printf("total: %5d, invalid: %5d, ratio: %3.0f%%\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
+    printf("\n");
+}
+
+tree_node*
+find_invalid_tree_node(
+    tree_node* node)
+{
+    std::stack<tree_node*> tnode_stack;
+    tnode_stack.push(node);
+
+    while (!tnode_stack.empty() && tnode_stack.top() != nullptr) 
+    {
+        tree_node *tnode = tnode_stack.top();
+        tnode_stack.pop();
+
+        if(tnode->valid == TREE_INVALID)
+            return tnode;
+
+        if(tnode->right != nullptr)
         {
-            tree->root = physical_delete_tree_node(tree->root, invalid_node);
-            tree->count_total--;
-            tree->count_invalid--;
+            tnode_stack.push(tnode->right);
         }
-        
-        else
+
+        if(tnode->left != nullptr)
         {
-            break;
+            tnode_stack.push(tnode->left);
         }
     }
 }
-
+/*
 tree_node*
 find_invalid_tree_node(
     tree_node* node)
@@ -277,7 +299,7 @@ find_invalid_tree_node(
     return nullptr;
 
 }
-
+*/
 
 /**
  * Find the minimum key from AVL tree.
