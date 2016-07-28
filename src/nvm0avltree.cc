@@ -271,35 +271,6 @@ find_invalid_tree_node(
         }
     }
 }
-/*
-tree_node*
-find_invalid_tree_node(
-    tree_node* node)
-{
-    tree_node *local_root = node;
-
-    if(local_root != nullptr)
-    {
-        if(local_root->valid == TREE_INVALID)
-            return local_root;
-
-        else
-        {
-            tree_node *left, *right;
-            left = find_invalid_tree_node(local_root->left);
-            if(left != nullptr)
-                return local_root = left;
-
-            right = find_invalid_tree_node(local_root->right);
-            if(right != nullptr)
-                return local_root = right;
-        }
-    }
-    
-    return nullptr;
-
-}
-*/
 
 /**
  * Find the minimum key from AVL tree.
