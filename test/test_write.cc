@@ -10,10 +10,10 @@
 #include "nvm0common.h"
 #include "test.h"
 
-
-///////////////////////////////
-//////////APPEND TEST//////////
-///////////////////////////////
+static double TimeSpecToSeconds(struct timespec* ts)
+{
+    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
+}
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -25,20 +25,23 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    clock_t start = clock();
+    struct timespec start;
+    struct timespec end;
 
     int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-    for(i = 0; i < n; i++) {
+    for(i = 0; i < n; i++)
+    {
         write(fd, buffer, nbytes);
     }
 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
     close(fd);
 
-    durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-
-    return NULL;
+    durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 }
 
 void
@@ -69,10 +72,6 @@ test_write_append()
     printf("average duration of %d thread : %f sec\n",nthread, averageDuration);
 }
 
-///////////////////////////////
-//////////RANDOM TEST//////////
-///////////////////////////////
-
 void
 *thread_write_random(
     void *data)
@@ -81,9 +80,12 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    clock_t start = clock();
+    struct timespec start;
+    struct timespec end;
 
     int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
@@ -93,11 +95,11 @@ void
         //printf("thread %u writes %u Bytes to VOL_%u.txt : %llu / %llu\r", tid, nbytes, tid, i, n);
     }
 
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
     close(fd);
 
-    durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-
-    return NULL;
+    durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 }
 
 void

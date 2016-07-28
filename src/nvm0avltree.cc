@@ -16,17 +16,13 @@ search_tree_node(
     while(local_root != NULL) 
     {
         if(lbn == local_root->lbn)
-        {
             return local_root;
-        }
+
         else if(lbn < local_root->lbn) 
-        {
             local_root = local_root->left;
-        }
+
         else if(lbn > local_root->lbn)
-        {
             local_root = local_root->right;
-        }
     }
 
     return nullptr;
@@ -234,7 +230,7 @@ rebalance_tree_node(
 {
     while(tree->count_invalid > 0)
     {
-        printf("total: %5d, invalid: %5d, ratio: %3.0f%%\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
+        printf("total: %5d, invalid: %5d, ratio: %3.0f%%\r", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
         tree_node *invalid_node = find_invalid_tree_node(tree->root);
         tree->root = physical_delete_tree_node(tree->root, invalid_node);
         tree->count_total--;

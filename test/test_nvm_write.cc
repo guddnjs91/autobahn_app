@@ -10,9 +10,11 @@
 #include "nvm0common.h"
 #include "test.h"
 
-///////////////////////////////
-//////////APPEND TEST//////////
-///////////////////////////////
+
+static double TimeSpecToSeconds(struct timespec* ts)
+{
+    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
+}
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -24,19 +26,18 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    clock_t start = clock();
-    
-//    printf("Thread %u writes %u Bytes * %llu to VOL_%u.txt\n", tid, nbytes, n, tid);
+    struct timespec start;
+    struct timespec end;
 
-    for(i = 0; i < n; i++) {
-//        if(i == n-1)
-//        {
-//            printf("Here\n");
-//        }
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    for(i = 0; i < n; i++)
+    {
         nvm_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
     }
 
-    durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start); 
 
     return NULL;
 }
@@ -67,10 +68,6 @@ test_nvm_write_append()
     printf("average duration of %d thread : %f sec\n",nthread, averageDuration);
 }
 
-///////////////////////////////
-//////////RANDOM TEST//////////
-///////////////////////////////
-
 void
 *thread_nvm_write_random(
     void *data)
@@ -79,7 +76,10 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    clock_t start = clock();
+    struct timespec start;
+    struct timespec end;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
@@ -87,7 +87,8 @@ void
         nvm_write(tid, rand_pos , buffer, nbytes);
     }
 
-    durations[tid-1] = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start); 
 
     return NULL;
 }
