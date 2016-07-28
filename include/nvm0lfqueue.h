@@ -17,14 +17,16 @@ template <typename T>
 class lfqueue
 {
   private:
-    atomic<uint_fast64_t>     p_count;  //global producer count
-    atomic<uint_fast64_t>     c_count;  //global consumer count
+    atomic<uint_fast64_t>   p_count;    //global producer count
+    atomic<uint_fast64_t>   c_count;    //global consumer count
 
-    T*                        values;   //value for each element in a queue
-    atomic<uint_fast64_t>*    c_counts; //c_count for each element in a queue
-    atomic<uint_fast64_t>*    p_counts; //p_count for each element in a queue
+    T*                      values;     //value for each element in a queue
+    atomic<uint_fast64_t>*  c_counts;   //c_count for each element in a queue
+    atomic<uint_fast64_t>*  p_counts;   //p_count for each element in a queue
 
-    uint32_t                  capacity; //capacity of queue
+    uint32_t                capacity;   //capacity of queue
+
+    bool                    is_closed;  //checker for any remaining spinlock to stop when system ends
 
   public:
     lfqueue(const uint32_t capacity);
@@ -33,6 +35,7 @@ class lfqueue
     T dequeue();
     bool is_empty();
     uint32_t get_size();
+    void close();
 };
 
 #endif

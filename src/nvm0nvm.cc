@@ -130,6 +130,7 @@ nvm_system_close()
 {
     //TODO: terminate flush thread & balloon thread
     sys_terminate = 1;
+    inode_dirty_lfqueue->close();
     pthread_mutex_lock(&g_balloon_mutex);
     pthread_cond_signal(&g_balloon_cond);
     pthread_mutex_unlock(&g_balloon_mutex);

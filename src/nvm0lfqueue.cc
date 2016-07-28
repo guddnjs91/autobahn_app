@@ -2,11 +2,15 @@
 #include <cstdint>
 #include "nvm0lfqueue.h"
 
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+
 /**
  * Constructor
  * Takes capacity as an argument and initializes a queue. */
 template <typename T>
 lfqueue<T>::lfqueue(const uint32_t capacity)
+: is_closed(false)
 {
     uint32_t i;
 
@@ -31,6 +35,7 @@ template <typename T>
 lfqueue<T>::~lfqueue()
 {
     delete[] values;
+    delete[] c_counts;
     delete[] p_counts;
 }
 
@@ -45,7 +50,10 @@ void lfqueue<T>::enqueue(const T value)
 
     //waits until the previous value in this element is taken by dequeue
     while ( p_count != c_counts[p_count%capacity].load() ) {
-        //do nothing
+        if(unlikely(is_closed))
+        {
+            return;
+        }
     }
 
     //stores the new value first, and atomically update the pcount of the new element
@@ -64,7 +72,10 @@ T lfqueue<T>::dequeue()
 
     //waits until a new value is added to the (c_count)th element
     while ( c_count != p_counts[c_count%capacity].load() ) {
-        //do nothing
+        if(unlikely(is_closed))
+        {
+            return 0;
+        }
     }
 
     //take out the value and atomically update the ccount and return the value
@@ -90,4 +101,14 @@ uint32_t lfqueue<T>::get_size()
     uint_fast64_t pc = p_count.load();
     uint_fast64_t cc = c_count.load();
     return ((pc-cc) & (0x0U - (pc >= cc)));
+}
+
+/**
+ * 
+ *
+ */
+template <typename T>
+void lfqueue<T>::close()
+{
+    is_closed = true;
 }
