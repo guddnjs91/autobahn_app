@@ -78,7 +78,7 @@ nvm_balloon(
         tnode_stack.push(tree->root);
 
         /* Preorder traverse tree. */
-        while(!tnode_stack.empty())
+        while(!tnode_stack.empty() && tnode_stack.top() != nullptr)
         {
             tree_node* tnode = tnode_stack.top();
             tnode_stack.pop();

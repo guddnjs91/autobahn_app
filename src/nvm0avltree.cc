@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stack>
 #include "nvm0common.h"
 
 /**
@@ -233,51 +234,43 @@ rebalance_tree_node(
 {
     while(tree->count_invalid > 0)
     {
-        printf("total: %d, invalid: %d, ratio: %f\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree));
+        printf("total: %5d, invalid: %5d, ratio: %3.0f%%\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
         tree_node *invalid_node = find_invalid_tree_node(tree->root);
-
-        if (invalid_node) 
-        {
-            tree->root = physical_delete_tree_node(tree->root, invalid_node);
-            tree->count_total--;
-            tree->count_invalid--;
-        }
-        
-        else
-        {
-            break;
-        }
+        tree->root = physical_delete_tree_node(tree->root, invalid_node);
+        tree->count_total--;
+        tree->count_invalid--;
     }
+
+    printf("total: %5d, invalid: %5d, ratio: %3.0f%%\n", tree->count_total, tree->count_invalid, get_invalid_ratio(tree)* 100);
+    printf("\n");
 }
 
 tree_node*
 find_invalid_tree_node(
     tree_node* node)
 {
-    tree_node *local_root = node;
+    std::stack<tree_node*> tnode_stack;
+    tnode_stack.push(node);
 
-    if(local_root != nullptr)
+    while (!tnode_stack.empty() && tnode_stack.top() != nullptr) 
     {
-        if(local_root->valid == TREE_INVALID)
-            return local_root;
+        tree_node *tnode = tnode_stack.top();
+        tnode_stack.pop();
 
-        else
+        if(tnode->valid == TREE_INVALID)
+            return tnode;
+
+        if(tnode->right != nullptr)
         {
-            tree_node *left, *right;
-            left = find_invalid_tree_node(local_root->left);
-            if(left != nullptr)
-                return local_root = left;
+            tnode_stack.push(tnode->right);
+        }
 
-            right = find_invalid_tree_node(local_root->right);
-            if(right != nullptr)
-                return local_root = right;
+        if(tnode->left != nullptr)
+        {
+            tnode_stack.push(tnode->left);
         }
     }
-    
-    return nullptr;
-
 }
-
 
 /**
  * Find the minimum key from AVL tree.
