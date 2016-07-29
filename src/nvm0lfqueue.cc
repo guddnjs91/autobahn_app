@@ -103,10 +103,28 @@ uint32_t lfqueue<T>::get_size()
     return ((pc-cc) & (0x0U - (pc >= cc)));
 }
 
-/**
- * 
- *
- */
+template <typename T>
+void lfqueue<T>::monitor()
+{
+    double fullness = (double)get_size() / (double)capacity * 100;
+
+    for (int i = 0; i < 50; i++) 
+    {
+        if(fullness < 2 * i)
+            std::cout << "-";
+        else
+            std::cout << "|";
+    }
+
+    std::cout << "  " << fullness << "% \r"; 
+}
+
+template <typename T>
+bool lfqueue<T>::isQuiteEmpty()
+{
+    return get_size() <= 1024 ? true : false; 
+}
+
 template <typename T>
 void lfqueue<T>::close()
 {

@@ -14,8 +14,14 @@ flush_thread_func(
 
     while(sys_terminate == 0)
     {
+        if(!inode_dirty_lfqueue->isQuiteEmpty()) 
+        {
+            nvm_flush();
+        } else {
+            sleep(1);
+        }
         /* Proactively call nvm_flush(). */
-        nvm_flush();
+        /* inode_dirty_lfqueue->monitor(); */
         //pthread_testcancel();
     }
     
@@ -42,6 +48,8 @@ nvm_flush(
     lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
 //    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    fsync(inode->volume->fd);
+    fsync(inode->volume->fd);
 //    printf("%u Bytes Data flushed from nvm->inode_table[%u] ", nvm->block_size, idx);
     inode->state = INODE_STATE_CLEAN;
 

@@ -4,6 +4,7 @@
 #ifndef nvm0lfqueue_h
 #define nvm0lfqueue_h
 
+#include <iostream>
 using namespace std;
 
 /**
@@ -35,6 +36,9 @@ class lfqueue
     T dequeue();
     bool is_empty();
     uint32_t get_size();
+    void monitor();
+    bool isQuiteFull();
+    bool isQuiteEmpty();
     void close();
 };
 

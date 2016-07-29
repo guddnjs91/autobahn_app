@@ -46,7 +46,7 @@ nvm_write(
 
         /* If the ratio of invalid tree node are over 70 %,
         rebalance the whole tree before writing. */
-        if(get_invalid_ratio(ve->tree) > 0.7)
+        if(get_invalid_ratio(ve->tree) > 1)
         {
             printf("volume tree %u rebalancing ...\n", ve->vid);
             rebalance_tree_node(ve->tree);
@@ -61,10 +61,10 @@ nvm_write(
         {
             /* If the ration of free inode LFQ is below 10 %, 
             wake up balloon thread for reclaiming inodes */
-            if(inode_free_lfqueue->get_size() < 0.1 * nvm->max_inode_entry)
+            if(inode_free_lfqueue->get_size() < 1000) //0.1 * nvm->max_inode_entry)
             {
-                    pthread_rwlock_unlock(&g_balloon_rwlock);
-                    lbn--;
+                pthread_rwlock_unlock(&g_balloon_rwlock);
+                lbn--;
                 pthread_mutex_lock(&g_balloon_mutex);
                 pthread_cond_signal(&g_balloon_cond);
                 pthread_mutex_unlock(&g_balloon_mutex);

@@ -35,6 +35,8 @@ void
     for(i = 0; i < n; i++)
     {
         write(fd, buffer, nbytes);
+        fsync(fd);
+        fsync(fd);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
