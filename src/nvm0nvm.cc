@@ -21,6 +21,8 @@ lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
+pthread_cond_t       g_flush_cond;     
+pthread_mutex_t      g_flush_mutex;   
 
 /* Global pthread flush thread and balloon thread. */
 pthread_t flush_thread;
@@ -113,6 +115,8 @@ nvm_system_init()
     pthread_rwlock_init(&g_balloon_rwlock, NULL);
     pthread_cond_init(&g_balloon_cond, NULL);
     pthread_mutex_init(&g_balloon_mutex, NULL);
+    pthread_cond_init(&g_flush_cond, NULL);
+    pthread_mutex_init(&g_flush_mutex, NULL);
 
     //TODO: create  flush thread & balloom thread
     sys_terminate = 0;

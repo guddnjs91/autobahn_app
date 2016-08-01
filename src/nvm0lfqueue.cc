@@ -120,6 +120,14 @@ void lfqueue<T>::monitor()
 }
 
 template <typename T>
+bool lfqueue<T>::isQuiteFull()
+{
+    double fullness = (double)get_size() / (double)capacity * 100;
+
+    return fullness > 70 ? true : false; 
+}
+
+template <typename T>
 bool lfqueue<T>::isQuiteEmpty()
 {
     return get_size() <= 1024 ? true : false; 

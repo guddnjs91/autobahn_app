@@ -39,6 +39,8 @@ extern struct nvm_metadata* nvm;
 extern pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 extern pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 extern pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
+extern pthread_cond_t       g_flush_cond;     
+extern pthread_mutex_t      g_flush_mutex;    
 
 /* Global pthread flush thread and balloon thread */
 extern pthread_t flush_thread;

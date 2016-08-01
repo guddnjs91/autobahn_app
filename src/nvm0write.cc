@@ -52,6 +52,13 @@ nvm_write(
             rebalance_tree_node(ve->tree);
         }
 
+        if(inode_dirty_lfqueue->isQuiteFull())
+        {
+            pthread_mutex_lock(&g_flush_mutex);
+            pthread_cond_signal(&g_flush_cond);
+            pthread_mutex_unlock(&g_flush_mutex);
+        }
+
         /* Searches the tree node from ve with its lbn */
         tree_node* tnode = search_tree_node(ve->tree, lbn);
         
