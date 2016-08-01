@@ -140,46 +140,46 @@ nvm_system_close()
     pthread_mutex_unlock(&g_balloon_mutex);
     
     /* For the busy-waiting flush thread. */
-    if(inode_dirty_lfqueue->get_size() == 0)
-    {
-        //printf("flush thread must be canceled\n");
-        //pthread_cancel(flush_thread);
-        
-        /* Select one CLEAN inode and add to dirty inode LFQ. (Not a good solution) */
-        for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++)
-        {
-            inode_entry* inode = &nvm->inode_table[idx];
-            if(inode->state == INODE_STATE_CLEAN)
-            {
-                inode_dirty_lfqueue->enqueue(idx);
-                break;
-            }
-        }
-    }
+    // if(inode_dirty_lfqueue->get_size() == 0)
+    // {
+    //     //printf("flush thread must be canceled\n");
+    //     //pthread_cancel(flush_thread);
+    //     
+    //     [> Select one CLEAN inode and add to dirty inode LFQ. (Not a good solution) <]
+    //     for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++)
+    //     {
+    //         inode_entry* inode = &nvm->inode_table[idx];
+    //         if(inode->state == INODE_STATE_CLEAN)
+    //         {
+    //             inode_dirty_lfqueue->enqueue(idx);
+    //             break;
+    //         }
+    //     }
+    // }
         
     pthread_join(flush_thread, NULL);
     pthread_join(balloon_thread, NULL);
 
-    while(inode_dirty_lfqueue->get_size() != 0)
-    {
-        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
-        inode_entry* inode = &nvm->inode_table[idx];
-
-//        printf("dirty inode LFQ cleaning\n");
-    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
-//    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
-    write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-//    printf("%u Bytes Data flushed from nvm->inode_table[%u]\n", nvm->block_size, idx);
-    inode->state = INODE_STATE_CLEAN;
-    }
-
-    while(volume_inuse_lfqueue->get_size() != 0)
-    {
-        volume_idx_t v = volume_inuse_lfqueue->dequeue();
-        volume_entry* ve = &nvm->volume_table[v];
-
-        close(ve->fd);
-    }
+//     while(inode_dirty_lfqueue->get_size() != 0)
+//     {
+//         inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+//         inode_entry* inode = &nvm->inode_table[idx];
+// 
+// //        printf("dirty inode LFQ cleaning\n");
+//     lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+// //    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
+//     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+// //    printf("%u Bytes Data flushed from nvm->inode_table[%u]\n", nvm->block_size, idx);
+//     inode->state = INODE_STATE_CLEAN;
+//     }
+// 
+//     while(volume_inuse_lfqueue->get_size() != 0)
+//     {
+//         volume_idx_t v = volume_inuse_lfqueue->dequeue();
+//         volume_entry* ve = &nvm->volume_table[v];
+// 
+//         close(ve->fd);
+//     }
 
 
     delete volume_free_lfqueue;

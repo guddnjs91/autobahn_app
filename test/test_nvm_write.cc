@@ -115,11 +115,13 @@ test_nvm_write(
         test_nvm_write_random();
     }
 
-    //nvm close nvm_system_close();
+    //nvm close
+    nvm_system_close();
     clock_gettime(CLOCK_MONOTONIC, &end);
     double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start); 
 
-    printf("total time: %f sec", time);
+    printf("total time: %f sec\n", time);
+    getchar();
    
     nvm_structure_destroy();
 
