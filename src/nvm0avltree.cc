@@ -266,6 +266,8 @@ find_invalid_tree_node(
             tnode_stack.push(tnode->left);
         }
     }
+    //it should never reach here!
+    return NULL;
 }
 
 /**

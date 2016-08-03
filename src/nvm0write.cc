@@ -107,21 +107,19 @@ nvm_write(
         /* Protect from flush_thread by inode lock */
         pthread_mutex_lock(&tnode->inode->lock);
 
+        /* Change the state of inode to DIRTY */
+        tnode->inode->state = INODE_STATE_DIRTY;
+
         /* Write out one data block to the NVM */
         uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
         inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
         char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
         memcpy(data_dst, ptr, write_bytes);
-        // need cache line write guarantee
+        //TODO:need cache line write guarantee
 
-        if(tnode->inode->state != INODE_STATE_DIRTY)
-        {
-
-            /* Change the state of inode to DIRTY */
-            tnode->inode->state = INODE_STATE_DIRTY;
-            
+        if(tnode->inode->state != INODE_STATE_DIRTY) {
             /* Insert written inode to dirty_inode_lfqueue.
-            Enqueud inode would be flushed by flush_thread at certain time. */
+            Enqueued inode would be flushed by flush_thread at certain time. */
             inode_dirty_lfqueue->enqueue(idx);
         }
 

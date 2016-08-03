@@ -4,6 +4,7 @@
 #include <sys/shm.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "nvm0common.h"
 #include <pthread.h>
 
@@ -12,26 +13,25 @@ void *shm_addr;
 
 // Declarations of global variables
 struct nvm_metadata* nvm;
+
 lfqueue<volume_idx_t>* volume_free_lfqueue;
 lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_free_lfqueue;
 lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 
-/* Global pthread variables for ballooning */
+pthread_t flush_thread;
+pthread_t balloon_thread;
+
 pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 pthread_cond_t       g_flush_cond;     
 pthread_mutex_t      g_flush_mutex;   
 
-/* Global pthread flush thread and balloon thread. */
-pthread_t flush_thread;
-pthread_t balloon_thread;
-
-/* System termination variable */
 volatile int sys_terminate; // 1 : terminate yes
 
 //private function declaration
+void recovery_init();
 void print_nvm_info();
 nvm_metadata* create_nvm_in_shm();
 void remove_nvm_in_shm();
@@ -66,8 +66,8 @@ nvm_structure_build()
 
     nvm->nvm_size           = NVM_SIZE;
     nvm->max_volume_entry   = MAX_VOLUME_ENTRY;
-    nvm->max_inode_entry    = ( NVM_SIZE - sizeof(struct nvm_metadata) - 
-                                sizeof(struct volume_entry)*MAX_VOLUME_ENTRY )
+    nvm->max_inode_entry    = ( NVM_SIZE - sizeof(struct nvm_metadata) -
+                                sizeof(struct volume_entry) * MAX_VOLUME_ENTRY )
                             / ( sizeof(struct inode_entry) + BLOCK_SIZE );
     nvm->block_size         = BLOCK_SIZE;
 
@@ -96,6 +96,8 @@ nvm_structure_build()
 void
 nvm_system_init()
 {
+    recovery_init();
+
     volume_free_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
@@ -188,10 +190,37 @@ nvm_system_close()
     delete inode_dirty_lfqueue;
 }
 
+/**
+ * Frees NVM from NVM system */
 void
 nvm_structure_destroy()
 {
     remove_nvm_in_shm();
+}
+
+/**
+ * Recovers the data in NVM and stores into permanent storage. */
+void
+recovery_init()
+{
+    inode_idx_t idx;
+    inode_entry* inode;
+    uint32_t vid;
+    int fd;
+
+    /* looks through the whole inode table, finds dirty inodes,
+       and writes the data block to file in permanent storage. */
+    for(idx = 0; idx < nvm->max_inode_entry; idx++){
+        inode = &nvm->inode_table[idx];
+        if(inode->state == INODE_STATE_DIRTY){
+            vid = inode->volume->vid;
+            fd = open(("VOL_" + to_string(vid) + ".txt").c_str(), O_RDWR | O_CREAT, 0644);
+            lseek(fd, nvm->block_size * inode->lbn, SEEK_SET);
+            write(fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+        }
+    }
+    sync();
+    sync();
 }
 
 /**
@@ -229,7 +258,6 @@ struct nvm_metadata*
 create_nvm_in_shm()
 {
     int shm_id;
-    struct shmid_ds shm_info;
 
     printf("Creating NVM in DRAM (shared memory)...\n");
 
@@ -252,7 +280,6 @@ create_nvm_in_shm()
 void remove_nvm_in_shm()
 {
     int     shm_id;
-    struct  shmid_ds shm_info;
 
     printf("Removing NVM from DRAM (shared memory)...\n");
 
