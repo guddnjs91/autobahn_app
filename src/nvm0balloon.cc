@@ -53,20 +53,20 @@ nvm_balloon(
     /* Lock write-lock to be mutually exclusive to write threads. */
     pthread_rwlock_wrlock(&g_balloon_rwlock);
 
-/*     switch(rc)
- *     {
- *         case 0:
- *         printf("\nballoon thread wakes up by write thread ...\n");
- *         break;
- *         
- *         case ETIMEDOUT:
- *         printf("\nballoon thread periodically wakes up ...\n");
- *         break;
- * 
- *         default:
- *         printf("\nsystem signaled balloon thread to wake up ...\n");
- *         break;
- *     } */
+    // switch(rc)
+    // {
+    //     case 0:
+    //     printf("\nballoon thread wakes up by write thread ...\n");
+    //     break;
+    // 
+    //     case ETIMEDOUT:
+    //     printf("\nballoon thread periodically wakes up ...\n");
+    //     break;
+    // 
+    //     default:
+    //     printf("\nsystem signaled balloon thread to wake up ...\n");
+    //     break;
+    // } 
 
     /* Traverse volume table that each entry has one tree structure. */
     for(volume_idx_t v = 0;

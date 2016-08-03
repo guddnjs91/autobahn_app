@@ -46,11 +46,11 @@ nvm_write(
 
         /* If the ratio of invalid tree node are over 70 %,
         rebalance the whole tree before writing. */
-        if(get_invalid_ratio(ve->tree) > 1)
-        {
-            printf("volume tree %u rebalancing ...\n", ve->vid);
-            rebalance_tree_node(ve->tree);
-        }
+        // if(get_invalid_ratio(ve->tree) > 1)
+        // {
+        //     printf("volume tree %u rebalancing ...\n", ve->vid);
+        //     rebalance_tree_node(ve->tree);
+        // }
 
         if(inode_dirty_lfqueue->isQuiteFull())
         {
@@ -108,6 +108,7 @@ nvm_write(
         pthread_mutex_lock(&tnode->inode->lock);
 
         /* Change the state of inode to DIRTY */
+        int old_state = tnode->inode->state;
         tnode->inode->state = INODE_STATE_DIRTY;
 
         /* Write out one data block to the NVM */
@@ -117,7 +118,7 @@ nvm_write(
         memcpy(data_dst, ptr, write_bytes);
         //TODO:need cache line write guarantee
 
-        if(tnode->inode->state != INODE_STATE_DIRTY) {
+        if(old_state != INODE_STATE_DIRTY) {
             /* Insert written inode to dirty_inode_lfqueue.
             Enqueued inode would be flushed by flush_thread at certain time. */
             inode_dirty_lfqueue->enqueue(idx);

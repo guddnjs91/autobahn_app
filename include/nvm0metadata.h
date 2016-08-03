@@ -17,7 +17,8 @@ Created 2016/06/07 Sang Rhee
 #define NVM_SIZE            1 * 1024 * 1024 * 1024LLU
 #define MAX_VOLUME_ENTRY    1024
 #define BLOCK_SIZE          16 * 1024
-
+#define SYNC_UNIT_SIZE      512 * 1024
+#define NUM_FLUSH           ((SYNC_UNIT_SIZE) / (BLOCK_SIZE))
 /** Represents the metadata of NVM */
 struct nvm_metadata {
     //system config value

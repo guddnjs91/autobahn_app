@@ -217,6 +217,7 @@ recovery_init()
             fd = open(("VOL_" + to_string(vid) + ".txt").c_str(), O_RDWR | O_CREAT, 0644);
             lseek(fd, nvm->block_size * inode->lbn, SEEK_SET);
             write(fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+            close(fd);
         }
     }
     sync();
