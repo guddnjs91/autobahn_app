@@ -12,21 +12,15 @@ flush_thread_func(
 {
     printf("Flush thread running.....\n");
 
-    while(sys_terminate == 0)
-    {
+    while(sys_terminate == 0) {
+
         pthread_mutex_lock(&g_flush_mutex);
         pthread_cond_wait(&g_flush_cond, &g_flush_mutex);
         pthread_mutex_unlock(&g_flush_mutex);
 
-        while(!inode_dirty_lfqueue->isQuiteEmpty())
-        {
+        while(!inode_dirty_lfqueue->isQuiteEmpty()) {
             nvm_flush();
         }
-    }
-
-    while (!inode_dirty_lfqueue->is_empty()) 
-    {
-       nvm_flush(); 
     }
     
     printf("Flush thread termintated.....\n");
@@ -42,8 +36,8 @@ nvm_flush(
 {
     // inode_dirty_lfqueue->monitor();
     inode_idx_t indexes[32];
-
     int i;
+
     for(i = 0; i < 32; i++) {
         
         /* Pick dirty inodes in dirty inode LFQ. */

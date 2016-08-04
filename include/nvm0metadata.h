@@ -14,11 +14,11 @@ Created 2016/06/07 Sang Rhee
 #include <pthread.h>
 
 //config (make changes here ONLY)
-#define NVM_SIZE            1 * 1024 * 1024 * 1024LLU
-#define MAX_VOLUME_ENTRY    1024
-#define BLOCK_SIZE          16 * 1024
-#define SYNC_UNIT_SIZE      512 * 1024
-#define NUM_FLUSH           ((SYNC_UNIT_SIZE) / (BLOCK_SIZE))
+#define NVM_SIZE            (1 * 1024 * 1024 * 1024LLU)
+#define MAX_VOLUME_ENTRY    (1024)
+#define BLOCK_SIZE          (16 * 1024)
+#define FLUSH_BATCH_SIZE    (32)
+
 /** Represents the metadata of NVM */
 struct nvm_metadata {
     //system config value
@@ -48,6 +48,6 @@ extern pthread_t flush_thread;
 extern pthread_t balloon_thread;
 
 /* System termination condition variables */
-extern volatile int sys_terminate;
+extern int sys_terminate;
 
 #endif

@@ -8,10 +8,8 @@
 #include "nvm0common.h"
 #include <pthread.h>
 
-#define SHM_KEY 1234
-void *shm_addr;
 
-// Declarations of global variables
+//Declarations of global variables
 struct nvm_metadata* nvm;
 
 lfqueue<volume_idx_t>* volume_free_lfqueue;
@@ -19,41 +17,41 @@ lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 lfqueue<inode_idx_t>* inode_free_lfqueue;
 lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 
-pthread_t flush_thread;
-pthread_t balloon_thread;
-
 pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 pthread_cond_t       g_flush_cond;     
 pthread_mutex_t      g_flush_mutex;   
 
-volatile int sys_terminate; // 1 : terminate yes
+pthread_t flush_thread;
+pthread_t balloon_thread;
+
+int sys_terminate;
 
 //private function declaration
-void recovery_init();
+void recovery_start();
 void print_nvm_info();
 nvm_metadata* create_nvm_in_shm();
 void remove_nvm_in_shm();
 
 /**
- * Construct NVM data structure
- * - volume_table
- * - inode_table
- * - block_table
- *
+ * This function is called ONCE when the NVM system is first created in a system.
+ * - NVM data structures
+ *     - volume_table
+ *     - inode_table
+ *     - block_table
  *  +---------------------------------------------------------------------------------------+
  *  |                                  NON-VOLATILE MEMORY                                  |
  *  +--------------------------+------------------+-----------------------+-----------------+
  *  |         METADATA         |   VOLUME TABLE   |      INODE TABLE      |   BLOCK TABLE   |
  *  +--------------------------+------------------+-----------------------+-----------------+
- *  | NVM_SIZE                 | Volume ID        | Logical Block Number  |                 |
- *  | Max Volume Entry         | fd               | INode State           |                 |
- *  | Max INode Entry          | INode Tree Root  | Volume Table Entry    |                 |
- *  | Block Size               |                  |                       |                 |
- *  | Volume Table             |                  |                       |                 |
- *  | INode Table              |                  |                       |                 |
- *  | Data Block Table         |                  |                       |                 |
+ *  | nvm_size                 | volume id        | logical block number  |                 |
+ *  | max volume entry         | fd               | state                 |                 |
+ *  | max inode entry          | inode root       | its volume entry      |                 |
+ *  | block size               |                  |                       |                 |
+ *  | volume table             |                  |                       |                 |
+ *  | inode table              |                  |                       |                 |
+ *  | data block table         |                  |                       |                 |
  *  +--------------------------+------------------+-----------------------+-----------------+
  */
 void
@@ -61,137 +59,150 @@ nvm_structure_build()
 {
     uint32_t i;
 
-    //Initialize nvm_metadata
+    //Initialize nvm_metadata structure
     nvm = create_nvm_in_shm();
-
     nvm->nvm_size           = NVM_SIZE;
     nvm->max_volume_entry   = MAX_VOLUME_ENTRY;
-    nvm->max_inode_entry    = ( NVM_SIZE - sizeof(struct nvm_metadata) -
-                                sizeof(struct volume_entry) * MAX_VOLUME_ENTRY )
-                            / ( sizeof(struct inode_entry) + BLOCK_SIZE );
+    nvm->max_inode_entry    = ( NVM_SIZE - sizeof(struct nvm_metadata)
+                                - sizeof(struct volume_entry) * MAX_VOLUME_ENTRY )
+                              / ( sizeof(struct inode_entry) + BLOCK_SIZE );
     nvm->block_size         = BLOCK_SIZE;
-
     nvm->volume_table       = (struct volume_entry*) (nvm + 1);
     nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
     nvm->datablock_table    = (char *)               (nvm->inode_table + nvm->max_inode_entry);
 
     //Initialize all inode_entries to state_free
-    for(i = 0; i < nvm->max_inode_entry; i++)
-    {
+    for(i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
+
+    //TODO: what else?
 }
 
 /**
- * Starts the NVM system
- * 1. Create abstract data types to control NVM data structure.
- *     - VTE_FREE_LFQUEUE
- *     - VTE_INUSE_LFQUEUE
- *     - INODE_FREE_LFQUEUE
- *     - INODE_DIRTY_LFQUEUE
- * 2. Create necessary threads for NVM system.
- *     - FLUSH_THREAD
- *     - BALLOON_THREAD
+ * This function is called everytime a NVM-system-embedded system is booted.
+ * 1. Start the recovery process to recover data in NVM, in case of previous system failure.
+ * 2. Starts NVM system
+ *     - Create abstract data types to control NVM data structure.
+ *         - volume_free_lfqueue
+ *         - volume_inuse_lfqueue
+ *         - inode_free_lfqueue
+ *         - inode_dirty_lfqueue
+ *     - Create necessary locks (mutex lock, rw lock) for concurrency control.
+ *     - Create necessary threads to aid NVM system.
+ *         - flush_thread
+ *         - balloon_thread
  */
 void
 nvm_system_init()
 {
-    recovery_init();
+    //Starts recovery
+    printf("Starting Recovery Process...\n");
+    recovery_start();
+    printf("Recovery successful!\n\n");
 
+    //Starts NVM system
+    printf("Starting NVM system...\n");
+    //volume data structure
     volume_free_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
-    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
-    {
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         volume_free_lfqueue->enqueue(i);
     }
 
+    //inode data structure
     inode_free_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-    for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++)
-    {
+    for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         inode_free_lfqueue->enqueue(i);
     }
 
-    printf("Created system latch-free-queue ...\n");
-
+    //locks
     pthread_rwlock_init(&g_balloon_rwlock, NULL);
     pthread_cond_init(&g_balloon_cond, NULL);
     pthread_mutex_init(&g_balloon_mutex, NULL);
     pthread_cond_init(&g_flush_cond, NULL);
     pthread_mutex_init(&g_flush_mutex, NULL);
 
-    //TODO: create  flush thread & balloom thread
+    //create threads
     sys_terminate = 0;
-    //pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
+    printf("Flush thread created...\n");
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
+    printf("Balloon thread created...\n");
 
-    printf("Created flush thread and balloon thread ...\n");
+    printf("NVM system successfully started!\n\n");
 }
 
 /**
- *  */
+ * This function is called when a NVM-system-embedded system is shutting down.
+ * Thus no user should be calling/running nvm_write at this point.
+ * 1. Terminate threads
+ *     - flush_thread
+ *     - balloon_thread
+ * 2. Close all the files(volumes) opened in NVM system
+ * 3. Deallocate data structures
+ *     - volume_free_lfqueue
+ *     - volume_inuse_lfqueue
+ *     - inode_free_lfqueue
+ *     - inode_dirty_lfqueue
+ */
 void
 nvm_system_close()
 {
-    //TODO: terminate flush thread & balloon thread
+    printf("Closing NVM system...\n");
+
+    //Terminate threads
     sys_terminate = 1;
-    inode_dirty_lfqueue->close();
+
+    //balloon thread - wakes up balloon thread if sleeping
     pthread_mutex_lock(&g_balloon_mutex);
     pthread_cond_signal(&g_balloon_cond);
-    pthread_mutex_unlock(&g_balloon_mutex);
-    
-    /* For the busy-waiting flush thread. */
-    // if(inode_dirty_lfqueue->get_size() == 0)
-    // {
-    //     //printf("flush thread must be canceled\n");
-    //     //pthread_cancel(flush_thread);
-    //     
-    //     [> Select one CLEAN inode and add to dirty inode LFQ. (Not a good solution) <]
-    //     for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++)
-    //     {
-    //         inode_entry* inode = &nvm->inode_table[idx];
-    //         if(inode->state == INODE_STATE_CLEAN)
-    //         {
-    //             inode_dirty_lfqueue->enqueue(idx);
-    //             break;
-    //         }
-    //     }
-    // }
-        
-    pthread_join(flush_thread, NULL);
+    pthread_mutex_unlock(&g_balloon_mutex); 
     pthread_join(balloon_thread, NULL);
 
-//     while(inode_dirty_lfqueue->get_size() != 0)
-//     {
-//         inode_idx_t idx = inode_dirty_lfqueue->dequeue();
-//         inode_entry* inode = &nvm->inode_table[idx];
-// 
-// //        printf("dirty inode LFQ cleaning\n");
-//     lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
-// //    printf("VOL_%u.txt : offset %u => ", inode->volume->vid, nvm->block_size * inode->lbn);
-//     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-// //    printf("%u Bytes Data flushed from nvm->inode_table[%u]\n", nvm->block_size, idx);
-//     inode->state = INODE_STATE_CLEAN;
-//     }
-// 
-//     while(volume_inuse_lfqueue->get_size() != 0)
-//     {
-//         volume_idx_t v = volume_inuse_lfqueue->dequeue();
-//         volume_entry* ve = &nvm->volume_table[v];
-// 
-//         close(ve->fd);
-//     }
+    //flush thread - notify lfqueue to avoid spinlock
+    inode_dirty_lfqueue->close();
+    pthread_join(flush_thread, NULL);
 
+    //flushes the remained dirty blocks in NVM to a permanent storage
+    printf("Flushing NVM system...\n");
+    while(!inode_dirty_lfqueue->is_empty()) {
+        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+        inode_entry* inode = &nvm->inode_table[idx];
 
+        lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    }
+    sync();
+    sync();
+    inode_idx_t idx;
+    for(idx = 0; idx < nvm->max_inode_entry; idx++) {
+        if(nvm->inode_table[idx].state == INODE_STATE_DIRTY) {
+            nvm->inode_table[idx].state = INODE_STATE_FREE;
+        }
+    }
+
+    //close files (volumes)
+    printf("Closing volumes in NVM...\n");
+    while(!volume_inuse_lfqueue->is_empty()) {
+        volume_idx_t v = volume_inuse_lfqueue->dequeue();
+        volume_entry* ve = &nvm->volume_table[v];
+        close(ve->fd);
+    }
+
+    //Deallocates data structures
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
     delete inode_free_lfqueue;
     delete inode_dirty_lfqueue;
+
+    printf("NVM system successfully closed!\n\n");
 }
 
 /**
- * Frees NVM from NVM system */
+ * This function is called when you don't want to use NVM system anymore.
+ * Frees NVM space from NVM system */
 void
 nvm_structure_destroy()
 {
@@ -199,17 +210,21 @@ nvm_structure_destroy()
 }
 
 /**
- * Recovers the data in NVM and stores into permanent storage. */
+ * Recovers the data in NVM and stores into permanent storage. 
+ * 1. Looks through the whole inode table
+ *    Finds dirty inode
+ *    Writes the corresponding data block to its destination
+ * 2. sync all at the end (makes the data durable in a permanent storage)
+ * 3. set all the dirty nodes to clean (since durably stored in permanent storage now) */
 void
-recovery_init()
+recovery_start()
 {
-    inode_idx_t idx;
     inode_entry* inode;
+    inode_idx_t idx;
     uint32_t vid;
     int fd;
 
-    /* looks through the whole inode table, finds dirty inodes,
-       and writes the data block to file in permanent storage. */
+    //Write dirty blocks to permanent storage
     for(idx = 0; idx < nvm->max_inode_entry; idx++){
         inode = &nvm->inode_table[idx];
         if(inode->state == INODE_STATE_DIRTY){
@@ -220,8 +235,17 @@ recovery_init()
             close(fd);
         }
     }
+
+    //Sync all
     sync();
     sync();
+
+    //Set all the DIRTY inodes to CLEAN
+    for(idx = 0; idx < nvm->max_inode_entry; idx++) {
+        if(nvm->inode_table[idx].state == INODE_STATE_DIRTY) {
+            nvm->inode_table[idx].state = INODE_STATE_FREE;
+        }
+    }
 }
 
 /**
@@ -255,6 +279,14 @@ print_nvm_info()
     printf("====================NVM Information====================\n");
 }
 
+/*------------------------------------------------------
+ *-----allocates shared memory to create a Fake NVM-----
+ *------------------------------------------------------*/
+#define SHM_KEY 1234
+void *shm_addr;
+
+/**
+ * Creates a fake NVM space in RAM */
 struct nvm_metadata*
 create_nvm_in_shm()
 {
@@ -278,27 +310,27 @@ create_nvm_in_shm()
     return (struct nvm_metadata*) shm_addr;
 }
 
-void remove_nvm_in_shm()
+/**
+ * Deallocates the fake NVM space in RAM */
+void
+remove_nvm_in_shm()
 {
-    int     shm_id;
+    int shm_id;
 
     printf("Removing NVM from DRAM (shared memory)...\n");
 
-    // Make Shared Memory space.
+    //Make Shared Memory space.
     shm_id = shmget((key_t) SHM_KEY, NVM_SIZE, 0666 | IPC_CREAT);
-
     if(shm_id == -1) {
         perror("shmget failed : ");
         exit(0);
     }
-
-    // Detach Shared Memory
+    //Detach Shared Memory
     if(shmdt(shm_addr) == -1) {
         perror("shmdt failed : ");
         exit(0);
     }
-
-    /* get rid of shared memory allocated space*/
+    //Get rid of shared memory allocated space
     if(shmctl(shm_id, IPC_RMID, 0) < 0) {
         printf("shmctl error");
         exit(0);
