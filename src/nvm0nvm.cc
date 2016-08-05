@@ -105,7 +105,7 @@ nvm_system_init()
     volume_free_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
-        nvm->volume_table[i].state = VOLUME_STATE_FREE;
+        volume_free_lfqueue->enqueue(i);
     }
 
     //inode data structure
