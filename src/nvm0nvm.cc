@@ -57,8 +57,6 @@ void remove_nvm_in_shm();
 void
 nvm_structure_build()
 {
-    uint32_t i;
-
     //Initialize nvm_metadata structure
     nvm = create_nvm_in_shm();
     nvm->nvm_size           = NVM_SIZE;
@@ -72,7 +70,7 @@ nvm_structure_build()
     nvm->datablock_table    = (char *)               (nvm->inode_table + nvm->max_inode_entry);
 
     //Initialize all inode_entries to state_free
-    for(i = 0; i < nvm->max_inode_entry; i++) {
+    for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
 
@@ -107,13 +105,14 @@ nvm_system_init()
     volume_free_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue = new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
-        volume_free_lfqueue->enqueue(i);
+        nvm->volume_table[i].state = VOLUME_STATE_FREE;
     }
 
     //inode data structure
     inode_free_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
+        nvm->inode_table[i].state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(i);
     }
 
@@ -176,10 +175,9 @@ nvm_system_close()
     }
     sync();
     sync();
-    inode_idx_t idx;
-    for(idx = 0; idx < nvm->max_inode_entry; idx++) {
+    for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++) {
         if(nvm->inode_table[idx].state == INODE_STATE_DIRTY) {
-            nvm->inode_table[idx].state = INODE_STATE_FREE;
+            nvm->inode_table[idx].state = INODE_STATE_CLEAN;
         }
     }
 
@@ -243,7 +241,7 @@ recovery_start()
     //Set all the DIRTY inodes to CLEAN
     for(idx = 0; idx < nvm->max_inode_entry; idx++) {
         if(nvm->inode_table[idx].state == INODE_STATE_DIRTY) {
-            nvm->inode_table[idx].state = INODE_STATE_FREE;
+            nvm->inode_table[idx].state = INODE_STATE_CLEAN;
         }
     }
 }
