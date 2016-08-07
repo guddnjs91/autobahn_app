@@ -19,7 +19,7 @@ flush_thread_func(
         
         usleep(10 * 1000);
         
-        while(!inode_dirty_lfqueue->isQuiteEmpty() && sys_terminate == 0) {
+        while(inode_dirty_lfqueue->get_size() > FLUSH_LWM && sys_terminate == 0) {
             nvm_flush();
         }
     }

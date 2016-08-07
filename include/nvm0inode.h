@@ -1,5 +1,5 @@
 /**
- * nvm0inode.h - header file for iNode */
+ * nvm0inode.h - header file for inode */
 
 #ifndef nvm0inode_h
 #define nvm0inode_h

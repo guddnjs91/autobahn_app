@@ -5,6 +5,9 @@
 #include <string>
 #include "nvm0common.h"
 
+//private function declarations
+const char* get_filename(uint32_t vid);
+
 /**
 Write out len bytes data pointed by ptr to nvm structure.
 After writing out to nvm, data blocks are enqueued to dirty LFQ.
@@ -24,8 +27,7 @@ nvm_write(
     /* Calculate how many blocks needed for writing */
     uint32_t lbn_start   = ofs / nvm->block_size;
     uint32_t lbn_end     = (ofs + len) / nvm->block_size;
-    if((ofs + len) % nvm->block_size == 0)
-    {
+    if((ofs + len) % nvm->block_size == 0) {
         lbn_end--; // To avoid dummy data block write
     }
     uint32_t offset      = ofs % nvm->block_size;
@@ -51,8 +53,7 @@ nvm_write(
         
         /* If there is no tree node with lbn found or is invalid,
         get free inode from free inode LFQ. */
-        if(tnode == nullptr || tnode->valid == TREE_INVALID)
-        {
+        if(tnode == nullptr || tnode->valid == TREE_INVALID) {
             /* If the ration of free inode LFQ is below 10 %, 
             wake up balloon thread for reclaiming inodes */
             if(inode_free_lfqueue->get_size() < 1000) //0.1 * nvm->max_inode_entry)

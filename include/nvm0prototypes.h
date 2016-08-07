@@ -3,10 +3,10 @@
 
 /* in file nvm0nvm.cc */
 void nvm_structure_build();
-void print_nvm_info();
 void nvm_system_init();
 void nvm_system_close();
 void nvm_structure_destroy();
+void print_nvm_info();
 
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);
@@ -30,7 +30,6 @@ double get_invalid_ratio(tree_root *tree);
 volume_idx_t get_volume_entry_idx(uint32_t vid);
 volume_idx_t search_volume_entry_idx(uint32_t vid);
 volume_idx_t alloc_volume_entry_idx(uint32_t vid);
-const char* get_filename(uint32_t vid);
 inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
 inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
 
