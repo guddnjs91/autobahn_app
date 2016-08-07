@@ -130,9 +130,9 @@ bool lfqueue<T>::isQuiteFull()
 template <typename T>
 bool lfqueue<T>::isQuiteEmpty()
 {
-    double fullness = (double)get_size() / (double)capacity * 100;
+    uint32_t fullness = get_size(); //(double)get_size() / (double)capacity * 100;
 
-    return fullness < 10 ? true : false; 
+    return fullness < (1024 * 8) /*FLUSH_LWM*/ ? true : false; 
 }
 
 template <typename T>

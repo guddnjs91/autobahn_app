@@ -39,10 +39,11 @@ size_t nvm_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
 
 /* in file nvm0flush.c */
 void* flush_thread_func(void* data);
-void nvm_flush(void);
 
 /* in file nvm0balloon.c */
 void* balloon_thread_func(void* data);
-void nvm_balloon(void);
+
+/* in file nvm0sync.c */
+void* sync_thread_func(void* data);
 
 #endif

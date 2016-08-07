@@ -5,12 +5,6 @@
 #include <string>
 #include "nvm0common.h"
 
-extern struct nvm_metadata* nvm;
-extern lfqueue<uint32_t>* volume_free_lfqueue;
-extern lfqueue<uint32_t>* volume_inuse_lfqueue;
-extern lfqueue<uint32_t>* inode_free_lfqueue;
-extern lfqueue<uint32_t>* inode_dirty_lfqueue;
-
 /**
 Write out len bytes data pointed by ptr to nvm structure.
 After writing out to nvm, data blocks are enqueued to dirty LFQ.
@@ -45,19 +39,12 @@ nvm_write(
         pthread_rwlock_rdlock(&g_balloon_rwlock);
 
         /* If the ratio of invalid tree node are over 70 %,
-        rebalance the whole tree before writing. */
+        TODO:rebalance the whole tree before writing. */
         // if(get_invalid_ratio(ve->tree) > 1)
         // {
         //     printf("volume tree %u rebalancing ...\n", ve->vid);
         //     rebalance_tree_node(ve->tree);
         // }
-
-        if(inode_dirty_lfqueue->isQuiteFull())
-        {
-            pthread_mutex_lock(&g_flush_mutex);
-            pthread_cond_signal(&g_flush_cond);
-            pthread_mutex_unlock(&g_flush_mutex);
-        }
 
         /* Searches the tree node from ve with its lbn */
         tree_node* tnode = search_tree_node(ve->tree, lbn);
@@ -75,13 +62,7 @@ nvm_write(
                 pthread_mutex_lock(&g_balloon_mutex);
                 pthread_cond_signal(&g_balloon_cond);
                 pthread_mutex_unlock(&g_balloon_mutex);
-                
-//                if(inode_free_lfqueue->get_size() == 0)
-//                {
-                    // possible deadlock might happens here
-//                    printf("DEAD LOCK HERE !!\n");
-                    continue;
-//                }
+                continue;
             }
 
             /* Get inode from inode_free_lfqueue. */

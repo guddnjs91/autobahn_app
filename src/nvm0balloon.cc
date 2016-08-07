@@ -8,6 +8,9 @@
 #include <stack>
 #include "nvm0common.h"
 
+//private function declarations
+void nvm_balloon();
+
 /**
 Balloon thread function wakes up when free inode shortage.*/
 void*
