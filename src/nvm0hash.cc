@@ -14,8 +14,9 @@ init_hash_node(
 {
     hash_node* h = (hash_node*)malloc(sizeof(hash_node));
     h->inode = inode;
-    h->lbn = inode->lbn;
     h->valid = HASH_NODE_VALID;
+    h->prev = nullptr;
+    h->next = nullptr;
 
     return h;
 }
@@ -58,12 +59,8 @@ logical_delete_hash_node(
     hash_table* table,
     hash_node* node)
 {
-    hash_node *searched_node = search_hash_node(table, node->lbn);
-    if (searched_node && searched_node->valid == HASH_NODE_VALID) 
-    {
-        searched_node->valid = HASH_NODE_INVALID;
-        table->count_invalid++;
-    }
+    node->valid = HASH_NODE_INVALID;
+    table->count_invalid++;
 }
 
 /**
@@ -73,7 +70,7 @@ physical_delete_hash_node(
     hash_table* table,
     hash_node* node)
 {
-    table->map.erase(node->lbn);
+    table->map.erase(node->inode->lbn);
     table->count_total--;
 }
 
