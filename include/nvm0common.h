@@ -15,5 +15,6 @@
 #include "nvm0metadata.h"
 #include "nvm0prototypes.h"
 #include "nvm0hash.h"
+#include "nvm0list.h"
 
 #endif
