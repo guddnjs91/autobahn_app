@@ -17,7 +17,8 @@ Created 2016/06/07 Sang Rhee
 #define NVM_SIZE            (1 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
-#define FLUSH_BATCH_SIZE    (32)
+#define FLUSH_LWM           (1024 * 8)
+#define MIN_SYNC_FREQUENCY  (1024)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
@@ -33,21 +34,18 @@ struct nvm_metadata {
     char*           datablock_table;
 };
 
-/* Global variable that can access every NVM area */
-extern struct nvm_metadata* nvm;
+//Global variables
+extern struct nvm_metadata* nvm; //holds information about NVM
 
-/* Global pthread variables for ballooning */
-extern pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
-extern pthread_cond_t       g_balloon_cond;     // global balloon condition variable
-extern pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
-extern pthread_cond_t       g_flush_cond;     
-extern pthread_mutex_t      g_flush_mutex;    
+extern pthread_rwlock_t g_balloon_rwlock;   //balloon read/write lock
+extern pthread_cond_t   g_balloon_cond;     //balloon condition variable
+extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
 
-/* Global pthread flush thread and balloon thread */
 extern pthread_t flush_thread;
+extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
 
-/* System termination condition variables */
+//Conditional variable for system termination
 extern int sys_terminate;
 
 #endif

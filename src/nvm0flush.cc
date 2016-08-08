@@ -4,6 +4,9 @@
 #include <pthread.h>
 #include "nvm0common.h"
 
+//private function declarations
+void nvm_flush();
+
 /**
  * Flush thread function proactively runs and flushes dirty inodes. */
 void*
@@ -13,12 +16,10 @@ flush_thread_func(
     printf("Flush thread running.....\n");
 
     while(sys_terminate == 0) {
-
-        pthread_mutex_lock(&g_flush_mutex);
-        pthread_cond_wait(&g_flush_cond, &g_flush_mutex);
-        pthread_mutex_unlock(&g_flush_mutex);
-
-        while(!inode_dirty_lfqueue->isQuiteEmpty()) {
+        
+        usleep(10 * 1000);
+        
+        while(inode_dirty_lfqueue->get_size() > FLUSH_LWM && sys_terminate == 0) {
             nvm_flush();
         }
     }
@@ -35,33 +36,15 @@ nvm_flush(
     void)
 {
     // inode_dirty_lfqueue->monitor();
-    inode_idx_t indexes[FLUSH_BATCH_SIZE];
-    int i, n_flushed = 0;
+    inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+    inode_entry* inode = &nvm->inode_table[idx];
+    
+    pthread_mutex_lock(&inode->lock);
 
-    for(i = 0; i < FLUSH_BATCH_SIZE; i++) {
-        
-        if(inode_dirty_lfqueue->is_empty()) {
-            break;
-        }
+    //Flush one data block
+    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+    write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
 
-        indexes[n_flushed++] = inode_dirty_lfqueue->dequeue();
-        inode_idx_t idx = indexes[i];
-        inode_entry* inode = &nvm->inode_table[idx];
-        
-        pthread_mutex_lock(&inode->lock);
-
-        //Flush one data block
-        lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
-        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
-    }
-
-    sync();
-    sync();
-
-    for (i = 0; i < n_flushed; i++) {
-        inode_entry* inode = &nvm->inode_table[indexes[i]];
-        inode->state = INODE_STATE_CLEAN;
-
-        pthread_mutex_unlock(&inode->lock);
-    }
+    inode->state = INODE_STATE_SYNC;
+    inode_sync_lfqueue->enqueue(idx);
 }

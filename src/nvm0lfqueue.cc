@@ -17,7 +17,7 @@ lfqueue<T>::lfqueue(const uint32_t capacity)
     p_count.store(capacity-1);   //initialize p_count
     c_count.store(capacity-1);   //initialize c_count
 
-    values = new T[capacity];                       //initialize values[]
+    values   = new T[capacity];                     //initialize values[]
     c_counts = new atomic<uint_fast64_t>[capacity]; //initialize ccounts[]
     p_counts = new atomic<uint_fast64_t>[capacity]; //initialize pcounts[]
     for(i=0; i<capacity; i++) {
@@ -43,15 +43,15 @@ lfqueue<T>::~lfqueue()
  * Enqueues an element with given value in a queue.
  * Note there is an invariant: The number of elements enqueued never exeeds the capacity of a queue. */
 template <typename T>
-void lfqueue<T>::enqueue(const T value)
+void
+lfqueue<T>::enqueue(const T value)
 {
     //atomically increments the global p_count and saves the incremented value to the local p_count
     uint_fast64_t p_count = this->p_count.fetch_add(1) + 1;
 
     //waits until the previous value in this element is taken by dequeue
     while ( p_count != c_counts[p_count%capacity].load() ) {
-        if(unlikely(is_closed))
-        {
+        if(unlikely(is_closed)) {
             return;
         }
     }
@@ -65,15 +65,15 @@ void lfqueue<T>::enqueue(const T value)
  * Dequeues and returns the value of an element in a queue. 
  * @return a value of an element dequeued */
 template <typename T>
-T lfqueue<T>::dequeue()
+T
+lfqueue<T>::dequeue()
 {
     //atomically increments the global c_count and saves the incremented value to the local c_count
     uint_fast64_t c_count = this->c_count.fetch_add(1) + 1;
 
     //waits until a new value is added to the (c_count)th element
     while ( c_count != p_counts[c_count%capacity].load() ) {
-        if(unlikely(is_closed))
-        {
+        if(unlikely(is_closed)) {
             return 0;
         }
     }
@@ -83,60 +83,52 @@ T lfqueue<T>::dequeue()
     c_counts[c_count%capacity].store(c_count+capacity);
     return value;
 }
-/**
- * Checks if a queue is empty.
- * @return true if a queue is empty, false otherwise */
-template <typename T>
-bool lfqueue<T>::is_empty()
-{
-    return p_count.load() <= c_count.load();
-}
 
 /**
  * Calculate and returns the size of a queue.
  * @return the size of a queue. */
 template <typename T>
-uint32_t lfqueue<T>::get_size()
+uint32_t
+lfqueue<T>::get_size()
 {
     uint_fast64_t pc = p_count.load();
     uint_fast64_t cc = c_count.load();
     return ((pc-cc) & (0x0U - (pc >= cc)));
 }
 
+/**
+ * Checks if a queue is empty.
+ * @return true if a queue is empty, false otherwise */
 template <typename T>
-void lfqueue<T>::monitor()
+bool
+lfqueue<T>::is_empty()
+{
+    return p_count.load() <= c_count.load();
+}
+
+template <typename T>
+void
+lfqueue<T>::monitor()
 {
     double fullness = (double)get_size() / (double)capacity * 100;
 
-    for (int i = 0; i < 50; i++) 
-    {
-        if(fullness < 2 * i)
+    for (int i = 0; i < 50; i++) {
+        if(fullness < 2 * i) {
             std::cout << "-";
-        else
+        } else {
             std::cout << "|";
+        }
     }
 
     std::cout << "  " << fullness << "% \r"; 
 }
 
+/**
+ * Setter function for is_closed.
+ * User can only set is_closed to true. It is set to false in constructor. */
 template <typename T>
-bool lfqueue<T>::isQuiteFull()
-{
-    double fullness = (double)get_size() / (double)capacity * 100;
-
-    return fullness > 70 ? true : false; 
-}
-
-template <typename T>
-bool lfqueue<T>::isQuiteEmpty()
-{
-    double fullness = (double)get_size() / (double)capacity * 100;
-
-    return fullness < 10 ? true : false; 
-}
-
-template <typename T>
-void lfqueue<T>::close()
+void
+lfqueue<T>::close()
 {
     is_closed = true;
 }

@@ -3,10 +3,10 @@
 
 /* in file nvm0nvm.cc */
 void nvm_structure_build();
-void print_nvm_info();
 void nvm_system_init();
 void nvm_system_close();
 void nvm_structure_destroy();
+void print_nvm_info();
 
 /* in file nvm0hash.cc */
 struct hash_node* init_hash_node(inode_entry* inode);
@@ -37,7 +37,6 @@ double get_invalid_ratio(tree_root *tree);
 volume_idx_t get_volume_entry_idx(uint32_t vid);
 volume_idx_t search_volume_entry_idx(uint32_t vid);
 volume_idx_t alloc_volume_entry_idx(uint32_t vid);
-const char* get_filename(uint32_t vid);
 inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
 inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
 
@@ -46,10 +45,11 @@ size_t nvm_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
 
 /* in file nvm0flush.c */
 void* flush_thread_func(void* data);
-void nvm_flush(void);
 
 /* in file nvm0balloon.c */
 void* balloon_thread_func(void* data);
-void nvm_balloon(void);
+
+/* in file nvm0sync.c */
+void* sync_thread_func(void* data);
 
 #endif

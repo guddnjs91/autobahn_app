@@ -19,7 +19,7 @@ static double TimeSpecToSeconds(struct timespec* ts)
 /**
  * Write thread fills in buffer and write it to nvm */
 void
-*thread_nvm_write_append(
+*thread_nvm_durable_write_append(
     void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -35,7 +35,7 @@ void
 }
 
 void
-test_nvm_write_append()
+test_nvm_durable_write_append()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
@@ -43,7 +43,7 @@ test_nvm_write_append()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_nvm_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_append, (void *)&tid[i]);
     }
 
     for(i=0; i<nthread; i++) {
@@ -52,7 +52,7 @@ test_nvm_write_append()
 }
 
 void
-*thread_nvm_write_random(
+*thread_nvm_durable_write_random(
     void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -69,7 +69,7 @@ void
 }
 
 void
-test_nvm_write_random()
+test_nvm_durable_write_random()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
@@ -77,14 +77,14 @@ test_nvm_write_random()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_nvm_write_random, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_random, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 }
 void
-test_nvm_write(
+test_nvm_durable_write(
     long long unsigned int file_size,
     int n_thread,
     size_t n_bytes,
@@ -110,18 +110,20 @@ test_nvm_write(
 
     //test
     if(type == _WRITE_APPEND_) {
-        test_nvm_write_append();
+        test_nvm_durable_write_append();
     } else if(type == _WRITE_RANDOM_) {
-        test_nvm_write_random();
+        test_nvm_durable_write_random();
     }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 
     //nvm close
     nvm_system_close();
     clock_gettime(CLOCK_MONOTONIC, &end);
-    double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start); 
+    double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 
-    printf("total time: %f sec\n", time);
-    getchar();
+    printf("total time after write finished: %f sec, time after system close(): %f sec\n\n", time, time2);
    
     nvm_structure_destroy();
 

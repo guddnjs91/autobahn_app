@@ -9,8 +9,8 @@
 
 #include "nvm0inode.h"
 
-#define TREE_VALID 0
-#define TREE_INVALID 1
+#define TREE_VALID      0
+#define TREE_INVALID    1
 
 struct tree_root
 {

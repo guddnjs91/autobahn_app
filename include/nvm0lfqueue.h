@@ -32,13 +32,15 @@ class lfqueue
   public:
     lfqueue(const uint32_t capacity);
     ~lfqueue();
+
     void enqueue(const T value);
     T dequeue();
-    bool is_empty();
+
     uint32_t get_size();
+    bool is_empty();
+
     void monitor();
-    bool isQuiteFull();
-    bool isQuiteEmpty();
+
     void close();
 };
 

@@ -5,11 +5,8 @@
 #include <string>
 #include "nvm0common.h"
 
-extern struct nvm_metadata* nvm;
-extern lfqueue<uint32_t>* volume_free_lfqueue;
-extern lfqueue<uint32_t>* volume_inuse_lfqueue;
-extern lfqueue<uint32_t>* inode_free_lfqueue;
-extern lfqueue<uint32_t>* inode_dirty_lfqueue;
+//private function declarations
+const char* get_filename(uint32_t vid);
 
 /**
 Write out len bytes data pointed by ptr to nvm structure.
@@ -30,8 +27,7 @@ nvm_write(
     /* Calculate how many blocks needed for writing */
     uint32_t lbn_start   = ofs / nvm->block_size;
     uint32_t lbn_end     = (ofs + len) / nvm->block_size;
-    if((ofs + len) % nvm->block_size == 0)
-    {
+    if((ofs + len) % nvm->block_size == 0) {
         lbn_end--; // To avoid dummy data block write
     }
     uint32_t offset      = ofs % nvm->block_size;
@@ -45,27 +41,19 @@ nvm_write(
         pthread_rwlock_rdlock(&g_balloon_rwlock);
 
         /* If the ratio of invalid tree node are over 70 %,
-        rebalance the whole tree before writing. */
+        TODO:rebalance the whole tree before writing. */
         // if(get_invalid_ratio(ve->tree) > 1)
         // {
         //     printf("volume tree %u rebalancing ...\n", ve->vid);
         //     rebalance_tree_node(ve->tree);
         // }
 
-        if(inode_dirty_lfqueue->isQuiteFull())
-        {
-            pthread_mutex_lock(&g_flush_mutex);
-            pthread_cond_signal(&g_flush_cond);
-            pthread_mutex_unlock(&g_flush_mutex);
-        }
-
         /* Searches the tree node from ve with its lbn */
         tree_node* tnode = search_tree_node(ve->tree, lbn);
         
         /* If there is no tree node with lbn found or is invalid,
         get free inode from free inode LFQ. */
-        if(tnode == nullptr || tnode->valid == TREE_INVALID)
-        {
+        if(tnode == nullptr || tnode->valid == TREE_INVALID) {
             /* If the ration of free inode LFQ is below 10 %, 
             wake up balloon thread for reclaiming inodes */
             if(inode_free_lfqueue->get_size() < 1000) //0.1 * nvm->max_inode_entry)
@@ -75,13 +63,7 @@ nvm_write(
                 pthread_mutex_lock(&g_balloon_mutex);
                 pthread_cond_signal(&g_balloon_cond);
                 pthread_mutex_unlock(&g_balloon_mutex);
-                
-//                if(inode_free_lfqueue->get_size() == 0)
-//                {
-                    // possible deadlock might happens here
-//                    printf("DEAD LOCK HERE !!\n");
-                    continue;
-//                }
+                continue;
             }
 
             /* Get inode from inode_free_lfqueue. */

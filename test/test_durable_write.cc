@@ -18,7 +18,7 @@ static double TimeSpecToSeconds(struct timespec* ts)
 /**
  * Write thread fills in buffer and write it to nvm */
 void
-*thread_write_append(
+*thread_durable_write_append(
    void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -35,6 +35,8 @@ void
     for(i = 0; i < n; i++)
     {
         write(fd, buffer, nbytes);
+        fsync(fd);
+        fsync(fd);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -45,7 +47,7 @@ void
 }
 
 void
-test_write_append()
+test_durable_write_append()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -57,7 +59,7 @@ test_write_append()
     
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_durable_write_append, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
@@ -73,7 +75,7 @@ test_write_append()
 }
 
 void
-*thread_write_random(
+*thread_durable_write_random(
     void *data)
 {
     long long unsigned int n = filesize / nthread / nbytes;
@@ -103,7 +105,7 @@ void
 }
 
 void
-test_write_random()
+test_durable_write_random()
 {
     durations = new double[nthread];
     pthread_t write_thread[nthread];
@@ -113,7 +115,7 @@ test_write_random()
 
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_write_random, (void *)&tid[i]);
+        pthread_create(&write_thread[i], NULL, thread_durable_write_random, (void *)&tid[i]);
     }
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
@@ -129,7 +131,7 @@ test_write_random()
 }
 
 void
-test_write(
+test_durable_write(
     long long unsigned int file_size,
     int n_thread,
     size_t n_bytes,
@@ -145,9 +147,9 @@ test_write(
 
     //test
     if(type == _WRITE_APPEND_) {
-        test_write_append();
+        test_durable_write_append();
     } else if(type == _WRITE_RANDOM_) {
-        test_write_random();
+        test_durable_write_random();
     }
 
     free(buffer);
