@@ -10,7 +10,12 @@ LIBNAME = -lpthread -lrt
 CPPFLAGS += $(INCLUDE)
 CXXFLAGS = -std=c++11 -g -W -Wall
 
-all: nvm0nvm nvm0lfqueue nvm0avltree nvm0write
+all: nvm0hash
+#all: nvm0hash nvm0nvm nvm0lfqueue nvm0avltree nvm0write
+
+
+nvm0hash: ./test_nvm0hash.cc ../src/nvm0hash.cc
+	$(CXX) $(INCLUDE) $(CXXFLAGS) -o $@ $^ $(LIBNAME)
 
 nvm0nvm: ./test_nvm0nvm.cc ../src/nvm0nvm.cc ../src/nvm0flush.cc ../src/nvm0balloon.cc
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -o $@ $^ $(LIBNAME)
@@ -25,4 +30,4 @@ nvm0write: ./test_nvm0write.cc ../src/nvm0nvm.cc ../src/nvm0write.cc ../src/nvm0
 	$(CXX) $(INCLUDE) $(CXXFLAGS) -o $@ $^ $(LIBNAME)
 
 clean:
-	rm nvm0nvm nvm0lfqueue nvm0avltree nvm0write *.txt
+	rm nvm0hash nvm0nvm nvm0lfqueue nvm0avltree nvm0write *.txt

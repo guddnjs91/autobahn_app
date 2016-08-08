@@ -8,6 +8,13 @@ void nvm_system_init();
 void nvm_system_close();
 void nvm_structure_destroy();
 
+/* in file nvm0hash.cc */
+struct hash_node* init_hash_node(inode_entry* inode);
+void insert_hash_node(struct hash_table *table, hash_node *node);
+struct hash_node* search_hash_node(struct hash_table *table, uint32_t lbn);
+void logical_delete_hash_node(struct hash_table *table, hash_node *node);
+void physical_delete_hash_node(struct hash_table *table, hash_node *node);
+
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);
 void insert_tree_node(tree_root* tree, tree_node* node);

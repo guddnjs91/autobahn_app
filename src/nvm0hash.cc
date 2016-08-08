@@ -57,8 +57,12 @@ logical_delete_hash_node(
     hash_table* table,
     hash_node* node)
 {
-    node->valid = HASH_NODE_INVALID;
-    table->count_invalid++;
+    hash_node *searched_node = search_hash_node(table, node->lbn);
+    if (searched_node && searched_node->valid == HASH_NODE_VALID) 
+    {
+        searched_node->valid = HASH_NODE_INVALID;
+        table->count_invalid++;
+    }
 }
 
 /**
