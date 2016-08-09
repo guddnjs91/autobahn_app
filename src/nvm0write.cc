@@ -46,7 +46,7 @@ void changeInodeStateToDirty(struct volume_entry* ve, struct hash_node *hash_nod
     int old_state = hash_node->inode->state;
     if (old_state == INODE_STATE_CLEAN) 
     {
-        remove_list_node(ve->hash_table->invalid_list, hash_node);
+        remove_list_node(inode_clean_list, hash_node);
     }
 
     hash_node->inode->state = INODE_STATE_DIRTY;
