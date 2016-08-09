@@ -1,12 +1,8 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <string>
 #include "nvm0common.h"
 
 //private function declarations
-const char* get_filename(uint32_t vid);
+
 
 bool isValidNode(struct hash_node *node)
 {
@@ -85,7 +81,7 @@ nvm_write(
     uint32_t offset = ofs % nvm->block_size;
     size_t written_bytes = 0;
 
-    std::cout << "lbn_end : " << lbn_end << std::endl;
+//    std::cout << "lbn_end : " << lbn_end << std::endl;
     /* Each loop write one data block to nvm */
     for(uint32_t lbn = lbn_start; lbn <= lbn_end; lbn++) {
 
@@ -143,132 +139,3 @@ nvm_write(
 
     return written_bytes;
 }
-
-/**
- * Get volume_entry object which has vid.
- * @return a free volume entry */
-volume_idx_t
-get_volume_entry_idx(
-    uint32_t vid) /* !<in: key to find volume_entry */
-{
-    volume_idx_t idx = search_volume_entry_idx(vid);
-    
-    if(idx == nvm->max_volume_entry) {
-        idx = alloc_volume_entry_idx(vid);
-    }
-    
-    return idx;
-}
-
-/**
- * Search volume_entry object from Volume Table.
- * @return found entry */
-volume_idx_t
-search_volume_entry_idx(
-    uint32_t vid)     /* !<in: searching tree with vid */
-{
-    volume_idx_t idx;
-
-    for(idx = 0; idx < nvm->max_volume_entry; idx++) 
-    {
-        if(nvm->volume_table[idx].vid == vid)
-        {
-            return idx;
-        }
-    }
-
-    return idx;
-}
-
-/**
- * Allocate new volume_entry from volume_free_lfqueue
- * @return allocated volume entry */
-volume_idx_t
-alloc_volume_entry_idx(
-    uint32_t vid) /* !<in: given vid to new allocated volume_entry */
-{
-    /**
-     * Get the free ve from volume_free_lfqueue.
-     * Multi-writers can ask for each free volume entry and
-     * lfqueue dequeue(consume) free volume entry to each writers.
-     * Thread asking for deque might be waiting for the queue if it's empty. */
-     volume_idx_t idx = volume_free_lfqueue->dequeue();
-
-    /**
-     * Setting up acquired free volume entry for use now.
-     * Give ve its vid, fd from opening the file.
-     * Initialize hash table 
-     * the logical blocks of inodes for its volume(file) */
-    nvm->volume_table[idx].fd = open(get_filename(vid), O_RDWR| O_CREAT, 0644);
-    nvm->volume_table[idx].hash_table = new_hash_table();
-    nvm->volume_table[idx].vid = vid;
-
-    return idx;
-}
-
-/**
- * Get inode_entry object for lbn.
- * @return inode */
-inode_idx_t
-get_inode_entry_idx(
-    volume_entry* ve, /* !<in: volume that contains inodes we are looking for */
-    uint32_t lbn)     /* !<in: find inode which has this lbn */
-{
-    inode_idx_t idx;
-    hash_node* hash_node;
-    inode_entry* inode;
-
-    hash_node  = search_hash_node(ve->hash_table, lbn);
-
-    if(hash_node != nullptr) {
-        inode = hash_node->inode;
-        idx = inode - nvm->inode_table;
-        return idx;
-    } else {
-        idx = alloc_inode_entry_idx(lbn);
-        inode = &nvm->inode_table[idx];
-        inode->volume = ve;
-        hash_node = new_hash_node(inode);
-        insert_hash_node(ve->hash_table, hash_node);
-    }
-
-    return idx;
-}
-
-/**
- * Allocate new volume_entry from free-list of ve.
- * @return inode */
-inode_idx_t
-alloc_inode_entry_idx(
-    uint32_t lbn) /* !<in: lbn to new allocating inode */
-{
-    /**
-     * Get the free inode from free_inode_lfqueue.
-     * Multi-writers can ask for each free-inode and
-     * lf-queue deque(consume) free-inode to each writers.
-     * Thread asking for deque might be waiting for the queue if it's empty. */
-    inode_idx_t idx = inode_free_lfqueue->dequeue();
-
-    /**
-     * Setting up the acquired inode.
-     * Give inode its lbn, and make its state as ALLOCATED */
-    nvm->inode_table[idx].lbn = lbn;
-    nvm->inode_table[idx].volume = nullptr;
-    nvm->inode_table[idx].lock = PTHREAD_MUTEX_INITIALIZER;
-    return idx;
-}
-
-/**
- * Get filename with argument vid (vid maps filename 1 to 1)
- @return const char* containing filename */
-const char*
-get_filename(
-    uint32_t vid) /* !<in: vid representing its own filename */
-{
-    std::string filename = "VOL_";
-    filename += std::to_string(vid);
-    filename += ".txt";
-
-    return filename.c_str();
-}
-

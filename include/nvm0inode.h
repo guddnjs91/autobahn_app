@@ -26,4 +26,6 @@ extern lfqueue<inode_idx_t>* inode_free_lfqueue;
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
 
+extern struct list* inode_clean_list;
+
 #endif

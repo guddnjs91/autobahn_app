@@ -8,11 +8,26 @@ void nvm_system_close();
 void nvm_structure_destroy();
 void print_nvm_info();
 
-/* in file nvm0list.cc */
-struct list* new_list();
-void push_back_list_node(struct list* list, struct hash_node* node);
-struct hash_node* pop_front_list_node(struct list* list);
-void remove_list_node(struct list* list, struct hash_node* node);
+/* in file nvm0write.cc */
+size_t nvm_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
+
+/* in file nvm0volume.cc */
+volume_idx_t get_volume_entry_idx(uint32_t vid);
+volume_idx_t search_volume_entry_idx(uint32_t vid);
+volume_idx_t alloc_volume_entry_idx(uint32_t vid);
+
+/* in file nvm0inode.cc */
+inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
+inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
+
+/* in file nvm0flush.cc */
+void* flush_thread_func(void* data);
+
+/* in file nvm0balloon.cc */
+void* balloon_thread_func(void* data);
+
+/* in file nvm0sync.cc */
+void* sync_thread_func(void* data);
 
 /* in file nvm0hash.cc */
 struct hash_table* new_hash_table();
@@ -21,6 +36,12 @@ void insert_hash_node(struct hash_table *table, hash_node *node);
 struct hash_node* search_hash_node(struct hash_table *table, uint32_t lbn);
 void logical_delete_hash_node(struct hash_table *table, hash_node *node);
 void physical_delete_hash_node(struct hash_table *table, hash_node *node);
+
+/* in file nvm0list.cc */
+struct list* new_list();
+void push_back_list_node(struct list* list, struct hash_node* node);
+struct hash_node* pop_front_list_node(struct list* list);
+void remove_list_node(struct list* list, struct hash_node* node);
 
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);
@@ -39,24 +60,5 @@ int get_balance(tree_node* node);
 tree_node* right_rotate(tree_node* y);
 tree_node* left_rotate(tree_node* x);
 double get_invalid_ratio(tree_root *tree);
-
-/* in file nvm0write.c */
-volume_idx_t get_volume_entry_idx(uint32_t vid);
-volume_idx_t search_volume_entry_idx(uint32_t vid);
-volume_idx_t alloc_volume_entry_idx(uint32_t vid);
-inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
-inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
-
-size_t nvm_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
-//void nvm_atomic_write(unsigned int vid, unsigned int ofs, void* ptr, unsigned int len);
-
-/* in file nvm0flush.c */
-void* flush_thread_func(void* data);
-
-/* in file nvm0balloon.c */
-void* balloon_thread_func(void* data);
-
-/* in file nvm0sync.c */
-void* sync_thread_func(void* data);
 
 #endif

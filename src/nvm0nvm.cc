@@ -17,6 +17,7 @@ lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
 lfqueue<inode_idx_t>*   inode_free_lfqueue;
 lfqueue<inode_idx_t>*   inode_dirty_lfqueue;
 lfqueue<inode_idx_t>*   inode_sync_lfqueue;
+struct list*            inode_clean_list;
 
 pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
@@ -86,6 +87,7 @@ nvm_structure_build()
  *         - volume_inuse_lfqueue
  *         - inode_free_lfqueue
  *         - inode_dirty_lfqueue
+ *         - inode_clean_list
  *     - Create necessary locks (mutex lock, rw lock) for concurrency control.
  *     - Create necessary threads to aid NVM system.
  *         - flush_thread
@@ -113,6 +115,7 @@ nvm_system_init()
     inode_free_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_sync_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    inode_clean_list    = new_list();
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(i);
@@ -149,6 +152,7 @@ nvm_system_init()
  *     - inode_free_lfqueue
  *     - inode_dirty_lfqueue
  *     - inode_sync_lfqueue
+ *     - inode_clean_list
  */
 void
 nvm_system_close()
@@ -206,6 +210,7 @@ nvm_system_close()
     delete inode_free_lfqueue;
     delete inode_dirty_lfqueue;
     delete inode_sync_lfqueue;
+    delete inode_clean_list;
 
     printf("NVM system successfully closed!\n\n");
 }

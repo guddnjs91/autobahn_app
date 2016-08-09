@@ -50,9 +50,8 @@ nvm_sync(
 
         inode->state = INODE_STATE_CLEAN;
 
-        // TODO: 
-        // 1. search hash node with (inode->volum_entry->hash_table, inode->lbn)
-        // 2. push_back into global clean list
+        struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
+        push_back_list_node(inode_clean_list, hash_node);
         
         pthread_mutex_unlock(&inode->lock);
     }

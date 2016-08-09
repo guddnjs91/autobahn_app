@@ -10,6 +10,8 @@
 
 //private function declarations
 void nvm_balloon();
+void balloon_wait();
+void fill_free_inodes();
 
 /**
 Balloon thread function wakes up when free inode shortage.*/
@@ -29,36 +31,61 @@ balloon_thread_func(
 }
 
 /**
-Balloon function traverses tree and reclaims free inodes
-in invalid tree nodes. */
+ * When necessary, balloon function takes inodes from inode_clean_list and fills up the inode_free_lfqueue.
+ */
 void
-nvm_balloon(
-    void)
+nvm_balloon()
 {
-    struct timeval now;
-    struct timespec timeout;
-    gettimeofday(&now, NULL);
-    timeout.tv_sec = now.tv_sec + 10;
-    timeout.tv_nsec = now.tv_usec * 1000;
+    balloon_wait();
 
-    /* Wait signal from nvm_write() function. */
-    pthread_mutex_lock(&g_balloon_mutex);
-    pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
-    pthread_mutex_unlock(&g_balloon_mutex);
-
-    if(sys_terminate) {
+    if(sys_terminate == 1) {
         return;
     }
 
-    /* Lock write-lock to be mutually exclusive to write threads. */
+    fill_free_inodes();
+}
+
+/**
+ * Wait for writer's signal or after 10 seconds.
+ * Writers will signal if there is no more free inodes.
+ */
+void
+balloon_wait()
+{
+    struct timeval now;
+    struct timespec timeout;
+
+    pthread_mutex_lock(&g_balloon_mutex);
+    gettimeofday(&now, NULL);
+    timeout.tv_sec = now.tv_sec + 10;
+    timeout.tv_nsec = now.tv_usec * 1000;
+    pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
+    pthread_mutex_unlock(&g_balloon_mutex);
+}
+
+/**
+ * 1. Looks through inode_clean_list,
+ * 2. invalidate the node in hash_table,
+ * 3. and fill up the inode_free_lfqueue.
+ */
+void
+fill_free_inodes()
+{
     pthread_rwlock_wrlock(&g_balloon_rwlock);
 
-    /* Traverse volume table that each entry has a hash table. */
+    //Traverse volume table that each entry has a hash table.
+    while(inode_clean_list->count > 1) {
+        struct hash_node* hash_node;
+        struct inode_entry* inode;
 
-        //TODO:  4 node
-        // 1. Traverse list and change state clean to invalid 
-        // 2. Enqueue the node into Free LFQueue
+        hash_node = pop_front_list_node(inode_clean_list);
+        inode = hash_node->inode;
+        logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
-    /* Unlock write-lock. */
+        inode_idx_t idx = (inode_idx_t) ((char *)inode - (char *)nvm->inode_table) / sizeof(inode_entry);
+        inode->state = INODE_STATE_FREE;
+        inode_free_lfqueue->enqueue(idx);
+    }
+
     pthread_rwlock_unlock(&g_balloon_rwlock);
 }

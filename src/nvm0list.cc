@@ -30,7 +30,7 @@ push_back_list_node(
         list->head = node;
         list->tail = node;
     } else {
-        list->tail->next = nullptr;
+        list->tail->next = node;
         node->prev = list->tail;
         node->next = nullptr;
 
