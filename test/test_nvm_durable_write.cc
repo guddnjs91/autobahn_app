@@ -28,7 +28,7 @@ void
 
     for(i = 0; i < n; i++)
     {
-        nvm_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
+        nvm_durable_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
     }
 
     return NULL;
@@ -62,7 +62,7 @@ void
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
         off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
-        nvm_write(tid, rand_pos , buffer, nbytes);
+        nvm_durable_write(tid, rand_pos , buffer, nbytes);
     }
 
     return NULL;

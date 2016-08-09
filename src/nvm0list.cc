@@ -54,7 +54,7 @@ pop_front_list_node(
         list->head = list->head->next;
 
         if(list->head == nullptr) {
-            list->tail == nullptr;
+            list->tail = nullptr;
         } else {
             list->head->prev = nullptr;
         }

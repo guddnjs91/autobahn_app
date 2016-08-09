@@ -9,7 +9,7 @@ void nvm_structure_destroy();
 void print_nvm_info();
 
 /* in file nvm0write.cc */
-size_t nvm_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
+size_t nvm_durable_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
 
 /* in file nvm0volume.cc */
 volume_idx_t get_volume_entry_idx(uint32_t vid);

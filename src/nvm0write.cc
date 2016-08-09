@@ -59,14 +59,16 @@ void changeInodeStateToDirty(struct volume_entry* ve, struct hash_node *hash_nod
 }
 
 /**
-Write out len bytes data pointed by ptr to nvm structure.
+ * Write out (len) bytes data pointed by ptr to nvm structure.
 After writing out to nvm, data blocks are enqueued to dirty LFQ.
 @return the byte size of data written to nvm */
 size_t
-nvm_write(
+nvm_durable_write(
     uint32_t vid,       /* !<in: volume ID */
     off_t    ofs,       /* !<in: volume offset */ 
-    const char* ptr,    /* !<in: buffer */ size_t   len)       /* !<in: size of buffer to be written */ {
+    const char* ptr,    /* !<in: buffer */
+    size_t   len )      /* !<in: size of buffer to be written */
+{
     /* Get the volume entry index from the nvm volume table.
     The volume entry contains the hash structure, representing one file. */
     volume_idx_t v_idx = get_volume_entry_idx(vid);
