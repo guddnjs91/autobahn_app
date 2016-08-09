@@ -14,6 +14,7 @@ void insert_hash_node(struct hash_table *table, hash_node *node);
 struct hash_node* search_hash_node(struct hash_table *table, uint32_t lbn);
 void logical_delete_hash_node(struct hash_table *table, hash_node *node);
 void physical_delete_hash_node(struct hash_table *table, hash_node *node);
+bool isValidNode(struct hash_node *node);
 
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);

@@ -10,7 +10,7 @@ typedef uint32_t volume_idx_t;
 struct volume_entry {
     uint32_t            vid;    // volume id - implicit filename
     int                 fd;     // file descriptor
-    struct hash_table*  ;   // AVL tree root of inode
+    struct hash_table*  hash_table;   
 };
 
 extern lfqueue<volume_idx_t>* volume_free_lfqueue;

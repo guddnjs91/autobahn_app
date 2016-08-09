@@ -12,6 +12,7 @@ struct hash_node
 {
     struct inode_entry* inode;
     int                 valid;
+
     struct hash_node*   prev;
     struct hash_node*   next;
 };
