@@ -5,12 +5,12 @@
  * Constructor for list
  */
 struct list*
-list_init()
+new_list()
 {
     struct list* list = (struct list*) malloc( sizeof(struct list) );
     list->head = nullptr;
     list->tail = nullptr;
-    count = 0;
+    list->count = 0;
 }
 
 /**
@@ -30,7 +30,7 @@ push_back_list_node(
     } else {
         list->tail->next = nullptr;
         node->prev = list->tail;
-        node->next = null;
+        node->next = nullptr;
 
         list->tail = node;
     }
@@ -86,6 +86,5 @@ remove_list_node(
         node->next->prev = node->prev;
     }
 
-    l->count--;
+    list->count--;
 }
-

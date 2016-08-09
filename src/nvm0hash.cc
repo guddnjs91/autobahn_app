@@ -1,96 +1,86 @@
-<<<<<<< HEAD
-#include <iostream>
 #include <stdlib.h>
 #include <unordered_map>
 #include "nvm0common.h"
 
-
 /**
-Allocate and initailize a hash node with inode
-@return initialized hash node */
-hash_node*
-init_hash_node(
-    inode_entry* inode) /*!< in: embedding inode */
+ * Constructor for hash_table structure.
+ */
+struct hash_table*
+new_hash_table()
 {
-    hash_node* h = (hash_node*)malloc(sizeof(hash_node));
-    h->inode = inode;
-    h->valid = HASH_NODE_VALID;
-    h->prev = nullptr;
-    h->next = nullptr;
+    struct hash_table* hash_table = new struct hash_table;
+    hash_table->invalid_list = new_list();
 
-    return h;
+    return hash_table;
 }
 
 /**
-Insert hash node to hash table */
+ * Allocate and initailize a new hash node with given inode.
+ * @return initialized hash node
+ */
+struct hash_node*
+new_hash_node(
+    struct inode_entry* inode ) /*!< in: embedding inode */
+{
+    struct hash_node* node = new struct hash_node;
+    node->inode = inode;
+    node->lbn = inode->lbn;
+    node->is_valid = true;
+    node->prev = nullptr;
+    node->next = nullptr;
+
+    return node;
+}
+
+/**
+ * Insert a hash node to a hash table.
+ */
 void
 insert_hash_node(
-    hash_table* table,
-    hash_node* node)
+    struct hash_table* table,
+    struct hash_node* node)
 {
-    std::pair<uint32_t, hash_node*> p (node->inode->lbn, node);
-    table->map.insert(p);
-    table->count_total++;
+    std::pair<uint32_t, hash_node*> pair (node->lbn, node);
+    table->map.insert(pair);
 }
 
 /**
-Search hash node from hash table.
-@return found hash node or nullptr if not found */
-hash_node*
+ * Search the hash table for a hash node.
+ * @return a found hash node, or nullptr if not found
+ */
+struct hash_node*
 search_hash_node(
-    hash_table* table,
+    struct hash_table* table,
     uint32_t lbn)
 {
-    std::unordered_map<uint32_t, hash_node*>::iterator it;
-    it = table->map.find(lbn);
+    std::unordered_map<uint32_t, hash_node*>::iterator it = table->map.find(lbn);
 
-    if(it == table->map.end())
-    {
+    if(it == table->map.end()) {
         return nullptr;
     }
-
     return it->second;
 }
 
 /**
-Logically delete hash node. */
+ * Logically deletes a hash node and inserts it into an invalid_list.
+ */
 void
 logical_delete_hash_node(
-    hash_table* table,
-    hash_node* node)
+    struct hash_table* table,
+    struct hash_node* node)
 {
-    node->valid = HASH_NODE_INVALID;
-    table->count_invalid++;
+    node->inode = nullptr;
+    node->is_valid = false;
+    push_back_list_node(table->list, node);
 }
 
 /**
-Delete hash node from hash table. */
+ * Physically deletes a hash node from hash table.
+ */
 void
 physical_delete_hash_node(
-    hash_table* table,
-    hash_node* node)
+    struct hash_table* table,
+    uint32_t lbn)
 {
-    table->map.erase(node->inode->lbn);
-    table->count_total--;
+    table->map.erase(lbn);
 }
-
-//int main ()
-//{
-//  std::unordered_map<std::string,std::string> mymap;
-//  mymap = {{"Australia","Canberra"},{"U.S.","Washington"},{"France","Paris"}};
-//
-//  std::cout << "mymap contains:";
-//  for ( auto it = mymap.begin(); it != mymap.end(); ++it )
-//    std::cout << " " << it->first << ":" << it->second;
-//  std::cout << std::endl;
-//
-//  std::cout << "mymap's buckets contain:\n";
-//  for ( unsigned i = 0; i < mymap.bucket_count(); ++i) {
-//    std::cout << "bucket #" << i << " contains:";
-//    for ( auto local_it = mymap.begin(i); local_it!= mymap.end(i); ++local_it )
-//      std::cout << " " << local_it->first << ":" << local_it->second;
-//    std::cout << std::endl;
-//  }
-//
-//  return 0;
-//}
