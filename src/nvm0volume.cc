@@ -21,7 +21,7 @@ get_volume_entry_idx(
 }
 
 /**
- * Search volume_entry object from Volume Table.
+ * Search for a volume_entry object from Volume Table.
  * @return found entry */
 volume_idx_t
 search_volume_entry_idx(
@@ -29,11 +29,9 @@ search_volume_entry_idx(
 {
     volume_idx_t idx;
 
-    for(idx = 0; idx < nvm->max_volume_entry; idx++) 
-    {
-        if(nvm->volume_table[idx].vid == vid)
-        {
-            return idx;
+    for(idx = 0; idx < nvm->max_volume_entry; idx++) {
+        if(nvm->volume_table[idx].vid == vid) {
+            break;
         }
     }
 
@@ -47,21 +45,11 @@ volume_idx_t
 alloc_volume_entry_idx(
     uint32_t vid) /* !<in: given vid to new allocated volume_entry */
 {
-    /**
-     * Get the free ve from volume_free_lfqueue.
-     * Multi-writers can ask for each free volume entry and
-     * lfqueue dequeue(consume) free volume entry to each writers.
-     * Thread asking for deque might be waiting for the queue if it's empty. */
-     volume_idx_t idx = volume_free_lfqueue->dequeue();
+    volume_idx_t idx = volume_free_lfqueue->dequeue();
 
-    /**
-     * Setting up acquired free volume entry for use now.
-     * Give ve its vid, fd from opening the file.
-     * Initialize hash table 
-     * the logical blocks of inodes for its volume(file) */
+    nvm->volume_table[idx].vid = vid;
     nvm->volume_table[idx].fd = open(get_filename(vid), O_RDWR| O_CREAT, 0644);
     nvm->volume_table[idx].hash_table = new_hash_table();
-    nvm->volume_table[idx].vid = vid;
 
     return idx;
 }

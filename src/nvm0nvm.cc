@@ -108,6 +108,7 @@ nvm_system_init()
     volume_free_lfqueue =   new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue =  new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        nvm->volume_table[i].vid = 0x0U - 1;
         volume_free_lfqueue->enqueue(i);
     }
 
@@ -118,6 +119,7 @@ nvm_system_init()
     inode_clean_list    = new_list();
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
+        nvm->inode_table[i].lock = PTHREAD_MUTEX_INITIALIZER;
         inode_free_lfqueue->enqueue(i);
     }
 
@@ -199,9 +201,10 @@ nvm_system_close()
     //close files (volumes)
     printf("Closing volumes in NVM...\n");
     while(!volume_inuse_lfqueue->is_empty()) {
-        volume_idx_t v = volume_inuse_lfqueue->dequeue();
-        volume_entry* ve = &nvm->volume_table[v];
-        close(ve->fd);
+        volume_idx_t idx = volume_inuse_lfqueue->dequeue();
+        volume_entry* volume = &nvm->volume_table[idx];
+        close(volume->fd);
+        delete volume->hash_table;
     }
 
     //Deallocates data structures

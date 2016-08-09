@@ -16,10 +16,6 @@ volume_idx_t get_volume_entry_idx(uint32_t vid);
 volume_idx_t search_volume_entry_idx(uint32_t vid);
 volume_idx_t alloc_volume_entry_idx(uint32_t vid);
 
-/* in file nvm0inode.cc */
-inode_idx_t get_inode_entry_idx(volume_entry* ve, uint32_t lbn);
-inode_idx_t alloc_inode_entry_idx(uint32_t lbn);
-
 /* in file nvm0flush.cc */
 void* flush_thread_func(void* data);
 
@@ -31,6 +27,7 @@ void* sync_thread_func(void* data);
 
 /* in file nvm0hash.cc */
 struct hash_table* new_hash_table();
+void validate_hash_node(struct hash_node* hash_node, struct inode_entry* inode);
 struct hash_node* new_hash_node(inode_entry* inode);
 void insert_hash_node(struct hash_table *table, hash_node *node);
 struct hash_node* search_hash_node(struct hash_table *table, uint32_t lbn);

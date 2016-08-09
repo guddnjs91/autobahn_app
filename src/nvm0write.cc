@@ -23,8 +23,9 @@ void awakeBalloonThread()
 
 inode_entry *getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 {
-    inode_idx_t inode_idx = alloc_inode_entry_idx(lbn);
-    inode_entry* inode = &nvm->inode_table[inode_idx];
+    inode_idx_t idx = inode_free_lfqueue->dequeue();
+    struct inode_entry* inode = &nvm->inode_table[idx];
+
     inode->lbn = lbn;
     inode->volume = ve;
 
@@ -41,19 +42,17 @@ uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct
     
     return write_bytes;
 }
-void changeInodeStateToDirty(struct volume_entry* ve, struct hash_node *hash_node)
-{   
+void changeInodeStateToDirty(struct hash_node *hash_node)
+{
     int old_state = hash_node->inode->state;
-    if (old_state == INODE_STATE_CLEAN) 
-    {
+    if (old_state == INODE_STATE_CLEAN) {
         remove_list_node(inode_clean_list, hash_node);
     }
 
     hash_node->inode->state = INODE_STATE_DIRTY;
 
     inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
-    if(old_state != INODE_STATE_DIRTY)
-    {
+    if(old_state != INODE_STATE_DIRTY) {
         inode_dirty_lfqueue->enqueue(idx);
     }
 }
@@ -83,7 +82,6 @@ nvm_durable_write(
     uint32_t offset = ofs % nvm->block_size;
     size_t written_bytes = 0;
 
-//    std::cout << "lbn_end : " << lbn_end << std::endl;
     /* Each loop write one data block to nvm */
     for(uint32_t lbn = lbn_start; lbn <= lbn_end; lbn++) {
 
@@ -91,41 +89,37 @@ nvm_durable_write(
 
         hash_node* node_searched = search_hash_node(ve->hash_table, lbn);
 
-        if (!isValidNode(node_searched)) 
-        {
-            if(!isFreeLFQueueEnough())
-            {
+        if (!isValidNode(node_searched)) {
+
+            if(!isFreeLFQueueEnough()) {
                 pthread_rwlock_unlock(&g_balloon_rwlock);
                 awakeBalloonThread();
 
-                /* If hash table has too much invalid state nodes. 
-                TODO: garbage collecting. */
+                //TODO: do garbage collection in the mean time
+
                 lbn--;
+
                 continue;
             }
 
             inode_entry* new_inode = getFreeInodeFromFreeLFQueue(ve, lbn); 
 
-            if(node_searched == nullptr)
-            {
-                // TODO: Initialize hash node and insert to hash table
+            if(node_searched == nullptr) {
+
                 node_searched = new_hash_node(new_inode);
                 insert_hash_node(ve->hash_table, node_searched);
-            }
 
-            else if(node_searched->is_valid == false)
-            {
-                // TODO : Reassign inode and make hash node valid, remove hash node from invalid list
-                node_searched->inode = new_inode;
-                node_searched->is_valid = true;
-                remove_list_node(ve->hash_table->invalid_list, node_searched);
+            } else if(!node_searched->is_valid) {
+
+                validate_hash_node(node_searched, new_inode);
+
             }
 
         }
 
         pthread_mutex_lock(&node_searched->inode->lock);
 
-        changeInodeStateToDirty(ve, node_searched);
+        changeInodeStateToDirty(node_searched);
 
         int write_bytes = writeDataBlockToNVM(len, offset, ptr, node_searched);
 

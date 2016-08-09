@@ -51,6 +51,9 @@ nvm_sync(
         inode->state = INODE_STATE_CLEAN;
 
         struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
+        if(hash_node == nullptr){
+            printf("fail!\n");
+        }
         push_back_list_node(inode_clean_list, hash_node);
         
         pthread_mutex_unlock(&inode->lock);

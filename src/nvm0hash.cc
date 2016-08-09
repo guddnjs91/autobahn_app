@@ -32,6 +32,17 @@ new_hash_node(
     return node;
 }
 
+void
+validate_hash_node(
+    struct hash_node* hash_node,
+    struct inode_entry* inode )
+{
+    hash_node->inode = inode;
+    hash_node->lbn = inode->lbn;
+    hash_node->is_valid = true;
+    remove_list_node(inode->volume->hash_table->invalid_list, hash_node);
+}
+
 /**
  * Insert a hash node to a hash table.
  */
