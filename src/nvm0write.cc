@@ -21,7 +21,7 @@ void awakeBalloonThread()
     pthread_mutex_unlock(&g_balloon_mutex);
 }
 
-inode_entry *getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
+inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 {
     inode_idx_t idx = inode_free_lfqueue->dequeue();
     struct inode_entry* inode = &nvm->inode_table[idx];
@@ -29,7 +29,7 @@ inode_entry *getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
     inode->lbn = lbn;
     inode->volume = ve;
 
-    return inode;
+    return idx;
 }
 
 uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct hash_node *hash_node)
@@ -42,7 +42,7 @@ uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct
     
     return write_bytes;
 }
-void changeInodeStateToDirty(struct hash_node *hash_node)
+void changeInodeStateToDirty(struct hash_node *hash_node, inode_idx_t idx)
 {
     int old_state = hash_node->inode->state;
     if (old_state == INODE_STATE_CLEAN) {
@@ -51,7 +51,6 @@ void changeInodeStateToDirty(struct hash_node *hash_node)
 
     hash_node->inode->state = INODE_STATE_DIRTY;
 
-    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
     if(old_state != INODE_STATE_DIRTY) {
         inode_dirty_lfqueue->enqueue(idx);
     }
@@ -68,6 +67,9 @@ nvm_durable_write(
     const char* ptr,    /* !<in: buffer */
     size_t   len )      /* !<in: size of buffer to be written */
 {
+    //declaration
+    inode_idx_t i_idx;
+
     /* Get the volume entry index from the nvm volume table.
     The volume entry contains the hash structure, representing one file. */
     volume_idx_t v_idx = get_volume_entry_idx(vid);
@@ -102,7 +104,8 @@ nvm_durable_write(
                 continue;
             }
 
-            inode_entry* new_inode = getFreeInodeFromFreeLFQueue(ve, lbn); 
+            i_idx = getFreeInodeFromFreeLFQueue(ve, lbn);
+            inode_entry* new_inode = &nvm->inode_table[i_idx];
 
             if(node_searched == nullptr) {
 
@@ -119,7 +122,7 @@ nvm_durable_write(
 
         pthread_mutex_lock(&node_searched->inode->lock);
 
-        changeInodeStateToDirty(node_searched);
+        changeInodeStateToDirty(node_searched, i_idx);
 
         int write_bytes = writeDataBlockToNVM(len, offset, ptr, node_searched);
 

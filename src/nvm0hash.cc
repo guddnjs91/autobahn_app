@@ -69,6 +69,10 @@ search_hash_node(
     if(it == table->map.end()) {
         return nullptr;
     }
+
+    if(it->second == nullptr) {
+        printf("ERROR: hash has a mapped value nullptr!\n");
+    }
     return it->second;
 }
 

@@ -53,9 +53,10 @@ nvm_sync(
         struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
         if(hash_node == nullptr){
             printf("fail!\n");
+            printf("hash_table: %p, lbn : %d\n", inode->volume->hash_table, inode->lbn);
         }
         push_back_list_node(inode_clean_list, hash_node);
-        
+         
         pthread_mutex_unlock(&inode->lock);
     }
 }
