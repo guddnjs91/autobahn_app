@@ -2,82 +2,91 @@
 #include <stdlib.h>
 
 /**
-Insert hash node to the tail of the list. */
+ * Constructor for list
+ */
+struct list*
+new_list()
+{
+    struct list* list = (struct list*) malloc( sizeof(struct list) );
+    list->head = nullptr;
+    list->tail = nullptr;
+    list->count = 0;
+
+    return list;
+}
+
+/**
+ * push_back (enqueue) - Inserts a hash node at the end of a list.
+ */
 void
 push_back_list_node(
-    list*       l,
-    hash_node*  node)
+    struct list* list,
+    struct hash_node* node)
 {
-    if(l->tail == nullptr)
-    {
-        l->head = node;
-        l->tail = node;
-    }
-    else
-    {
-        node->prev = l->tail;
-        l->tail = node;
+    if(list->tail == nullptr) {
+        node->prev = nullptr;
+        node->next = nullptr;
+
+        list->head = node;
+        list->tail = node;
+    } else {
+        list->tail->next = nullptr;
+        node->prev = list->tail;
+        node->next = nullptr;
+
+        list->tail = node;
     }
 
-    l->count++;
+    list->count++;
 }
 
 /**
-Get the first hash node from the head of the list. 
-@return the first hash node or nullptr if empty. */
-hash_node*
+ * pop_front (dequeue) - Gets the first hash node from the beginning of a list. 
+ * @return the first hash node or nullptr if empty. */
+struct hash_node*
 pop_front_list_node(
-    list* l)
+    struct list* list )
 {
-    if(l->head == nullptr)
-    {
-        return nullptr;
-    }
-    else
-    {
-        hash_node* node = l->head;
-        l->head = l->head->next;
-        if(l->head != nullptr)
-        {
-            l->head->prev = nullptr;
+    struct hash_node* node = list->head;
+
+    if(node != nullptr) {
+
+        list->head = list->head->next;
+
+        if(list->head == nullptr) {
+            list->tail == nullptr;
+        } else {
+            list->head->prev = nullptr;
         }
-        l->count--;
-        return node;
-    }
 
-}
-
-/**
-Remove hash node from the listi.
-@return removed hash node. */
-hash_node*
-remove_list_node(
-    list*       l,
-    hash_node*  node)
-{
-    if(node->prev == nullptr && node->next == nullptr)
-    {   // only one element
-        l->head = nullptr;
-        l->tail = nullptr;
+        list->count--;
     }
-    else if(node->prev == nullptr)
-    {
-        l->head = node->next;
-        node->next->prev = nullptr;
-    }
-    else if(node->next == nullptr)
-    {
-        l->tail = node->prev;
-        node->prev->next = nullptr;
-    }
-    else
-    {
-        node->prev->next = node->next;
-    }
-    node->prev = nullptr;
-    node->next = nullptr;
-    l->count--;
 
     return node;
 }
 
+/**
+ * remove - Removes a given hash node from the list. The given hash node MUST exist in the list.
+ */
+void
+remove_list_node(
+    struct list*        list,
+    struct hash_node*   node )
+{
+    if(node == list->head && node == list->tail) {
+        list->head = nullptr;
+        list->tail = nullptr;
+    } else if(node == list->head) {
+        list->head = list->head->next;
+        list->head->prev = nullptr;
+    } else if(node == list->tail) {
+        list->tail = list->tail->prev;
+        list->tail->next = nullptr;
+    } else
+    {
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
+    }
+
+    list->count--;
+}

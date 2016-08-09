@@ -8,6 +8,11 @@
 //private function declarations
 const char* get_filename(uint32_t vid);
 
+bool isValidNode(struct hash_node *node)
+{
+   return node && node->is_valid ? true : false; 
+}
+
 bool isFreeLFQueueEnough()
 {
     return inode_free_lfqueue->get_size() > 1000 ? true : false;
@@ -24,32 +29,33 @@ inode_entry *getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 {
     inode_idx_t inode_idx = alloc_inode_entry_idx(lbn);
     inode_entry* inode = &nvm->inode_table[inode_idx];
-    new_inode->lbn = lbn;
+    inode->lbn = lbn;
     inode->volume = ve;
 
     return inode;
 }
-uint32_t WriteDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct hash_node *searched_node)
+
+uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct hash_node *hash_node)
 {
     uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
-    inode_idx_t idx = (inode_idx_t)((char *)searched_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
+    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
     char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
     memcpy(data_dst, ptr, write_bytes);
     //TODO:need cache line write guarantee
     
     return write_bytes;
 }
-void ChangeInodeState(struct volume_entry* ve, struct hash_node *searched_node)
+void changeInodeStateToDirty(struct volume_entry* ve, struct hash_node *hash_node)
 {   
-    int old_state = searched_node->inode->state;
-    if (old_state == INODE_STATE_CLEAN 
+    int old_state = hash_node->inode->state;
+    if (old_state == INODE_STATE_CLEAN) 
     {
-        remove_list_node(ve->hash_table->invalid_list, node_searched);
+        remove_list_node(ve->hash_table->invalid_list, hash_node);
     }
 
-    searched_node->inode->state = INODE_STATE_DIRTY;
+    hash_node->inode->state = INODE_STATE_DIRTY;
 
-    inode_idx_t idx = (inode_idx_t)((char *)searched_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
+    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
     if(old_state != INODE_STATE_DIRTY)
     {
         inode_dirty_lfqueue->enqueue(idx);
@@ -64,9 +70,7 @@ size_t
 nvm_write(
     uint32_t vid,       /* !<in: volume ID */
     off_t    ofs,       /* !<in: volume offset */ 
-    const char* ptr,    /* !<in: buffer */
-    size_t   len)       /* !<in: size of buffer to be written */
-{
+    const char* ptr,    /* !<in: buffer */ size_t   len)       /* !<in: size of buffer to be written */ {
     /* Get the volume entry index from the nvm volume table.
     The volume entry contains the hash structure, representing one file. */
     volume_idx_t v_idx = get_volume_entry_idx(vid);
@@ -81,6 +85,7 @@ nvm_write(
     uint32_t offset = ofs % nvm->block_size;
     size_t written_bytes = 0;
 
+    std::cout << "lbn_end : " << lbn_end << std::endl;
     /* Each loop write one data block to nvm */
     for(uint32_t lbn = lbn_start; lbn <= lbn_end; lbn++) {
 
@@ -93,7 +98,7 @@ nvm_write(
             if(!isFreeLFQueueEnough())
             {
                 pthread_rwlock_unlock(&g_balloon_rwlock);
-                AwakeBalloonThread();
+                awakeBalloonThread();
 
                 /* If hash table has too much invalid state nodes. 
                 TODO: garbage collecting. */
@@ -103,29 +108,30 @@ nvm_write(
 
             inode_entry* new_inode = getFreeInodeFromFreeLFQueue(ve, lbn); 
 
-            else if(node_searched->is_valid == false)
-            {
-                // TODO : Reassign inode and make hash node valid, remove hash node from invalid list
-                node_searched->inode = new_inode;
-                node_searched->valid = HASH_NODE_VALID;
-                remove_list_node(ve->hash_table->invalid_list, node_searched);
-            }
-
             if(node_searched == nullptr)
             {
                 // TODO: Initialize hash node and insert to hash table
                 node_searched = new_hash_node(new_inode);
                 insert_hash_node(ve->hash_table, node_searched);
             }
+
+            else if(node_searched->is_valid == false)
+            {
+                // TODO : Reassign inode and make hash node valid, remove hash node from invalid list
+                node_searched->inode = new_inode;
+                node_searched->is_valid = true;
+                remove_list_node(ve->hash_table->invalid_list, node_searched);
+            }
+
         }
 
-        pthread_mutex_lock(&searhced_node->inode->lock);
+        pthread_mutex_lock(&node_searched->inode->lock);
 
-        ChangeInodeState(ve, searched_node);
+        changeInodeStateToDirty(ve, node_searched);
 
-        int write_bytes = WriteDataBlockToNVM(len, offset, ptr, searched_node);
+        int write_bytes = writeDataBlockToNVM(len, offset, ptr, node_searched);
 
-        pthread_mutex_unlock(&searched_node->inode->lock);
+        pthread_mutex_unlock(&node_searched->inode->lock);
 
         /* Re-inintialize offset and len*/
         offset = 0;
@@ -222,7 +228,7 @@ get_inode_entry_idx(
         idx = alloc_inode_entry_idx(lbn);
         inode = &nvm->inode_table[idx];
         inode->volume = ve;
-        hash_node = init_hash_node(inode);
+        hash_node = new_hash_node(inode);
         insert_hash_node(ve->hash_table, hash_node);
     }
 

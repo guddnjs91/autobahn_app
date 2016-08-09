@@ -44,6 +44,8 @@ void
     close(fd);
 
     durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+
+    return nullptr;
 }
 
 void
@@ -102,6 +104,8 @@ void
     close(fd);
 
     durations[tid-1] = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+
+    return nullptr;
 }
 
 void
