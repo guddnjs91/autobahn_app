@@ -48,6 +48,14 @@ int main()
 {
     system("clear");
 
+    //////////write//////////
+    printf("\n[write test]\n");
+    test_write_performance(test_write);
+
+    printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
+    getchar();
+    system("clear");
+
     //////////NVM durable write//////////
     printf("\n[nvm durable write test]\n");
     test_write_performance(test_nvm_durable_write);
@@ -56,13 +64,6 @@ int main()
     getchar();
     system("clear");
 
-    //////////write//////////
-    printf("\n[write test]\n");
-    test_write_performance(test_write);
-
-    printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
-    getchar();
-    system("clear");
 
     //////////durable write//////////
     printf("\n[durable write test]\n");
