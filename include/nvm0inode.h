@@ -19,13 +19,13 @@ struct inode_entry {
     uint32_t                lbn;    // logical block number
     int                     state;  // state of block
     struct volume_entry*    volume; // volume id (implicit filename)
+    struct hash_node*       hash_node;
     pthread_mutex_t         lock;   // inode lock
 };
 
 extern lfqueue<inode_idx_t>* inode_free_lfqueue;
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue;
 extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
-
-extern struct list* inode_clean_list;
+extern lfqueue<inode_idx_t>* inode_clean_lfqueue;
 
 #endif

@@ -42,19 +42,6 @@ uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct
     
     return write_bytes;
 }
-void changeInodeStateToDirty(struct hash_node *hash_node, inode_idx_t idx)
-{
-    int old_state = hash_node->inode->state;
-    if (old_state == INODE_STATE_CLEAN) {
-        remove_list_node(inode_clean_list, hash_node);
-    }
-
-    hash_node->inode->state = INODE_STATE_DIRTY;
-
-    if(old_state != INODE_STATE_DIRTY) {
-        inode_dirty_lfqueue->enqueue(idx);
-    }
-}
 
 /**
  * Write out (len) bytes data pointed by ptr to nvm structure.
@@ -122,9 +109,15 @@ nvm_durable_write(
 
         pthread_mutex_lock(&node_searched->inode->lock);
 
-        changeInodeStateToDirty(node_searched, i_idx);
+        int old_state = node_searched->inode->state;
+        node_searched->inode->state = INODE_STATE_DIRTY;
 
         int write_bytes = writeDataBlockToNVM(len, offset, ptr, node_searched);
+
+        if(old_state != INODE_STATE_DIRTY) {
+            inode_idx_t idx = (inode_idx_t)((char *)node_searched->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
+            inode_dirty_lfqueue->enqueue(idx);
+        }
 
         pthread_mutex_unlock(&node_searched->inode->lock);
 

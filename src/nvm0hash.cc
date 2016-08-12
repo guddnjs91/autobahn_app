@@ -24,6 +24,7 @@ new_hash_node(
 {
     struct hash_node* node = new struct hash_node;
     node->inode = inode;
+    node->inode->hash_node = node;
     node->lbn = inode->lbn;
     node->is_valid = true;
     node->prev = nullptr;
@@ -38,9 +39,9 @@ validate_hash_node(
     struct inode_entry* inode )
 {
     hash_node->inode = inode;
+    hash_node->inode->hash_node = hash_node;
     hash_node->lbn = inode->lbn;
     hash_node->is_valid = true;
-    remove_list_node(inode->volume->hash_table->invalid_list, hash_node);
 }
 
 /**

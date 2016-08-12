@@ -74,15 +74,19 @@ fill_free_inodes()
     pthread_rwlock_wrlock(&g_balloon_rwlock);
 
     //Traverse volume table that each entry has a hash table.
-    while(inode_clean_list->count > 1) {
-        struct hash_node* hash_node;
-        struct inode_entry* inode;
+    while(!inode_clean_lfqueue->is_empty()) {
 
-        hash_node = pop_front_list_node(inode_clean_list);
-        inode = hash_node->inode;
-        logical_delete_hash_node(inode->volume->hash_table, hash_node);
+        inode_idx_t idx = inode_clean_lfqueue->dequeue();
+        struct inode_entry* inode = &nvm->inode_table[idx];
 
-        inode_idx_t idx = (inode_idx_t) ((char *)inode - (char *)nvm->inode_table) / sizeof(inode_entry);
+        //concurrency problem may occur here!
+        if (inode->state == INODE_STATE_DIRTY)
+        {
+           continue; 
+        }
+
+        logical_delete_hash_node(inode->volume->hash_table, inode->hash_node);
+
         inode->state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(idx);
     }
