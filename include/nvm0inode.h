@@ -19,7 +19,6 @@ struct inode_entry {
     uint32_t                lbn;    // logical block number
     int                     state;  // state of block
     struct volume_entry*    volume; // volume id (implicit filename)
-    struct hash_node*       hash_node;
     pthread_mutex_t         lock;   // inode lock
 };
 

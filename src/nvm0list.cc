@@ -4,10 +4,10 @@
 /**
  * Constructor for list
  */
-struct list*
+struct hash_node_list*
 new_list()
 {
-    struct list* list = (struct list*) malloc( sizeof(struct list) );
+    struct hash_node_list* list = (struct hash_node_list*) malloc( sizeof(struct hash_node_list) );
     list->head = nullptr;
     list->tail = nullptr;
     list->count = 0;
@@ -20,7 +20,7 @@ new_list()
  */
 void
 push_back_list_node(
-    struct list* list,
+    struct hash_node_list* list,
     struct hash_node* node)
 {
     if(list->tail == nullptr) {
@@ -45,7 +45,7 @@ push_back_list_node(
  * @return the first hash node or nullptr if empty. */
 struct hash_node*
 pop_front_list_node(
-    struct list* list )
+    struct hash_node_list* list )
 {
     struct hash_node* node = list->head;
 
@@ -70,7 +70,7 @@ pop_front_list_node(
  */
 void
 remove_list_node(
-    struct list*        list,
+    struct hash_node_list* list,
     struct hash_node*   node )
 {
     if(node == list->head && node == list->tail) {

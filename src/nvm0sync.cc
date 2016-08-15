@@ -50,7 +50,7 @@ nvm_sync(
 
         inode->state = INODE_STATE_CLEAN;
 
-        struct hash_node* hash_node = inode->hash_node;
+        struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
         if(hash_node == nullptr){
             printf("fail!\n");
             printf("hash_table: %p, lbn : %d\n", inode->volume->hash_table, inode->lbn);

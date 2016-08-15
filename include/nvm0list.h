@@ -3,7 +3,7 @@
 
 #include "nvm0hash.h"
 
-struct list
+struct hash_node_list
 {
     struct hash_node*   head;
     struct hash_node*   tail;

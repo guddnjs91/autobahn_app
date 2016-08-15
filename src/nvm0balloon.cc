@@ -85,7 +85,8 @@ fill_free_inodes()
            continue; 
         }
 
-        logical_delete_hash_node(inode->volume->hash_table, inode->hash_node);
+        struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
+        logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
         inode->state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(idx);

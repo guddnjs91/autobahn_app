@@ -35,10 +35,10 @@ void logical_delete_hash_node(struct hash_table *table, hash_node *node);
 void physical_delete_hash_node(struct hash_table *table, hash_node *node);
 
 /* in file nvm0list.cc */
-struct list* new_list();
-void push_back_list_node(struct list* list, struct hash_node* node);
-struct hash_node* pop_front_list_node(struct list* list);
-void remove_list_node(struct list* list, struct hash_node* node);
+struct hash_node_list* new_list();
+void push_back_list_node(struct hash_node_list* list, struct hash_node* node);
+struct hash_node* pop_front_list_node(struct hash_node_list* list);
+void remove_list_node(struct hash_node_list* list, struct hash_node* node);
 
 /* in file nvm0avltree.cc */
 tree_node* search_tree_node(tree_root* tree, uint32_t lbn);

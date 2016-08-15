@@ -14,7 +14,7 @@ Created 2016/06/07 Sang Rhee
 #include <pthread.h>
 
 //config (make changes here ONLY)
-#define NVM_SIZE            (1 * 1024 * 1024 * 1024LLU)
+#define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
 #define FLUSH_LWM           (1024 * 8)

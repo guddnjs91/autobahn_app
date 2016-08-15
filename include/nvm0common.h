@@ -16,5 +16,6 @@
 #include "nvm0prototypes.h"
 #include "nvm0hash.h"
 #include "nvm0list.h"
+#include "libcuckoo/src/cuckoohash_map.hh"
 
 #endif

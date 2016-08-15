@@ -8,7 +8,7 @@ CXX = g++
 
 # Pre-defined Macros 
 CPPFLAGS += -Iinclude
-CXXFLAGS += -std=c++11 -pg -g -W -Wall
+CXXFLAGS += -std=c++11 -g -W -Wall
 
 CXX_SRCS := $(wildcard test/*cc)         \
             $(wildcard src/*.cc)

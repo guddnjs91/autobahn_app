@@ -3,7 +3,8 @@
 
 #include "nvm0inode.h"
 #include "nvm0list.h"
-#include <unordered_map>
+#include "libcuckoo/src/cuckoohash_map.hh"
+#include "libcuckoo/src/city_hasher.hh"
 
 struct hash_node
 {
@@ -17,8 +18,8 @@ struct hash_node
 
 struct hash_table
 {
-    std::unordered_map<uint32_t, struct hash_node*> map; //key = lbn
-    struct list* invalid_list;
+    cuckoohash_map<uint32_t, struct hash_node*> map; //key = lbn
+    struct hash_node_list* invalid_list;
 };
 
 #endif

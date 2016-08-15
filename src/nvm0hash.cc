@@ -24,7 +24,6 @@ new_hash_node(
 {
     struct hash_node* node = new struct hash_node;
     node->inode = inode;
-    node->inode->hash_node = node;
     node->lbn = inode->lbn;
     node->is_valid = true;
     node->prev = nullptr;
@@ -39,7 +38,6 @@ validate_hash_node(
     struct inode_entry* inode )
 {
     hash_node->inode = inode;
-    hash_node->inode->hash_node = hash_node;
     hash_node->lbn = inode->lbn;
     hash_node->is_valid = true;
 }
@@ -52,8 +50,7 @@ insert_hash_node(
     struct hash_table* table,
     struct hash_node* node)
 {
-    std::pair<uint32_t, hash_node*> pair (node->lbn, node);
-    table->map.insert(pair);
+    table->map[node->inode->lbn] = node;
 }
 
 /**
@@ -65,16 +62,10 @@ search_hash_node(
     struct hash_table* table,
     uint32_t lbn)
 {
-    std::unordered_map<uint32_t, hash_node*>::iterator it = table->map.find(lbn);
+    struct hash_node *node = nullptr;
+    table->map.find(lbn, node);
 
-    if(it == table->map.end()) {
-        return nullptr;
-    }
-
-    if(it->second == nullptr) {
-        printf("ERROR: hash has a mapped value nullptr!\n");
-    }
-    return it->second;
+    return node;
 }
 
 /**
