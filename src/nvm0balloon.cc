@@ -12,6 +12,7 @@
 void nvm_balloon();
 void balloon_wait();
 void fill_free_inodes();
+bool try_lock_hash_node(struct hash_node *node);
 
 /**
 Balloon thread function wakes up when free inode shortage.*/
@@ -71,8 +72,6 @@ balloon_wait()
 void
 fill_free_inodes()
 {
-    pthread_rwlock_wrlock(&g_balloon_rwlock);
-
     //Traverse volume table that each entry has a hash table.
     while(!inode_clean_lfqueue->is_empty()) {
 
@@ -80,17 +79,32 @@ fill_free_inodes()
         struct inode_entry* inode = &nvm->inode_table[idx];
 
         //concurrency problem may occur here!
-        if (inode->state == INODE_STATE_DIRTY)
+        if (inode->state != INODE_STATE_CLEAN)
         {
            continue; 
         }
 
         struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
+        if(!try_lock_hash_node(hash_node))
+            continue;
+
         logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
         inode->state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(idx);
+        pthread_mutex_unlock(&hash_node->mutex);
+    }
+}
+
+bool try_lock_hash_node(struct hash_node *node)
+{
+    pthread_mutex_lock(&node->mutex);
+    
+    if(node->inode->state != INODE_STATE_CLEAN)
+    {
+        pthread_mutex_unlock(&node->mutex);
+        return false;
     }
 
-    pthread_rwlock_unlock(&g_balloon_rwlock);
+    return true;
 }

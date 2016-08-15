@@ -74,14 +74,11 @@ nvm_durable_write(
     /* Each loop write one data block to nvm */
     for(uint32_t lbn = lbn_start; lbn <= lbn_end; lbn++) {
 
-        pthread_rwlock_rdlock(&g_balloon_rwlock);
-
         hash_node* node_searched = search_hash_node(ve->hash_table, lbn);
 
         if (!isValidNode(node_searched)) {
 
             if(!isFreeLFQueueEnough()) {
-                pthread_rwlock_unlock(&g_balloon_rwlock);
                 awakeBalloonThread();
 
                 //TODO: do garbage collection in the mean time
@@ -107,6 +104,13 @@ nvm_durable_write(
 
         }
 
+        pthread_mutex_lock(&node_searched->mutex);
+        if(!node_searched->is_valid)
+        {
+            lbn--;
+            continue;
+        }
+
         pthread_mutex_lock(&node_searched->inode->lock);
 
         int old_state = node_searched->inode->state;
@@ -119,14 +123,13 @@ nvm_durable_write(
             inode_dirty_lfqueue->enqueue(idx);
         }
 
+        pthread_mutex_unlock(&node_searched->mutex);
         pthread_mutex_unlock(&node_searched->inode->lock);
 
         /* Re-inintialize offset and len*/
         offset = 0;
         len -= write_bytes;
         written_bytes += written_bytes;
-
-        pthread_rwlock_unlock(&g_balloon_rwlock);
     }
 
     return written_bytes;

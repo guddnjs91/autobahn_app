@@ -26,6 +26,7 @@ new_hash_node(
     node->inode = inode;
     node->lbn = inode->lbn;
     node->is_valid = true;
+    node->mutex = PTHREAD_MUTEX_INITIALIZER;
     node->prev = nullptr;
     node->next = nullptr;
 

@@ -125,7 +125,6 @@ nvm_system_init()
     }
 
     //locks
-    pthread_rwlock_init(&g_balloon_rwlock, NULL);
     pthread_cond_init(&g_balloon_cond, NULL);
     pthread_mutex_init(&g_balloon_mutex, NULL);
 

@@ -11,6 +11,7 @@ struct hash_node
     struct inode_entry* inode;
     uint32_t            lbn;
     bool                is_valid;
+    pthread_mutex_t     mutex;
 
     struct hash_node*   prev;
     struct hash_node*   next;
