@@ -25,6 +25,9 @@ void* balloon_thread_func(void* data);
 /* in file nvm0sync.cc */
 void* sync_thread_func(void* data);
 
+/* in file nvm0monitor.cc */
+void* monitor_thread_func(void* data);
+
 /* in file nvm0hash.cc */
 struct hash_table* new_hash_table();
 void validate_hash_node(struct hash_node* hash_node, struct inode_entry* inode);

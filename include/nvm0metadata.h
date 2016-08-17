@@ -20,6 +20,7 @@ Created 2016/06/07 Sang Rhee
 #define FLUSH_LWM           (1024 * 8)
 #define NUM_FLUSH_THR       (4)
 #define MIN_SYNC_FREQUENCY  (1024)
+#define MONITORING 0
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
@@ -35,6 +36,15 @@ struct nvm_metadata {
     char*           datablock_table;
 };
 
+struct monitor
+{
+    atomic<uint_fast64_t> free;
+    atomic<uint_fast64_t> dirty;
+    atomic<uint_fast64_t> clean;
+    atomic<uint_fast64_t> sync;
+};
+
+
 //Global variables
 extern struct nvm_metadata* nvm; //holds information about NVM
 
@@ -45,6 +55,8 @@ extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
 extern pthread_t flush_thread[NUM_FLUSH_THR];
 extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
+extern pthread_t monitor_thread;
+extern struct monitor monitor;
 
 //Conditional variable for system termination
 extern int sys_terminate;

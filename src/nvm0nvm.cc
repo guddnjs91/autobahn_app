@@ -26,6 +26,8 @@ pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 pthread_t flush_thread[NUM_FLUSH_THR];
 pthread_t sync_thread;
 pthread_t balloon_thread;
+pthread_t monitor_thread;
+struct monitor monitor;
 
 int sys_terminate;
 
@@ -98,12 +100,12 @@ void
 nvm_system_init()
 {
     //Starts recovery
-    printf("Starting Recovery Process...\n");
+    //printf("Starting Recovery Process...\n");
     recovery_start();
-    printf("Recovery successful!\n\n");
+    //printf("Recovery successful!\n\n");
 
     //Starts NVM system
-    printf("Starting NVM system...\n");
+    //printf("Starting NVM system...\n");
     //volume data structure
     volume_free_lfqueue =   new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue =  new lfqueue<volume_idx_t>(nvm->max_volume_entry);
@@ -134,13 +136,18 @@ nvm_system_init()
     {
         pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
     }
-    printf("Flush thread created...\n");
+    printf("%d Flush thread created...\n", NUM_FLUSH_THR);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
-    printf("Sync thread created...\n");
+    //printf("Sync thread created...\n");
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
-    printf("Balloon thread created...\n");
+    //printf("Balloon thread created...\n");
 
-    printf("NVM system successfully started!\n\n");
+    #if MONITORING
+    pthread_create(&monitor_thread, NULL, monitor_thread_func, NULL);
+    //printf("monitor thread created...\n");
+    #endif
+
+    //printf("NVM system successfully started!\n\n");
 }
 
 /**
@@ -162,7 +169,7 @@ nvm_system_init()
 void
 nvm_system_close()
 {
-    printf("Closing NVM system...\n");
+    //printf("Closing NVM system...\n");
 
     //Terminate threads
     sys_terminate = 1;
@@ -184,8 +191,12 @@ nvm_system_close()
     inode_sync_lfqueue->close();
     pthread_join(sync_thread, NULL);
 
+    #if MONITORING
+    pthread_join(monitor_thread, NULL);
+    #endif
+
     //flushes the remained dirty blocks in NVM to a permanent storage
-    printf("Flushing NVM system...\n");
+    //printf("Flushing NVM system...\n");
     while(!inode_dirty_lfqueue->is_empty()) {
         inode_idx_t idx = inode_dirty_lfqueue->dequeue();
         inode_entry* inode = &nvm->inode_table[idx];
@@ -205,7 +216,7 @@ nvm_system_close()
     }
 
     //close files (volumes)
-    printf("Closing volumes in NVM...\n");
+    //printf("Closing volumes in NVM...\n");
     while(!volume_inuse_lfqueue->is_empty()) {
         volume_idx_t idx = volume_inuse_lfqueue->dequeue();
         volume_entry* volume = &nvm->volume_table[idx];
@@ -221,7 +232,7 @@ nvm_system_close()
     delete inode_sync_lfqueue;
     delete inode_clean_lfqueue;
 
-    printf("NVM system successfully closed!\n\n");
+    //printf("NVM system successfully closed!\n\n");
 }
 
 /**
@@ -317,7 +328,7 @@ create_nvm_in_shm()
 {
     int shm_id;
 
-    printf("Creating NVM in DRAM (shared memory)...\n");
+    //printf("Creating NVM in DRAM (shared memory)...\n");
 
     shm_id = shmget((key_t) SHM_KEY, NVM_SIZE, 0666 | IPC_CREAT);
     if(shm_id == -1) {
@@ -330,7 +341,7 @@ create_nvm_in_shm()
         exit(0);
     }
 
-    printf("[Succeeded]\n");
+    //printf("[Succeeded]\n");
 
     return (struct nvm_metadata*) shm_addr;
 }
@@ -342,7 +353,7 @@ remove_nvm_in_shm()
 {
     int shm_id;
 
-    printf("Removing NVM from DRAM (shared memory)...\n");
+    //printf("Removing NVM from DRAM (shared memory)...\n");
 
     //Make Shared Memory space.
     shm_id = shmget((key_t) SHM_KEY, NVM_SIZE, 0666 | IPC_CREAT);
@@ -361,5 +372,5 @@ remove_nvm_in_shm()
         exit(0);
     }
 
-    printf("[Succeeded]\n");
+    //printf("[Succeeded]\n");
 }

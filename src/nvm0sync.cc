@@ -13,7 +13,7 @@ void*
 sync_thread_func(
     void* data)
 {
-    printf("Sync thread running.....\n");
+//    printf("Sync thread running.....\n");
 
     while(sys_terminate == 0) {
 
@@ -28,7 +28,7 @@ sync_thread_func(
         }
     }
     
-    printf("Sync thread termintated.....\n");
+//    printf("Sync thread termintated.....\n");
 
     return NULL;
 }
@@ -49,17 +49,8 @@ nvm_sync(
         inode_entry* inode = &nvm->inode_table[idx];
 
         inode->state = INODE_STATE_CLEAN;
-
-        struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
-        if(hash_node == nullptr){
-            printf("fail!\n");
-            printf("hash_table: %p, lbn : %d\n", inode->volume->hash_table, inode->lbn);
-        }
-
         inode_clean_lfqueue->enqueue(idx);
-         
-        // push_back_list_node(inode_clean_list, hash_node);
-         
+        monitor.clean++;
         pthread_mutex_unlock(&inode->lock);
     }
 }

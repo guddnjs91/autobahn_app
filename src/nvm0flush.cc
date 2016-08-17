@@ -13,7 +13,7 @@ void*
 flush_thread_func(
     void* data)
 {
-    printf("Flush thread running.....\n");
+//    printf("Flush thread running.....\n");
 
     while(sys_terminate == 0) {
         
@@ -24,7 +24,7 @@ flush_thread_func(
         }
     }
     
-    printf("Flush thread termintated.....\n");
+//    printf("Flush thread termintated.....\n");
 
     return NULL;
 }
@@ -47,4 +47,5 @@ nvm_flush(
 
     inode->state = INODE_STATE_SYNC;
     inode_sync_lfqueue->enqueue(idx);
+    monitor.sync++;
 }

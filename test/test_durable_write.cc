@@ -25,7 +25,7 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open(("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
     for(i = 0; i < n; i++)
     {
@@ -64,7 +64,7 @@ void
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
 
-    int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    int fd = open(("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {

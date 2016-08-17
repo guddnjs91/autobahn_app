@@ -20,13 +20,13 @@ void*
 balloon_thread_func(
     void* data)
 {
-    printf("Balloon thread running.....\n");
+//    printf("Balloon thread running.....\n");
     
     while(sys_terminate == 0) {
         nvm_balloon();
     }
     
-    printf("Balloon thread terminated.....\n");
+//    printf("Balloon thread terminated.....\n");
     
     return NULL;
 }
@@ -77,8 +77,7 @@ fill_free_inodes()
 
         inode_idx_t idx = inode_clean_lfqueue->dequeue();
         struct inode_entry* inode = &nvm->inode_table[idx];
-
-        //concurrency problem may occur here!
+//concurrency problem may occur here!
         if (inode->state != INODE_STATE_CLEAN)
         {
            continue; 
@@ -93,6 +92,7 @@ fill_free_inodes()
         inode->state = INODE_STATE_FREE;
         inode_free_lfqueue->enqueue(idx);
         pthread_mutex_unlock(&hash_node->mutex);
+        monitor.free++;
     }
 }
 

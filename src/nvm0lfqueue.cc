@@ -112,15 +112,15 @@ lfqueue<T>::monitor()
 {
     double fullness = (double)get_size() / (double)capacity * 100;
 
-    for (int i = 0; i < 50; i++) {
-        if(fullness < 2 * i) {
+    for (int i = 0; i < 10; i++) {
+        if(fullness < 10 * i) {
             std::cout << "-";
         } else {
             std::cout << "|";
         }
     }
-
-    std::cout << "  " << fullness << "% \r"; 
+   
+    printf(" %.2lf %%", fullness);
 }
 
 /**
