@@ -18,6 +18,7 @@ Created 2016/06/07 Sang Rhee
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
 #define FLUSH_LWM           (1024 * 8)
+#define NUM_FLUSH_THR       (4)
 #define MIN_SYNC_FREQUENCY  (1024)
 
 /** Represents the metadata of NVM */
@@ -41,7 +42,7 @@ extern pthread_rwlock_t g_balloon_rwlock;   //balloon read/write lock
 extern pthread_cond_t   g_balloon_cond;     //balloon condition variable
 extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
 
-extern pthread_t flush_thread;
+extern pthread_t flush_thread[NUM_FLUSH_THR];
 extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
 

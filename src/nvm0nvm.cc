@@ -23,7 +23,7 @@ pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 
-pthread_t flush_thread;
+pthread_t flush_thread[NUM_FLUSH_THR];
 pthread_t sync_thread;
 pthread_t balloon_thread;
 
@@ -130,7 +130,10 @@ nvm_system_init()
 
     //create threads
     sys_terminate = 0;
-    pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
+    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    {
+        pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
+    }
     printf("Flush thread created...\n");
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
     printf("Sync thread created...\n");
@@ -172,7 +175,10 @@ nvm_system_close()
 
     //flush thread - notify lfqueue to avoid spinlock
     inode_dirty_lfqueue->close();
-    pthread_join(flush_thread, NULL);
+    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    {
+        pthread_join(flush_thread[i], NULL);
+    }
 
     //sync thread
     inode_sync_lfqueue->close();
