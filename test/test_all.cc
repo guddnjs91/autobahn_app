@@ -67,4 +67,6 @@ int main()
     //////////durable write//////////
     printf("\n[durable write test]\n");
     test_write_performance(test_durable_write);
+
+    return 0;
 }

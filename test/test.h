@@ -1,7 +1,7 @@
 #ifndef test_h
 #define test_h
 
-#define TOTAL_FILE_SIZE 20 * 1024 * 1024 * 1024LLU
+#define TOTAL_FILE_SIZE 40 * 1024 * 1024 * 1024LLU
 #define MAX_THREADS 128
 #define WRITE_BYTES1 16 * 1024
 #define WRITE_BYTES2 1024 
