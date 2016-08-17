@@ -61,9 +61,21 @@ const char*
 get_filename(
     uint32_t vid) /* !<in: vid representing its own filename */
 {
-    std::string filename = "./VOL_";
-    filename += std::to_string(vid);
-    filename += ".txt";
+    std::string filename;
+
+    if(vid % 2 == 1)
+    {
+        filename = "/opt/nvm1/NVM/VOL_";
+        filename += std::to_string(vid);
+        filename += ".txt";
+    }
+
+    else
+    {
+        filename = "/opt/nvm2/NVM/VOL_";
+        filename += std::to_string(vid);
+        filename += ".txt";
+    }
 
     return filename.c_str();
 }
