@@ -40,14 +40,11 @@ nvm_monitor()
 
 void printLFQueueGauge()
 {
-    printf("\t[clean LFQueue]");
-    printf("   \t[free LFQueue]");
-    printf("   \t[dirty LFQueue]");
-    printf("   \t[sync LFQueue]");
+    printf("\t[free LFQueue]");
+    printf("\t\t\t[dirty LFQueue]");
+    printf("\t\t\t[sync LFQueue]");
+    printf("\t\t\t[clean LFQueue]");
     printf("\n");
-    
-    printf("\t");
-    inode_clean_lfqueue->monitor();
 
     printf("\t");
     inode_free_lfqueue->monitor();
@@ -57,6 +54,10 @@ void printLFQueueGauge()
 
     printf("\t");
     inode_sync_lfqueue->monitor();
+
+    printf("\t");
+    inode_clean_lfqueue->monitor();
+
     printf("\n");
 }
 
@@ -70,19 +71,19 @@ void printThroughput()
     double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize;
     double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize;
 
-    printf("\tfree: ");
+    printf("\tclean->free: ");
     coloring(free);
     printf("%.2lf GiB/s ", free); 
 
-    printf("\t\033[0mdirty: ");
+    printf("\t\033[0mfree->dirty: ");
     coloring(dirty);
     printf("%.2lf GiB/s ", dirty); 
 
-    printf("\t\033[0msync: ");
+    printf("\t\033[0mdirty->sync: ");
     coloring(sync);
     printf("%.2lf GiB/s ", sync); 
 
-    printf("\t\033[0mclean: ");
+    printf("\t\033[0msync->clean: ");
     coloring(clean);
     printf("%.2lf GiB/s ", clean); 
 

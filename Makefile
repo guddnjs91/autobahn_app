@@ -1,4 +1,3 @@
-
 # Main suffixes for auto compile by dependencies
 #.SUFFIXES : .cc .o
 
@@ -29,6 +28,8 @@ test: $(OBJS)
 
 clean:
 	rm $(BIN)test $(OBJS) 
+	rm /opt/nvm1/NVM/*.txt
+	rm /opt/nvm2/NVM/*.txt
 
 again:
 	clear

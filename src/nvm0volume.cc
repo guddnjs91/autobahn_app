@@ -69,7 +69,6 @@ get_filename(
         filename += std::to_string(vid);
         filename += ".txt";
     }
-
     else
     {
         filename = "/opt/nvm2/NVM/VOL_";

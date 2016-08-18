@@ -112,8 +112,8 @@ lfqueue<T>::monitor()
 {
     double fullness = (double)get_size() / (double)capacity * 100;
 
-    for (int i = 0; i < 10; i++) {
-        if(fullness < 10 * i) {
+    for (int i = 0; i < 20; i++) {
+        if(fullness < 5 * i) {
             std::cout << "-";
         } else {
             std::cout << "|";

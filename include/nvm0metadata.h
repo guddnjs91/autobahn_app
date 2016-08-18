@@ -20,7 +20,7 @@ Created 2016/06/07 Sang Rhee
 #define FLUSH_LWM           (1024 * 8)
 #define NUM_FLUSH_THR       (4)
 #define MIN_SYNC_FREQUENCY  (1024)
-#define MONITORING 0 
+#define MONITORING          (1)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
