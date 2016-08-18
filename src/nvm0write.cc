@@ -120,7 +120,7 @@ nvm_durable_write(
 
         if(old_state != INODE_STATE_DIRTY) {
             inode_idx_t idx = (inode_idx_t)((char *)node_searched->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
-            inode_dirty_lfqueue->enqueue(idx);
+            inode_dirty_lfqueue[vid % NUM_FLUSH_THR]->enqueue(idx);
             monitor.dirty++;
         }
 

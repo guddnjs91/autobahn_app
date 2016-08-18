@@ -15,7 +15,7 @@ struct nvm_metadata* nvm;
 lfqueue<volume_idx_t>*  volume_free_lfqueue;
 lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
 lfqueue<inode_idx_t>*   inode_free_lfqueue;
-lfqueue<inode_idx_t>*   inode_dirty_lfqueue;
+lfqueue<inode_idx_t>*   inode_dirty_lfqueue[NUM_FLUSH_THR];
 lfqueue<inode_idx_t>*   inode_sync_lfqueue;
 lfqueue<inode_idx_t>*   inode_clean_lfqueue;
 
@@ -116,7 +116,9 @@ nvm_system_init()
 
     //inode data structure
     inode_free_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-    inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    for(int i = 0; i < NUM_FLUSH_THR; i++) {
+        inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    }
     inode_sync_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_clean_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
 
@@ -132,9 +134,11 @@ nvm_system_init()
 
     //create threads
     sys_terminate = 0;
+    int flush_idx[NUM_FLUSH_THR];
     for(int i = 0; i < NUM_FLUSH_THR; i++)
     {
-        pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
+        flush_idx[i] = i;
+        pthread_create(&flush_thread[i], NULL, flush_thread_func, (void *) &flush_idx[i]);
     }
     printf("%d Flush thread created...\n", NUM_FLUSH_THR);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
@@ -181,7 +185,7 @@ nvm_system_close()
     pthread_join(balloon_thread, NULL);
 
     //flush thread - notify lfqueue to avoid spinlock
-    inode_dirty_lfqueue->close();
+    //inode_dirty_lfqueue->close();
     for(int i = 0; i < NUM_FLUSH_THR; i++)
     {
         pthread_join(flush_thread[i], NULL);
@@ -197,12 +201,14 @@ nvm_system_close()
 
     //flushes the remained dirty blocks in NVM to a permanent storage
     //printf("Flushing NVM system...\n");
-    while(!inode_dirty_lfqueue->is_empty()) {
-        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
-        inode_entry* inode = &nvm->inode_table[idx];
+    for(int i = 0; i < NUM_FLUSH_THR; i++) {
+        while(!inode_dirty_lfqueue[i]->is_empty()) {
+            inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
+            inode_entry* inode = &nvm->inode_table[idx];
 
-        lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
-        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+            lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+            write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+        }
     }
 
     sync();
@@ -228,7 +234,9 @@ nvm_system_close()
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
     delete inode_free_lfqueue;
-    delete inode_dirty_lfqueue;
+    for(int i = 0; i < NUM_FLUSH_THR; i++) {
+        delete inode_dirty_lfqueue[i];
+    }
     delete inode_sync_lfqueue;
     delete inode_clean_lfqueue;
 

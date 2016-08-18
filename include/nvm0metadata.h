@@ -58,6 +58,8 @@ extern pthread_t balloon_thread;
 extern pthread_t monitor_thread;
 extern struct monitor monitor;
 
+extern lfqueue<inode_idx_t>*    inode_dirty_lfqueue[NUM_FLUSH_THR];
+
 //Conditional variable for system termination
 extern int sys_terminate;
 

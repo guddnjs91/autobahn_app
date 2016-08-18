@@ -22,9 +22,9 @@ struct inode_entry {
     pthread_mutex_t         lock;   // inode lock
 };
 
-extern lfqueue<inode_idx_t>* inode_free_lfqueue;
-extern lfqueue<inode_idx_t>* inode_dirty_lfqueue;
-extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
-extern lfqueue<inode_idx_t>* inode_clean_lfqueue;
+extern lfqueue<inode_idx_t>*    inode_free_lfqueue;
+//extern lfqueue<inode_idx_t>     inode_dirty_lfqueue[NUM_FLUSH_THR];
+extern lfqueue<inode_idx_t>*    inode_sync_lfqueue;
+extern lfqueue<inode_idx_t>*    inode_clean_lfqueue;
 
 #endif

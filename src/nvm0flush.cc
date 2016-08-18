@@ -5,7 +5,7 @@
 #include "nvm0common.h"
 
 //private function declarations
-void nvm_flush();
+void nvm_flush(int i);
 
 /**
  * Flush thread function proactively runs and flushes dirty inodes. */
@@ -15,12 +15,14 @@ flush_thread_func(
 {
 //    printf("Flush thread running.....\n");
 
+    int i = *((int*) data);
+
     while(sys_terminate == 0) {
         
         usleep(10 * 1000);
         
-        while(inode_dirty_lfqueue->get_size() > FLUSH_LWM && sys_terminate == 0) {
-            nvm_flush();
+        while(inode_dirty_lfqueue[i]->get_size() > FLUSH_LWM && sys_terminate == 0) {
+            nvm_flush(i);
         }
     }
     
@@ -33,10 +35,10 @@ flush_thread_func(
  * Flush a batch of dirty data block from NVM to a permenant storage. */
 void
 nvm_flush(
-    void)
+    int i )
 {
     // inode_dirty_lfqueue->monitor();
-    inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+    inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     
     pthread_mutex_lock(&inode->lock);
