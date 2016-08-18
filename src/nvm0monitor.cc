@@ -33,7 +33,6 @@ void
 nvm_monitor()
 {
     static int counter = 0;
-
     printLFQueueGauge();
     counter++;
 
