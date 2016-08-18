@@ -40,7 +40,7 @@ class lfqueue
     bool is_empty();
 
     void monitor();
-
+    void coloring(double state);
     void close();
 };
 

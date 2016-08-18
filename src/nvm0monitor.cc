@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include "nvm0common.h"
 
-void* monitor_thread_func(void* data);
+void *monitor_thread_func(void* data);
 void nvm_monitor();
 void printLFQueueGauge();
 void printThroughput();
@@ -20,7 +20,7 @@ monitor_thread_func(
 
     while(sys_terminate == 0)
     {
-        usleep(1000 * 1000);
+        usleep(1 * 1000);
         nvm_monitor();
     }
     
@@ -32,10 +32,15 @@ monitor_thread_func(
 void
 nvm_monitor()
 {
+    static int counter = 0;
     printLFQueueGauge();
-    printThroughput();
-    printf("\n");
-    reset();
+    counter++;
+
+    if(counter == 1000)
+    {
+        printThroughput();
+        counter = 0;
+    }
 }
 
 void printLFQueueGauge()
@@ -58,7 +63,7 @@ void printLFQueueGauge()
     printf("\t");
     inode_clean_lfqueue->monitor();
 
-    printf("\n");
+    printf("\033[1A \r");
 }
 
 
@@ -71,6 +76,7 @@ void printThroughput()
     double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize;
     double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize;
 
+    printf("\n\n");
     printf("\tclean->free: ");
     coloring(free);
     printf("%.2lf GiB/s ", free); 
@@ -88,7 +94,8 @@ void printThroughput()
     printf("%.2lf GiB/s ", clean); 
 
     printf("\033[0m");
-    printf("\n");
+    printf("\033[2A \r");
+    reset();
 }
 
 void reset()
