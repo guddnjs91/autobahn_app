@@ -105,7 +105,7 @@ nvm_system_init()
     //printf("Recovery successful!\n\n");
 
     //Starts NVM system
-    //printf("Starting NVM system...\n");
+    printf("Starting NVM system...\n");
     //volume data structure
     volume_free_lfqueue =   new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue =  new lfqueue<volume_idx_t>(nvm->max_volume_entry);
@@ -142,16 +142,16 @@ nvm_system_init()
     }
     printf("%d Flush thread created...\n", NUM_FLUSH_THR);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
-    //printf("Sync thread created...\n");
+    printf("Sync thread created...\n");
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
-    //printf("Balloon thread created...\n");
+    printf("Balloon thread created...\n");
 
     #if MONITORING
     pthread_create(&monitor_thread, NULL, monitor_thread_func, NULL);
-    //printf("monitor thread created...\n");
+    printf("monitor thread created...\n");
     #endif
 
-    //printf("NVM system successfully started!\n\n");
+    printf("NVM system successfully started!\n\n");
 }
 
 /**
@@ -173,7 +173,6 @@ nvm_system_init()
 void
 nvm_system_close()
 {
-    //printf("Closing NVM system...\n");
 
     //Terminate threads
     sys_terminate = 1;
@@ -197,10 +196,15 @@ nvm_system_close()
 
     #if MONITORING
     pthread_join(monitor_thread, NULL);
+    for(int i = 0; i < NUM_FLUSH_THR + 4; i++)
+    {
+        printf("\n");
+    }
     #endif
 
+    printf("Closing NVM system...\n");
     //flushes the remained dirty blocks in NVM to a permanent storage
-    //printf("Flushing NVM system...\n");
+    printf("Flushing NVM system...\n");
     for(int i = 0; i < NUM_FLUSH_THR; i++) {
         while(!inode_dirty_lfqueue[i]->is_empty()) {
             inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
@@ -222,7 +226,7 @@ nvm_system_close()
     }
 
     //close files (volumes)
-    //printf("Closing volumes in NVM...\n");
+    printf("Closing volumes in NVM...\n");
     while(!volume_inuse_lfqueue->is_empty()) {
         volume_idx_t idx = volume_inuse_lfqueue->dequeue();
         volume_entry* volume = &nvm->volume_table[idx];
@@ -240,7 +244,7 @@ nvm_system_close()
     delete inode_sync_lfqueue;
     delete inode_clean_lfqueue;
 
-    //printf("NVM system successfully closed!\n\n");
+    printf("NVM system successfully closed!\n\n");
 }
 
 /**

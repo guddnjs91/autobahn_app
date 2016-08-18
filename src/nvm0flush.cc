@@ -37,7 +37,6 @@ void
 nvm_flush(
     int i )
 {
-    // inode_dirty_lfqueue->monitor();
     inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     

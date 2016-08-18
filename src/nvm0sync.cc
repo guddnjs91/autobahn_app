@@ -41,7 +41,7 @@ nvm_sync(
 {
     uint32_t n = inode_sync_lfqueue->get_size();
 
-    sync();
+//    sync();
 
     for (uint32_t i = 0; i < n; i++) {
         inode_idx_t idx = inode_sync_lfqueue->dequeue();

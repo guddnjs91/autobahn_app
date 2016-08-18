@@ -123,7 +123,8 @@ test_nvm_durable_write(
     clock_gettime(CLOCK_MONOTONIC, &end);
     double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 
-    printf("total time after write finished: %f sec, time after system close(): %f sec\n\n", time, time2);
+
+    printf("\t>>>>>>>>> total time after write finished: %f sec, time after system close(): %f sec <<<<<<<<<<\n\n", time, time2);
    
     nvm_structure_destroy();
 

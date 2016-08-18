@@ -107,10 +107,41 @@ lfqueue<T>::is_empty()
 }
 
 template <typename T>
+void 
+lfqueue<T>::coloring(double state)
+{
+    //red
+    if(state > 75)
+    {
+        printf("\033[31m");
+    }
+
+    //yellow
+    else if(state > 50)
+    {
+        printf("\033[33m");
+    }
+
+    //green
+    else if(state > 25)
+    {
+        printf("\033[32m");
+    }
+
+    //blue
+    else
+    {
+        printf("\033[34m");
+    }
+}
+
+template <typename T>
 void
 lfqueue<T>::monitor()
 {
     double fullness = (double)get_size() / (double)capacity * 100;
+
+    this->coloring(fullness);
 
     for (int i = 0; i < 20; i++) {
         if(fullness < 5 * i) {
@@ -120,7 +151,8 @@ lfqueue<T>::monitor()
         }
     }
    
-    printf(" %.2lf %%", fullness);
+    printf(" %7.3lf %%", fullness);
+    printf("\033[0m");
 }
 
 /**
@@ -132,3 +164,4 @@ lfqueue<T>::close()
 {
     is_closed = true;
 }
+

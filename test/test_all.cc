@@ -19,27 +19,25 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
     int nthread;
 
     /* write (WRITE_BYTES1) bytes at a time */
-    printf("[Writing %d bytes at a time totaling %llu bytes]\n", WRITE_BYTES1, TOTAL_FILE_SIZE);
+    printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES1, TOTAL_FILE_SIZE, NUM_FLUSH_THR);
     for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
         printf("#-------- %d threads APPEND TEST -------\n", nthread);
         (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES1, _WRITE_APPEND_);
 //        printf("#-------------- RANDOM TEST ---------------------\n");
 //        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES1, _WRITE_RANDOM_);
-        printf("\n");
         remove_files(nthread);
     }
 
-    printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
+    printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n");
     getchar();
 
     /* write (WRITE_BYTES2) bytes at a time */
-    printf("[Writing %d bytes at a time totaling %llu bytes]\n", WRITE_BYTES2, TOTAL_FILE_SIZE);
+    printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES2, TOTAL_FILE_SIZE, NUM_FLUSH_THR);
     for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
         printf("#-------- %d threads APPEND TEST -------\n", nthread);
         (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_APPEND_);
 //        printf("#-------------- RANDOM TEST ---------------------\n");
 //        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_RANDOM_);
-        printf("\n");
         remove_files(nthread);
     }
 }
@@ -55,6 +53,7 @@ int main()
     printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
     getchar();
     system("clear");
+
 
     //////////write//////////
     printf("\n[write test]\n");
