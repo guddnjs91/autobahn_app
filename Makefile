@@ -33,5 +33,5 @@ clean:
 
 again:
 	clear
-	make clean	
+	rm $(BIN)test $(OBJS)	
 	make

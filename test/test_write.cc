@@ -24,8 +24,16 @@ void
     long long unsigned int n = filesize / nthread / nbytes;
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
+    int fd;
 
-    int fd = open( ("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    if(tid % 2 == 1)
+    {
+        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
+    else
+    {
+        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
 
     for(i = 0; i < n; i++)
     {
@@ -61,8 +69,16 @@ void
     long long unsigned int n = filesize / nthread / nbytes;
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
+    int fd;
 
-    int fd = open(("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    if(tid % 2 == 1)
+    {
+        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
+    else
+    {
+        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
@@ -122,6 +138,7 @@ test_write(
 
     clock_gettime(CLOCK_MONOTONIC, &end); 
     double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+    dprintf(report_fd, "\t\t\t %6.3f\n",time);
     printf("total time after write finished: %f sec\n\n", time);
 
     free(buffer);

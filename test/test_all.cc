@@ -28,6 +28,8 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 {
     int nthread;
 
+    for(int i = 0; i < 5; i ++)
+    {
     /* write (WRITE_BYTES1) bytes at a time */
     printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES1, TOTAL_FILE_SIZE, NUM_FLUSH_THR);
     dprintf(report_fd, "## threads \t|\tinterval(sec)\n");
@@ -39,6 +41,7 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
 //        printf("#-------------- RANDOM TEST ---------------------\n");
 //        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES1, _WRITE_RANDOM_);
         remove_files(nthread);
+    }
     }
 
     printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n");
