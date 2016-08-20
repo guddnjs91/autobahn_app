@@ -1,16 +1,17 @@
 #include <unistd.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <pthread.h>
-#include "nvm0common.h"
+#include "nvm0nvm.h"
+#include "nvm0lfqueue.h"
+#include "nvm0monitor.h"
 
 void *monitor_thread_func(void* data);
-void nvm_monitor();
-void printLFQueueGauge();
-void printThroughput();
-void coloring(double state);
-void reset();
-
+static void nvm_monitor();
+static void printLFQueueGauge();
+static void printThroughput();
+static void coloring(double state);
+static void reset();
 
 void*
 monitor_thread_func(
@@ -76,9 +77,9 @@ void printLFQueueGauge()
 
     for (int i = 0; i < 20; i++) {
         if(fullness < 5 * i) {
-            std::cout << "-";
+            printf("-");
         } else {
-            std::cout << "|";
+            printf("|");
         }
     }
    

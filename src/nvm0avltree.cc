@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stack>
-#include "nvm0common.h"
+#include "nvm0avltree.h"
 
 /**
  * Search tree node object from avl tree root

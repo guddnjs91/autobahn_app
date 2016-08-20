@@ -1,5 +1,4 @@
-#include "nvm0common.h"
-#include <stdlib.h>
+#include "nvm0list.h"
 
 /**
  * Constructor for list

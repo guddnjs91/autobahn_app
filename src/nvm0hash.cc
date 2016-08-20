@@ -1,6 +1,4 @@
-#include <stdlib.h>
-#include <unordered_map>
-#include "nvm0common.h"
+#include "nvm0hash.h"
 
 /**
  * Constructor for hash_table structure.

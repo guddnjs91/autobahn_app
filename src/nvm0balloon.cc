@@ -6,7 +6,10 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <stack>
-#include "nvm0common.h"
+#include "nvm0nvm.h"
+#include "nvm0hash.h"
+#include "nvm0monitor.h"
+#include "nvm0lfqueue.h"
 
 //private function declarations
 void nvm_balloon();

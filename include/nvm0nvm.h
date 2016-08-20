@@ -1,26 +1,20 @@
-/******************************************************************//**
-@file include/nvm0metadata.h
-Config and Metadata are stored in this header file.
-Config is the configuration before setting up and starting NVM System.
-Meta Data stores the information that has to be persistent
-throughout the NVM System use with given config settings.
+#pragma once
 
-Created 2016/06/07 Sang Rhee
-***********************************************************************/
-
-#ifndef nvm0metadata_h
-#define nvm0metadata_h
-
+#include <cstdint>
+#include <sys/types.h>
 #include <pthread.h>
+#include "nvm0inode.h"
+#include "nvm0volume.h"
 
 //config (make changes here ONLY)
 #define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
-#define FLUSH_LWM           (1024 * 8)
-#define NUM_FLUSH_THR       (4)
+#define FLUSH_LWM           (128)
+#define NUM_FLUSH_THR       (8)
 #define MIN_SYNC_FREQUENCY  (1024)
 #define MONITORING          (0)
+#define testing             (1)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
@@ -30,20 +24,11 @@ struct nvm_metadata {
     uint32_t    max_inode_entry;
     uint32_t    block_size;
 
-    // Base address of each table
+    //Base address of each table
     volume_entry*   volume_table;
     inode_entry*    inode_table;
     char*           datablock_table;
 };
-
-struct monitor
-{
-    atomic<uint_fast64_t> free;
-    atomic<uint_fast64_t> dirty;
-    atomic<uint_fast64_t> clean;
-    atomic<uint_fast64_t> sync;
-};
-
 
 //Global variables
 extern struct nvm_metadata* nvm; //holds information about NVM
@@ -56,11 +41,24 @@ extern pthread_t flush_thread[NUM_FLUSH_THR];
 extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
 extern pthread_t monitor_thread;
-extern struct monitor monitor;
-
-extern lfqueue<inode_idx_t>*    inode_dirty_lfqueue[NUM_FLUSH_THR];
 
 //Conditional variable for system termination
-extern int sys_terminate;
+extern int sys_terminate; 
 
-#endif
+
+
+/* functions */
+
+/* in file nvm0nvm.cc */
+void nvm_structure_build();
+void nvm_system_init();
+void nvm_system_close();
+void nvm_structure_destroy();
+void print_nvm_info();
+
+size_t nvm_durable_write(uint32_t vid, off_t ofs, const char* ptr, size_t len);
+
+void* flush_thread_func(void* data);
+void* balloon_thread_func(void* data);
+void* sync_thread_func(void* data);
+void* monitor_thread_func(void* data);

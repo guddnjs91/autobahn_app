@@ -1,5 +1,9 @@
 #include <fcntl.h>
-#include "nvm0common.h"
+#include <string>
+#include "nvm0nvm.h"
+#include "nvm0hash.h"
+#include "nvm0volume.h"
+#include "nvm0lfqueue.h"
 
 //private function declarations
 const char* get_filename(uint32_t vid);

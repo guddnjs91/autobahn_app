@@ -1,11 +1,4 @@
-/**
- * AVL tree node.
- * Tree structure doesn't embedded in inode anymore.
- * tree_node will be managed by AVL tree in MEMORY
- * Each tree_node contins inode and its valid bit. */
-
-#ifndef nvm0avltree_h
-#define nvm0avltree_h
+#pragma once
 
 #include "nvm0inode.h"
 
@@ -22,12 +15,30 @@ struct tree_root
 struct tree_node 
 {
    struct inode_entry*    inode;
-   uint32_t               lbn; // key
-   int                    valid; // Balloon thread change this and writer will delegate this node.
+   uint32_t               lbn;
+   int                    valid;
 
    struct tree_node*      left;
    struct tree_node*      right;
    int                    height;
 };
 
-#endif
+
+
+/* functions */
+tree_node* search_tree_node(tree_root* tree, uint32_t lbn);
+void insert_tree_node(tree_root* tree, tree_node* node);
+tree_node* insert_tree_node(tree_node* root, tree_node* node);
+tree_node* physical_delete_tree_node(tree_node* root, tree_node* node);
+void logical_delete_tree_node(tree_root* tree, tree_node* node);
+void rebalance_tree_node(tree_root* tree);
+tree_node* find_invalid_tree_node(tree_node* node);
+
+tree_node* init_tree_node(inode_entry* inode);
+tree_node* min_value_node(tree_node* node);
+int max_height(int a, int b);
+int get_height(tree_node* node);
+int get_balance(tree_node* node);
+tree_node* right_rotate(tree_node* y);
+tree_node* left_rotate(tree_node* x);
+double get_invalid_ratio(tree_root *tree);

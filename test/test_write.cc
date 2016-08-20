@@ -7,8 +7,8 @@
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
-#include "nvm0common.h"
 #include "test.h"
+using namespace std;
 
 static double TimeSpecToSeconds(struct timespec* ts)
 {

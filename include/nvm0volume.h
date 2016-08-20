@@ -1,8 +1,6 @@
-/**
- * nvm0volume.h - header file for Volume Table */
+#pragma once
 
-#ifndef nvm0volume_h
-#define nvm0volume_h
+#include <cstdint>
 
 typedef uint32_t volume_idx_t;
 
@@ -13,7 +11,7 @@ struct volume_entry {
     struct hash_table*  hash_table;   
 };
 
-extern lfqueue<volume_idx_t>* volume_free_lfqueue;
-extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
-
-#endif
+/* functions */
+volume_idx_t get_volume_entry_idx(uint32_t vid);
+volume_idx_t search_volume_entry_idx(uint32_t vid);
+volume_idx_t alloc_volume_entry_idx(uint32_t vid);

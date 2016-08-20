@@ -1,3 +1,4 @@
+#include <string>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/ipc.h>
@@ -5,17 +6,29 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include "nvm0common.h"
 #include <pthread.h>
+#include "nvm0nvm.h"
+#include "nvm0lfqueue.h"
+#include "nvm0monitor.h"
 
 
 //Declarations of global variables
 struct nvm_metadata* nvm;
+struct monitor monitor;
+int sys_terminate;
+int flush_idx[NUM_FLUSH_THR];
 
 lfqueue<volume_idx_t>*  volume_free_lfqueue;
 lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
 lfqueue<inode_idx_t>*   inode_free_lfqueue;
+
+#if testing
+lfqueue<inode_idx_t>*   inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
+lfqueue<volume_idx_t>*  flush_ready_idx_lfqueue;
+#else
 lfqueue<inode_idx_t>*   inode_dirty_lfqueue[NUM_FLUSH_THR];
+#endif
+
 lfqueue<inode_idx_t>*   inode_sync_lfqueue;
 lfqueue<inode_idx_t>*   inode_clean_lfqueue;
 
@@ -27,9 +40,7 @@ pthread_t flush_thread[NUM_FLUSH_THR];
 pthread_t sync_thread;
 pthread_t balloon_thread;
 pthread_t monitor_thread;
-struct monitor monitor;
 
-int sys_terminate;
 
 //private function declaration
 void recovery_start();
@@ -77,7 +88,6 @@ nvm_structure_build()
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
 
-    //TODO: what else?
 }
 
 /**
@@ -116,9 +126,18 @@ nvm_system_init()
 
     //inode data structure
     inode_free_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+#if testing
+    flush_ready_idx_lfqueue = new lfqueue<volume_idx_t>(MAX_VOLUME_ENTRY);
+    for(int i = 0; i < MAX_VOLUME_ENTRY; i++) {
+        inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+        flush_ready_idx_lfqueue->enqueue(i+1);
+    }
+#else
     for(int i = 0; i < NUM_FLUSH_THR; i++) {
         inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
+#endif
+
     inode_sync_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     inode_clean_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
 
@@ -134,12 +153,18 @@ nvm_system_init()
 
     //create threads
     sys_terminate = 0;
-    int flush_idx[NUM_FLUSH_THR];
+#if testing
+    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    {
+        pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
+    }
+#else
     for(int i = 0; i < NUM_FLUSH_THR; i++)
     {
         flush_idx[i] = i;
-        pthread_create(&flush_thread[i], NULL, flush_thread_func, (void *) &flush_idx[i]);
+        pthread_create(&flush_thread[i], NULL, flush_thread_func, (void *)&flush_idx[i]);
     }
+#endif
     printf("%d Flush thread created...\n", NUM_FLUSH_THR);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
     printf("Sync thread created...\n");
@@ -173,7 +198,6 @@ nvm_system_init()
 void
 nvm_system_close()
 {
-
     //Terminate threads
     sys_terminate = 1;
 
@@ -184,7 +208,20 @@ nvm_system_close()
     pthread_join(balloon_thread, NULL);
 
     //flush thread - notify lfqueue to avoid spinlock
-    //inode_dirty_lfqueue->close();
+
+#if testing
+    for(int i = 0; i < MAX_VOLUME_ENTRY; i++)
+    {
+        inode_dirty_lfqueue[i]->close();
+    }
+#else
+    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    {
+        inode_dirty_lfqueue[i]->close();
+    }
+#endif
+
+
     for(int i = 0; i < NUM_FLUSH_THR; i++)
     {
         pthread_join(flush_thread[i], NULL);
@@ -205,6 +242,18 @@ nvm_system_close()
     printf("Closing NVM system...\n");
     //flushes the remained dirty blocks in NVM to a permanent storage
     printf("Flushing NVM system...\n");
+
+#if testing
+    for(int i = 0; i < MAX_VOLUME_ENTRY; i++) {
+        while(!inode_dirty_lfqueue[i]->is_empty()) {
+            inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
+            inode_entry* inode = &nvm->inode_table[idx];
+
+            lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+            write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+        }
+    }
+#else
     for(int i = 0; i < NUM_FLUSH_THR; i++) {
         while(!inode_dirty_lfqueue[i]->is_empty()) {
             inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
@@ -214,7 +263,7 @@ nvm_system_close()
             write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
         }
     }
-
+#endif
     sync();
     sync();
 
@@ -231,16 +280,23 @@ nvm_system_close()
         volume_idx_t idx = volume_inuse_lfqueue->dequeue();
         volume_entry* volume = &nvm->volume_table[idx];
         close(volume->fd);
-        delete volume->hash_table;
+        free(volume->hash_table);
     }
 
     //Deallocates data structures
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
     delete inode_free_lfqueue;
+#if testing
+    for(int i = 0; i < MAX_VOLUME_ENTRY; i++) {
+        delete inode_dirty_lfqueue[i];
+    }
+    delete flush_ready_idx_lfqueue;
+#else
     for(int i = 0; i < NUM_FLUSH_THR; i++) {
         delete inode_dirty_lfqueue[i];
     }
+#endif
     delete inode_sync_lfqueue;
     delete inode_clean_lfqueue;
 

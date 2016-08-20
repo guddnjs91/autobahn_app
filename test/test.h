@@ -1,7 +1,7 @@
-#ifndef test_h
-#define test_h
+#pragma once
+#include <cstdio>
 
-#define TOTAL_FILE_SIZE 60 * 1024 * 1024 * 1024LLU
+#define TOTAL_FILE_SIZE 20 * 1024 * 1024 * 1024LLU
 #define MAX_THREADS 128
 #define WRITE_BYTES1 16 * 1024
 #define WRITE_BYTES2 1024 
@@ -18,4 +18,4 @@ extern size_t nbytes;
 extern char* buffer;
 extern double* durations;
 
-#endif
+extern int report_fd;

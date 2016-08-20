@@ -1,9 +1,6 @@
-/**
- * nvm0inode.h - header file for inode */
+#pragma once
 
-#ifndef nvm0inode_h
-#define nvm0inode_h
-
+#include <cstdint>
 #include <pthread.h>
 
 /* State of inode */
@@ -21,10 +18,3 @@ struct inode_entry {
     struct volume_entry*    volume; // volume id (implicit filename)
     pthread_mutex_t         lock;   // inode lock
 };
-
-extern lfqueue<inode_idx_t>*    inode_free_lfqueue;
-//extern lfqueue<inode_idx_t>     inode_dirty_lfqueue[NUM_FLUSH_THR];
-extern lfqueue<inode_idx_t>*    inode_sync_lfqueue;
-extern lfqueue<inode_idx_t>*    inode_clean_lfqueue;
-
-#endif

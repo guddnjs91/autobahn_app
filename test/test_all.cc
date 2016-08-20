@@ -1,8 +1,18 @@
-#include "nvm0common.h"
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <string>
+#include <string.h>
 #include "test.h"
+#include "nvm0nvm.h"
+using namespace std;
 
+int report_fd;
+FILE *report_fp;
+string report_time_YMD;
+string report_time_HMS;
 long long unsigned int filesize;
 int nthread;
 size_t nbytes;
@@ -42,11 +52,30 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
     }
 }
 
+void start_recording_report()
+{
+    time_t timer;
+    struct tm *t;
+
+    timer = time(NULL);
+    t = localtime(&timer);
+    
+    report_time_YMD = to_string(t->tm_year + 1900) + "-" + to_string(t->tm_mon + 1) + "-" + to_string(t->tm_mday);
+    report_time_HMS = to_string(t->tm_hour) + ":" + to_string(t->tm_min) + ":" + to_string(t->tm_sec);
+
+    report_fd = open( ("/opt/nvm1/NVM/report/" + report_time_YMD).c_str() , O_RDWR | O_CREAT | O_APPEND, 0666 ); 
+    write(report_fd, ("# Testing Start at : " + report_time_HMS + "\n").c_str(),
+    strlen(("Testing Start at : " + report_time_HMS + "\n").c_str())); 
+}
+
 int main()
 {
     system("clear");
 
+    start_recording_report();
+
     //////////NVM durable write//////////
+    write(report_fd, "\n## [nvm durable write test]\n", strlen("\n## [nvm durable write test]\n")); 
     printf("\n[nvm durable write test]\n");
     test_write_performance(test_nvm_durable_write);
 
@@ -56,6 +85,7 @@ int main()
 
 
     //////////write//////////
+    write(report_fd, "\n## [write test]\n", strlen("\n## [write test]\n")); 
     printf("\n[write test]\n");
     test_write_performance(test_write);
 
@@ -64,6 +94,7 @@ int main()
     system("clear");
 
     //////////durable write//////////
+    write(report_fd, "\n## [durable write test]\n", strlen("\n## [durable write test]\n")); 
     printf("\n[durable write test]\n");
     test_write_performance(test_durable_write);
 
