@@ -14,7 +14,7 @@
 #define NUM_FLUSH_THR       (8)
 #define MIN_SYNC_FREQUENCY  (1024)
 #define MONITORING          (0)
-#define testing             (1)
+#define testing             (0)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
