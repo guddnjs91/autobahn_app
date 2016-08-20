@@ -130,7 +130,7 @@ nvm_system_init()
     flush_ready_idx_lfqueue = new lfqueue<volume_idx_t>(MAX_VOLUME_ENTRY);
     for(int i = 0; i < MAX_VOLUME_ENTRY; i++) {
         inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-        flush_ready_idx_lfqueue->enqueue(i+1);
+        flush_ready_idx_lfqueue->enqueue(i);
     }
 #else
     for(int i = 0; i < NUM_FLUSH_THR; i++) {
@@ -220,7 +220,6 @@ nvm_system_close()
         inode_dirty_lfqueue[i]->close();
     }
 #endif
-
 
     for(int i = 0; i < NUM_FLUSH_THR; i++)
     {

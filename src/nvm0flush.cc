@@ -25,10 +25,10 @@ flush_thread_func(
         volume_idx_t idx = flush_ready_idx_lfqueue->dequeue();
         
         while(inode_dirty_lfqueue[idx]->get_size() > FLUSH_LWM && sys_terminate == 0) {
-            nvm_flush(idx % MAX_VOLUME_ENTRY);
+            nvm_flush(idx);
         }
 
-        flush_ready_idx_lfqueue->enqueue(idx % MAX_VOLUME_ENTRY);
+        flush_ready_idx_lfqueue->enqueue(idx);
 #else
         int idx = *((int *)data);
         while(inode_dirty_lfqueue[idx]->get_size() > FLUSH_LWM && sys_terminate == 0) {

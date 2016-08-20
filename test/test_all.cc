@@ -69,7 +69,7 @@ void start_recording_report()
     report_time_YMD = to_string(t->tm_year + 1900) + "-" + to_string(t->tm_mon + 1) + "-" + to_string(t->tm_mday);
     report_time_HMS = to_string(t->tm_hour) + ":" + to_string(t->tm_min) + ":" + to_string(t->tm_sec);
 
-    report_fd = open( ("/opt/nvm2/NVM/report/" + report_time_YMD).c_str() , O_RDWR | O_CREAT | O_APPEND, 0666 ); 
+    report_fd = open( ("./report/" + report_time_YMD).c_str() , O_RDWR | O_CREAT | O_APPEND, 0666 ); 
     dprintf(report_fd, "\n# Testing Start at : %s\n", report_time_HMS.c_str());
     dprintf(report_fd, "# %llu GiB file write, %d flushers running\n", TOTAL_FILE_SIZE / 1024 / 1024 / 1024, NUM_FLUSH_THR );
 }
