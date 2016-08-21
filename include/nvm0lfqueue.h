@@ -4,9 +4,6 @@
 #include <atomic>
 #include <cstdint>
 #include <stdio.h>
-#include "nvm0nvm.h"
-#include "nvm0inode.h"
-#include "nvm0volume.h"
 using namespace std;
 
 #define likely(x)       __builtin_expect((x),1)
@@ -159,15 +156,3 @@ class lfqueue
     };
 };
 
-extern lfqueue<volume_idx_t>* volume_free_lfqueue;
-extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
-extern lfqueue<volume_idx_t>* flush_ready_idx_lfqueue;
-
-extern lfqueue<inode_idx_t>* inode_free_lfqueue;
-#if testing
-extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
-#else
-extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[NUM_FLUSH_THR];
-#endif
-extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
-extern lfqueue<inode_idx_t>* inode_clean_lfqueue;

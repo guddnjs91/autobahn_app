@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <sys/uio.h>
 #include "nvm0nvm.h"
-#include "nvm0lfqueue.h"
+#include "nvm0inode.h"
 #include "nvm0monitor.h"
 
 //private function declarations
-void nvm_flush(int dirty_Q_idx);
+void nvm_flush(int dirty_queue_idx);
 
 /**
  * Flush thread function proactively runs and flushes dirty inodes. */
@@ -21,20 +22,17 @@ flush_thread_func(
         
         usleep(10 * 1000);
 
-#if testing
-        volume_idx_t idx = flush_ready_idx_lfqueue->dequeue();
+        if(volume_inuse_lfqueue->get_size() == 0) {
+            continue;
+        }
+
+        volume_idx_t idx = volume_inuse_lfqueue->dequeue();
         
-        while(inode_dirty_lfqueue[idx]->get_size() > FLUSH_LWM && sys_terminate == 0) {
+        while(inode_dirty_lfqueue[idx]->get_size() > 1 && sys_terminate == 0) {
             nvm_flush(idx);
         }
 
-        flush_ready_idx_lfqueue->enqueue(idx);
-#else
-        int idx = *((int *)data);
-        while(inode_dirty_lfqueue[idx]->get_size() > FLUSH_LWM && sys_terminate == 0) {
-            nvm_flush(idx);
-        }
-#endif
+        volume_inuse_lfqueue->enqueue(idx);
 
     }
     
@@ -46,9 +44,9 @@ flush_thread_func(
 /**
  * Flush a batch of dirty data block from NVM to a permenant storage. */
 void
-nvm_flush(int dirty_Q_idx)
+nvm_flush(int dirty_queue_idx)
 {
-    inode_idx_t idx = inode_dirty_lfqueue[dirty_Q_idx]->dequeue();
+    inode_idx_t idx = inode_dirty_lfqueue[dirty_queue_idx]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     
     pthread_mutex_lock(&inode->lock);

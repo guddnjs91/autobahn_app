@@ -18,3 +18,4 @@ struct inode_entry {
     struct volume_entry*    volume; // volume id (implicit filename)
     pthread_mutex_t         lock;   // inode lock
 };
+

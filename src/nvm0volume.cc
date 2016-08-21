@@ -3,7 +3,6 @@
 #include "nvm0nvm.h"
 #include "nvm0hash.h"
 #include "nvm0volume.h"
-#include "nvm0lfqueue.h"
 
 //private function declarations
 const char* get_filename(uint32_t vid);
@@ -54,6 +53,8 @@ alloc_volume_entry_idx(
     nvm->volume_table[idx].vid = vid;
     nvm->volume_table[idx].fd = open(get_filename(vid), O_RDWR| O_CREAT, 0644);
     nvm->volume_table[idx].hash_table = new_hash_table();
+
+    volume_inuse_lfqueue->enqueue(idx);
 
     return idx;
 }

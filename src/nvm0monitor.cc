@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "nvm0nvm.h"
-#include "nvm0lfqueue.h"
+#include "nvm0inode.h"
 #include "nvm0monitor.h"
 
 void *monitor_thread_func(void* data);
@@ -66,7 +66,7 @@ void printLFQueueGauge()
 
     /* sorry for hard coding */
     uint64_t total_size = 0;
-    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
     {
         total_size += inode_dirty_lfqueue[i]->get_size();
     }

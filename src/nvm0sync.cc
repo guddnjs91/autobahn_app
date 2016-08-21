@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include "nvm0nvm.h"
 #include "nvm0monitor.h"
-#include "nvm0lfqueue.h"
+#include "nvm0inode.h"
 
 //private function declarations
 void nvm_sync();
@@ -19,7 +19,7 @@ sync_thread_func(
 
     while(sys_terminate == 0) {
 
-//        usleep( 10 * 1000 );
+        usleep( 10 * 1000 );
 
         if(inode_sync_lfqueue->get_size() >=
             MIN_SYNC_FREQUENCY + 

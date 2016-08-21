@@ -1,11 +1,11 @@
 #include <cstdint>
+#include <sched.h>
 #include <string.h>
 #include <pthread.h>
 #include "nvm0nvm.h"
 #include "nvm0hash.h"
 #include "nvm0inode.h"
 #include "nvm0volume.h"
-#include "nvm0lfqueue.h"
 #include "nvm0monitor.h"
 
 //private function declarations
@@ -91,7 +91,6 @@ nvm_durable_write(
                 //TODO: do garbage collection in the mean time
 
                 lbn--;
-
                 continue;
             }
 
@@ -127,11 +126,7 @@ nvm_durable_write(
 
         if(old_state != INODE_STATE_DIRTY) {
             inode_idx_t idx = (inode_idx_t)((char *)node_searched->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
-#if testing
-            inode_dirty_lfqueue[vid % MAX_VOLUME_ENTRY]->enqueue(idx);
-#else
-            inode_dirty_lfqueue[vid % NUM_FLUSH_THR]->enqueue(idx);
-#endif
+            inode_dirty_lfqueue[v_idx]->enqueue(idx);
             monitor.dirty++;
         }
 

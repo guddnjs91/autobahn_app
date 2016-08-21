@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include "nvm0inode.h"
 #include "nvm0volume.h"
+#include "nvm0lfqueue.h"
 
 //config (make changes here ONLY)
 #define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
@@ -45,7 +46,14 @@ extern pthread_t monitor_thread;
 //Conditional variable for system termination
 extern int sys_terminate; 
 
+//lfqueues
+extern lfqueue<volume_idx_t>* volume_free_lfqueue;
+extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
+extern lfqueue<inode_idx_t>* inode_free_lfqueue;
+extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
+extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
+extern lfqueue<inode_idx_t>* inode_clean_lfqueue;
 
 /* functions */
 
