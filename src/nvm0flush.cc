@@ -86,27 +86,58 @@ nvm_flush(int dirty_queue_idx)
         }
 
         //write
-        iov = (struct iovec*) malloc( (num_ahead +1) * sizeof(struct iovec));
-        for(int j = 0; j < num_ahead+1; j++) {
-            iov[j].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+j];
-            iov[j].iov_len  = nvm->block_size;
-        }
-            
-        inode_idx_t  start_idx   = indexes[i];
-        inode_entry* start_inode = &nvm->inode_table[start_idx];
+        iov = (struct iovec*) malloc( (1000) * sizeof(struct iovec));
+        int num_left = num_ahead+1;
+        for(int j = 0; j < (num_ahead+1 + (1000-1) ) / 1000; j++) {
+            int num_write = (num_left >= 1000) ? 1000 : num_left;
+            num_left -= num_write;
 
-        lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
-        writev(start_inode->volume->fd, iov, num_ahead+1);
+            for(int k = 0; k < num_write; k++) {
+                iov[k].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+k];
+                iov[k].iov_len  = nvm->block_size;
+            }
+                
+            inode_idx_t  start_idx   = indexes[i];
+            inode_entry* start_inode = &nvm->inode_table[start_idx];
+    
+            lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
+            ssize_t bytes_written = writev(start_inode->volume->fd, iov, num_write);
+            if(bytes_written != nvm->block_size * num_write) {
+                printf("ERROR: writev failed to write requested number of bytes! bytes_written: %ld, bytes_requested: %d\n", bytes_written, nvm->block_size * num_write);
+                exit(0);
+            }
+
+            for(int k = 0; k < num_write; k++) {
+                inode_idx_t idx = indexes[i++];
+                inode_entry* inode = &nvm->inode_table[idx];
+    
+                inode->state = INODE_STATE_SYNC;
+                inode_sync_lfqueue->enqueue(idx);
+                monitor.sync++;
+            }
+        }
+
+//        iov = (struct iovec*) malloc( (num_ahead +1) * sizeof(struct iovec));
+//        for(int j = 0; j < num_ahead+1; j++) {
+//            iov[j].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+j];
+//            iov[j].iov_len  = nvm->block_size;
+//        }
+//            
+//        inode_idx_t  start_idx   = indexes[i];
+//        inode_entry* start_inode = &nvm->inode_table[start_idx];
+//
+//        lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
+//        writev(start_inode->volume->fd, iov, num_ahead+1);
 
         //state change
-        for(int j = 0; j < num_ahead+1; j++) {
-            inode_idx_t idx = indexes[i++];
-            inode_entry* inode = &nvm->inode_table[idx];
-
-            inode->state = INODE_STATE_SYNC;
-            inode_sync_lfqueue->enqueue(idx);
-            monitor.sync++;
-        }
+//        for(int j = 0; j < num_ahead+1; j++) {
+//            inode_idx_t idx = indexes[i++];
+//            inode_entry* inode = &nvm->inode_table[idx];
+//
+//            inode->state = INODE_STATE_SYNC;
+//            inode_sync_lfqueue->enqueue(idx);
+//            monitor.sync++;
+//        }
         free(iov);
     }
 
