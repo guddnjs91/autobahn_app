@@ -18,9 +18,9 @@
 
 #define MIN_SYNC_FREQUENCY  (1<<14)
 
-#define MONITORING          (0)
+#define MONITORING          (1)
 #define SYNC_OPTION         (1)
-#define testing             (0)
+#define testing             (1)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
