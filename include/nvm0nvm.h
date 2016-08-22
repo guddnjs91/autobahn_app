@@ -11,11 +11,19 @@
 #define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
-#define FLUSH_LWM           (128)
-#define NUM_FLUSH_THR       (8)
-#define MIN_SYNC_FREQUENCY  (1024)
+
+#define NUM_FLUSH_THR       (16)
+#define FLUSH_BATCH_SIZE    (1024)
+#define FLUSH_LWM           (128) //not used anymore!
+
+#define MIN_SYNC_FREQUENCY  (1<<14)
+
 #define MONITORING          (0)
-#define testing             (1)
+#define SYNC_OPTION         (1)
+#define testing             (0)
+
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {

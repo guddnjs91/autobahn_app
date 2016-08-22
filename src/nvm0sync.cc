@@ -15,8 +15,6 @@ void*
 sync_thread_func(
     void* data)
 {
-//    printf("Sync thread running.....\n");
-
     while(sys_terminate == 0) {
 
         usleep( 10 * 1000 );
@@ -30,8 +28,6 @@ sync_thread_func(
         }
     }
     
-//    printf("Sync thread termintated.....\n");
-
     return NULL;
 }
 
@@ -43,7 +39,9 @@ nvm_sync(
 {
     uint32_t n = inode_sync_lfqueue->get_size();
 
+#if SYNC_OPTION
     sync();
+#endif
 
     for (uint32_t i = 0; i < n; i++) {
         inode_idx_t idx = inode_sync_lfqueue->dequeue();

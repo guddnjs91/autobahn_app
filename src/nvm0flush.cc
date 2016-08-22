@@ -8,7 +8,7 @@
 #include "nvm0monitor.h"
 
 //private function declarations
-void nvm_flush(int dirty_queue_idx);
+void nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov);
 
 /**
  * Flush thread function proactively runs and flushes dirty inodes. */
@@ -16,27 +16,30 @@ void*
 flush_thread_func(
     void* data)
 {
-//    printf("Flush thread running.....\n");
+    //init
+    volume_idx_t    v_idx;
+    inode_idx_t*    i_idxs = (inode_idx_t*)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
+    struct iovec*   iov     = (struct iovec*) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
 
-    while(sys_terminate == 0) {
+    while (sys_terminate == 0) {
         
-        usleep(10 * 1000);
-
-        if(volume_inuse_lfqueue->get_size() == 0) {
+        if (unlikely(volume_inuse_lfqueue->get_size() == 0)) {
+            pthread_yield();
             continue;
         }
 
-        volume_idx_t idx = volume_inuse_lfqueue->dequeue();
+        v_idx = volume_inuse_lfqueue->dequeue();
         
-        while(inode_dirty_lfqueue[idx]->get_size() > 1 && sys_terminate == 0) {
-            nvm_flush(idx);
+        while (inode_dirty_lfqueue[v_idx]->get_size() > 1 && sys_terminate == 0) {
+            nvm_flush(v_idx, i_idxs, iov);
         }
 
-        volume_inuse_lfqueue->enqueue(idx);
+        volume_inuse_lfqueue->enqueue(v_idx);
 
     }
     
-//    printf("Flush thread termintated.....\n");
+    free(i_idxs);
+    free(iov);
 
     return NULL;
 }
@@ -44,116 +47,86 @@ flush_thread_func(
 /**
  * Flush a batch of dirty data block from NVM to a permenant storage. */
 void
-nvm_flush(int dirty_queue_idx)
+nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
 {
+
 #if testing
-    uint64_t num_blocks, i;
-    struct iovec* iov;
-    inode_idx_t* indexes;
 
-    //number of blocks to write
-    num_blocks = inode_dirty_lfqueue[dirty_queue_idx]->get_size()-1;
+    int i, indexToWrite, batch_count;
+    uint32_t curr_lbn, succ_lbn;
+    inode_entry *inode, *start_inode;
+    inode_idx_t i_idx;
+    ssize_t bytes_written;
 
-    //1. take them out from dirty_queue
-    //2. lock them
-    indexes = (inode_idx_t*) malloc( num_blocks * sizeof(inode_idx_t));
-    for(i = 0; i < num_blocks; i++) {
+    int num_dirty_inodes = inode_dirty_lfqueue[v_idx]->get_size()-1;
+    int write_size = (num_dirty_inodes >= FLUSH_BATCH_SIZE) ? FLUSH_BATCH_SIZE : num_dirty_inodes;
 
-        indexes[i] = inode_dirty_lfqueue[dirty_queue_idx]->dequeue();
-
-        inode_entry* inode = &nvm->inode_table[indexes[i]];
+    //dequeue from dirty and lock
+    for(i = 0; i < write_size; i++) {
+        i_idxs[i] = inode_dirty_lfqueue[v_idx]->dequeue();
+        inode = &nvm->inode_table[i_idxs[i]];
         pthread_mutex_lock(&inode->lock);
     }
 
-    //1. look ahead
-    //2. batch write (writev)
-    i = 0;
-    while( i < num_blocks ) {
-        
+    indexToWrite = 0;
+    while (indexToWrite < write_size) {
+
         //look ahead
-        int num_ahead = 0;
-        uint32_t curr_lbn = (&nvm->inode_table[indexes[i]])->lbn;
-        for(uint64_t j = i+1; j < num_blocks; j++) {
+        batch_count = 1;
+        curr_lbn = (&nvm->inode_table[i_idxs[indexToWrite]])->lbn;
 
-            uint32_t succ_lbn = (&nvm->inode_table[indexes[j]])->lbn;
+        for(i = indexToWrite+1; i < write_size; i++) {
 
-            if(succ_lbn == curr_lbn+1) {
-                num_ahead++;
+            succ_lbn = (&nvm->inode_table[i_idxs[i]])->lbn;
+
+            if(succ_lbn == curr_lbn + 1) {
+                batch_count++;
                 curr_lbn = succ_lbn;
             } else {
                 break;
             }
         }
 
-        //write
-        iov = (struct iovec*) malloc( (1000) * sizeof(struct iovec));
-        int num_left = num_ahead+1;
-        for(int j = 0; j < (num_ahead+1 + (1000-1) ) / 1000; j++) {
-            int num_write = (num_left >= 1000) ? 1000 : num_left;
-            num_left -= num_write;
-
-            for(int k = 0; k < num_write; k++) {
-                iov[k].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+k];
-                iov[k].iov_len  = nvm->block_size;
-            }
-                
-            inode_idx_t  start_idx   = indexes[i];
-            inode_entry* start_inode = &nvm->inode_table[start_idx];
-    
-            lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
-            ssize_t bytes_written = writev(start_inode->volume->fd, iov, num_write);
-            if(bytes_written != nvm->block_size * num_write) {
-                printf("ERROR: writev failed to write requested number of bytes! bytes_written: %ld, bytes_requested: %d\n", bytes_written, nvm->block_size * num_write);
-                exit(0);
-            }
-
-            for(int k = 0; k < num_write; k++) {
-                inode_idx_t idx = indexes[i++];
-                inode_entry* inode = &nvm->inode_table[idx];
-    
-                inode->state = INODE_STATE_SYNC;
-                inode_sync_lfqueue->enqueue(idx);
-                monitor.sync++;
-            }
+        //batch
+        for(i = 0; i < batch_count; i++) {
+            iov[i].iov_base = nvm->datablock_table + nvm->block_size * i_idxs[indexToWrite+i];
+            iov[i].iov_len  = nvm->block_size;
         }
 
-//        iov = (struct iovec*) malloc( (num_ahead +1) * sizeof(struct iovec));
-//        for(int j = 0; j < num_ahead+1; j++) {
-//            iov[j].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+j];
-//            iov[j].iov_len  = nvm->block_size;
-//        }
-//            
-//        inode_idx_t  start_idx   = indexes[i];
-//        inode_entry* start_inode = &nvm->inode_table[start_idx];
-//
-//        lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
-//        writev(start_inode->volume->fd, iov, num_ahead+1);
+        //write
+        start_inode = &nvm->inode_table[i_idxs[indexToWrite]];
+        bytes_written = pwritev(start_inode->volume->fd, iov, batch_count, (off_t) nvm->block_size * start_inode->lbn);
+        if(bytes_written != nvm->block_size * batch_count) {
+            printf("ERROR: writev failed to write requested number of bytes! bytes_written: %ld, bytes_requested: %d\n", bytes_written, nvm->block_size * batch_count);
+            exit(0);
+        }
 
-        //state change
-//        for(int j = 0; j < num_ahead+1; j++) {
-//            inode_idx_t idx = indexes[i++];
-//            inode_entry* inode = &nvm->inode_table[idx];
-//
-//            inode->state = INODE_STATE_SYNC;
-//            inode_sync_lfqueue->enqueue(idx);
-//            monitor.sync++;
-//        }
-        free(iov);
+        //enqueue into sync
+        for(i = 0; i < batch_count; i++) {
+            i_idx = i_idxs[indexToWrite+i];
+            inode = &nvm->inode_table[i_idx];
+    
+            inode->state = INODE_STATE_SYNC;
+            inode_sync_lfqueue->enqueue(i_idx);
+            monitor.sync++;
+        }
+
+        indexToWrite += batch_count;
     }
 
-    free(indexes);
 #else
-    inode_idx_t idx = inode_dirty_lfqueue[dirty_queue_idx]->dequeue();
+
+    inode_idx_t idx = inode_dirty_lfqueue[v_idx]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     
     pthread_mutex_lock(&inode->lock);
 
-    //Flush one data block
-    lseek(inode->volume->fd, (off_t) nvm->block_size * inode->lbn, SEEK_SET);
-    write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+    pwrite(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size, (off_t) nvm->block_size * inode->lbn);
 
     inode->state = INODE_STATE_SYNC;
     inode_sync_lfqueue->enqueue(idx);
     monitor.sync++;
+
 #endif
+
 }

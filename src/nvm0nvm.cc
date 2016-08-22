@@ -104,12 +104,13 @@ void
 nvm_system_init()
 {
     //Starts recovery
-    //printf("Starting Recovery Process...\n");
+    printf("Starting Recovery Process...\n");
     recovery_start();
-    //printf("Recovery successful!\n\n");
+    printf("Recovery successful!\n\n");
 
     //Starts NVM system
     printf("Starting NVM system...\n");
+
     //volume data structure
     volume_free_lfqueue =   new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue =  new lfqueue<volume_idx_t>(nvm->max_volume_entry);
@@ -208,9 +209,9 @@ nvm_system_close()
 #endif
 
     printf("Closing NVM system...\n");
+
     //flushes the remained dirty blocks in NVM to a permanent storage
     printf("Flushing NVM system...\n");
-
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         while(!inode_dirty_lfqueue[i]->is_empty()) {
             inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
