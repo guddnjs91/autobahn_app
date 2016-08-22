@@ -16,7 +16,7 @@
 struct nvm_metadata* nvm;
 struct monitor monitor;
 int sys_terminate;
-int flush_idx[NUM_FLUSH_THR];
+int flush_idx[MAX_NUM_FLUSHER];
 
 lfqueue<volume_idx_t>*  volume_free_lfqueue;
 lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
@@ -30,7 +30,7 @@ pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 
-pthread_t flush_thread[NUM_FLUSH_THR];
+pthread_t flush_thread[MAX_NUM_FLUSHER];
 pthread_t sync_thread;
 pthread_t balloon_thread;
 pthread_t monitor_thread;
@@ -140,19 +140,19 @@ nvm_system_init()
 
     //create threads
     sys_terminate = 0;
-    for(int i = 0; i < NUM_FLUSH_THR; i++) {
+    for(int i = 0; i < num_flusher; i++) {
         pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
     }
-    printf("%d Flush thread created...\n", NUM_FLUSH_THR);
+    printf("%d Flush thread created...\n", num_flusher);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
     printf("Sync thread created...\n");
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
     printf("Balloon thread created...\n");
 
-#if MONITORING
-    pthread_create(&monitor_thread, NULL, monitor_thread_func, NULL);
-    printf("monitor thread created...\n");
-#endif
+    if(verbose_flag) {
+        pthread_create(&monitor_thread, NULL, monitor_thread_func, NULL);
+        printf("monitor thread created...\n");
+    }
 
     printf("NVM system successfully started!\n\n");
 }
@@ -191,7 +191,7 @@ nvm_system_close()
         inode_dirty_lfqueue[i]->close();
     }
 
-    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    for(int i = 0; i < num_flusher; i++)
     {
         pthread_join(flush_thread[i], NULL);
     }
@@ -200,13 +200,13 @@ nvm_system_close()
     inode_sync_lfqueue->close();
     pthread_join(sync_thread, NULL);
 
-#if MONITORING
-    pthread_join(monitor_thread, NULL);
-    for(int i = 0; i < NUM_FLUSH_THR + 4; i++)
-    {
-        printf("\n");
+    if(verbose_flag) {
+        pthread_join(monitor_thread, NULL);
+        for(int i = 0; i < num_flusher + 4; i++)
+        {
+            printf("\n");
+        }
     }
-#endif
 
     printf("Closing NVM system...\n");
 

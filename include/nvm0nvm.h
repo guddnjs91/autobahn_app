@@ -12,18 +12,32 @@
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
 
-#define NUM_FLUSH_THR       (16)
+#define MAX_NUM_FLUSHER     (32)
 #define FLUSH_BATCH_SIZE    (1024)
 #define FLUSH_LWM           (128) //not used anymore!
 
 #define MIN_SYNC_FREQUENCY  (1<<14)
 
-#define MONITORING          (1)
-#define SYNC_OPTION         (1)
 #define testing             (1)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
+
+/* Command argument defined options */
+#define DEFAULT_FILE_SIZE   (20 * 1024 * 1024 * 1024LLU)
+#define DEFAULT_NUM_THREAD  (1)
+#define DEFAULT_NUM_FLUSH   (8)
+#define MONITOR_OFF         (0)
+#define MONITOR_ON          (1)
+#define SYNC_OFF            (0)
+#define SYNC_ON             (1)
+
+extern long long unsigned int total_file_size;
+extern int num_thread;
+extern int num_flusher;
+extern int verbose_flag;
+extern int sync_flag;
+extern int write_mode;
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
@@ -46,7 +60,7 @@ extern pthread_rwlock_t g_balloon_rwlock;   //balloon read/write lock
 extern pthread_cond_t   g_balloon_cond;     //balloon condition variable
 extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
 
-extern pthread_t flush_thread[NUM_FLUSH_THR];
+extern pthread_t flush_thread[MAX_NUM_FLUSHER];
 extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
 extern pthread_t monitor_thread;

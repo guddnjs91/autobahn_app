@@ -130,9 +130,9 @@ test_write(
      //test
      clock_gettime(CLOCK_MONOTONIC, &start);
      
-     if(type == _WRITE_APPEND_) {
+     if(type == WRITE_MODE_APPEND) {
          test_write_append();
-     } else if(type == _WRITE_RANDOM_) {
+     } else if(type == WRITE_MODE_RANDOM) {
          test_write_random();
      }
 

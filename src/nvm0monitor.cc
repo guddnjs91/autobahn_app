@@ -52,7 +52,7 @@ void printLFQueueGauge()
     printf("\t\t\t\t[clean LFQueue]");
     printf("\n");
 
-    for(int i = 0; i < NUM_FLUSH_THR; i++)
+    for(int i = 0; i < num_flusher; i++)
     {
         printf("\t\t\t\t        dirty[%d]", i);
         inode_dirty_lfqueue[i]->monitor();
@@ -95,7 +95,7 @@ void printLFQueueGauge()
     printf("\n");
 
 
-    for(int i = 0; i < NUM_FLUSH_THR + 2; i++)
+    for(int i = 0; i < num_flusher + 2; i++)
     {
         printf("\033[1A");
     }
@@ -113,7 +113,7 @@ void printThroughput()
     double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize;
     double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize;
 
-    for(int i = 0; i < NUM_FLUSH_THR + 2; i++)
+    for(int i = 0; i < num_flusher + 2; i++)
     {
         printf("\n \r");
     }
@@ -136,7 +136,7 @@ void printThroughput()
 
     printf("\033[0m");
 
-    for(int i = 0; i < NUM_FLUSH_THR + 2; i++)
+    for(int i = 0; i < num_flusher + 2; i++)
     {
         printf("\033[1A \r");
     }
