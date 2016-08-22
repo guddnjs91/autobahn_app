@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdio>
 
-#define TOTAL_FILE_SIZE 20 * 1024 * 1024 * 1024LLU
+#define TOTAL_FILE_SIZE 80 * 1024 * 1024 * 1024LLU
 #define MAX_THREADS 128
 #define WRITE_BYTES1 16 * 1024
-#define WRITE_BYTES2 1024 
+#define WRITE_BYTES2 1024 * 1024 
 
 #define _WRITE_APPEND_ 1
 #define _WRITE_RANDOM_ 2

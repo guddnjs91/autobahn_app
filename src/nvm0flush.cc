@@ -46,16 +46,83 @@ flush_thread_func(
 void
 nvm_flush(int dirty_queue_idx)
 {
+#if testing
+    uint64_t num_blocks, i;
+    struct iovec* iov;
+    inode_idx_t* indexes;
+
+    //number of blocks to write
+    num_blocks = inode_dirty_lfqueue[dirty_queue_idx]->get_size()-1;
+
+    //1. take them out from dirty_queue
+    //2. lock them
+    indexes = (inode_idx_t*) malloc( num_blocks * sizeof(inode_idx_t));
+    for(i = 0; i < num_blocks; i++) {
+
+        indexes[i] = inode_dirty_lfqueue[dirty_queue_idx]->dequeue();
+
+        inode_entry* inode = &nvm->inode_table[indexes[i]];
+        pthread_mutex_lock(&inode->lock);
+    }
+
+    //1. look ahead
+    //2. batch write (writev)
+    i = 0;
+    while( i < num_blocks ) {
+        
+        //look ahead
+        int num_ahead = 0;
+        uint32_t curr_lbn = (&nvm->inode_table[indexes[i]])->lbn;
+        for(uint64_t j = i+1; j < num_blocks; j++) {
+
+            uint32_t succ_lbn = (&nvm->inode_table[indexes[j]])->lbn;
+
+            if(succ_lbn == curr_lbn+1) {
+                num_ahead++;
+                curr_lbn = succ_lbn;
+            } else {
+                break;
+            }
+        }
+
+        //write
+        iov = (struct iovec*) malloc( (num_ahead +1) * sizeof(struct iovec));
+        for(int j = 0; j < num_ahead+1; j++) {
+            iov[j].iov_base = nvm->datablock_table + nvm->block_size * indexes[i+j];
+            iov[j].iov_len  = nvm->block_size;
+        }
+            
+        inode_idx_t  start_idx   = indexes[i];
+        inode_entry* start_inode = &nvm->inode_table[start_idx];
+
+        lseek(start_inode->volume->fd, (off_t) nvm->block_size * start_inode->lbn, SEEK_SET);
+        writev(start_inode->volume->fd, iov, num_ahead+1);
+
+        //state change
+        for(int j = 0; j < num_ahead+1; j++) {
+            inode_idx_t idx = indexes[i++];
+            inode_entry* inode = &nvm->inode_table[idx];
+
+            inode->state = INODE_STATE_SYNC;
+            inode_sync_lfqueue->enqueue(idx);
+            monitor.sync++;
+        }
+        free(iov);
+    }
+
+    free(indexes);
+#else
     inode_idx_t idx = inode_dirty_lfqueue[dirty_queue_idx]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     
     pthread_mutex_lock(&inode->lock);
 
     //Flush one data block
-    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+    lseek(inode->volume->fd, (off_t) nvm->block_size * inode->lbn, SEEK_SET);
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
 
     inode->state = INODE_STATE_SYNC;
     inode_sync_lfqueue->enqueue(idx);
     monitor.sync++;
+#endif
 }

@@ -138,8 +138,15 @@ test_write(
 
     clock_gettime(CLOCK_MONOTONIC, &end); 
     double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
-    dprintf(report_fd, "\t\t\t %6.3f\n",time);
-    printf("total time after write finished: %f sec\n\n", time);
+    
+    sync();
+    sync();
+
+    clock_gettime(CLOCK_MONOTONIC, &end); 
+    double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+
+    dprintf(report_fd, "write finished: %f sec \t sync finished : %f \n\n", time, time2);
+    printf("write finished: %f sec \t sync finished : %f \n\n", time, time2);
 
     free(buffer);
 }
