@@ -75,13 +75,14 @@ nvm_structure_build()
     nvm->block_size         = BLOCK_SIZE;
     nvm->volume_table       = (struct volume_entry*) (nvm + 1);
     nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
-    nvm->datablock_table    = (char *)               (nvm->inode_table + nvm->max_inode_entry);
+    nvm->datablock_table    = (char *)               ((char *)(nvm->inode_table + nvm->max_inode_entry)
+                                                      - (long unsigned int)(nvm->inode_table + nvm->max_inode_entry) % BLOCK_SIZE
+                                                      + BLOCK_SIZE);
 
     //Initialize all inode_entries to state_free
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
-
 }
 
 /**
@@ -362,6 +363,16 @@ create_nvm_in_shm()
     }
 
     //printf("[Succeeded]\n");
+
+    char *page_fault_maker = (char*)shm_addr;
+    char page_fault_garbage;
+#define PAGE_FAULT_UNIT_SIZE (1<<12)
+    while(page_fault_maker < (char*)shm_addr + NVM_SIZE)
+    {
+        page_fault_garbage = *page_fault_maker;
+        page_fault_maker += PAGE_FAULT_UNIT_SIZE;
+        //printf("page_fault_maker:%p, page_fault_garbage:%c\n", page_fault_maker, page_fault_garbage);
+    }
 
     return (struct nvm_metadata*) shm_addr;
 }
