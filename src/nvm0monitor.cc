@@ -12,6 +12,7 @@ static void printLFQueueGauge();
 static void printThroughput();
 static void coloring(double state);
 static void reset();
+static double TimeSpecToSeconds(struct timespec* ts);
 
 void*
 monitor_thread_func(
@@ -37,7 +38,6 @@ nvm_monitor()
         printThroughput();
         counter = 0;
     }
-
     counter++;
 }
 
@@ -103,12 +103,17 @@ void printLFQueueGauge()
 
 void printThroughput()
 {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    double time_interval = 0;
+    time_interval = TimeSpecToSeconds(&now) - TimeSpecToSeconds(&monitor.time_recorder);
+
     //GiB
     #define unitSize (1024 * 1024 * 1024LLU)
-    double free = (double)monitor.free.load() * 16 * 1024 / unitSize;
-    double dirty = (double)monitor.dirty.load() * 16 * 1024 / unitSize;
-    double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize;
-    double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize;
+    double free = (double)monitor.free.load() * 16 * 1024 / unitSize / time_interval;
+    double dirty = (double)monitor.dirty.load() * 16 * 1024 / unitSize / time_interval;
+    double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize / time_interval;
+    double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize / time_interval;
 
     for(int i = 0; i < num_flusher + 2; i++)
     {
@@ -147,6 +152,7 @@ void reset()
     monitor.dirty = 0;
     monitor.clean = 0;
     monitor.sync = 0;
+    clock_gettime(CLOCK_MONOTONIC, &monitor.time_recorder);
 }
 
 void coloring(double state)
@@ -176,3 +182,7 @@ void coloring(double state)
     }
 }
 
+static double TimeSpecToSeconds(struct timespec* ts)
+{
+    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
+}

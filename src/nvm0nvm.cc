@@ -365,8 +365,10 @@ create_nvm_in_shm()
     printf("[Succeeded]\n");
 
     char *page_fault_maker = (char*)shm_addr;
-#define PAGE_FAULT_UNIT_SIZE (1<<11)
+    char page_fault_test;
+#define PAGE_FAULT_UNIT_SIZE (1<<12)
     while(page_fault_maker < (char*)shm_addr + NVM_SIZE) {
+        page_fault_test = *page_fault_maker;
         page_fault_maker += PAGE_FAULT_UNIT_SIZE;
     }
 
