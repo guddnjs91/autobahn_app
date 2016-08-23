@@ -18,15 +18,15 @@
 
 #define MIN_SYNC_FREQUENCY  (1<<14)
 
-#define testing             (1)
+#define testing             (0)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
 /* Command argument defined options */
-#define DEFAULT_FILE_SIZE   (20 * 1024 * 1024 * 1024LLU)
+#define DEFAULT_FILE_SIZE   (80 * 1024 * 1024 * 1024LLU)
 #define DEFAULT_NUM_THREAD  (1)
-#define DEFAULT_NUM_FLUSH   (8)
+#define DEFAULT_NUM_FLUSH   (16)
 #define MONITOR_OFF         (0)
 #define MONITOR_ON          (1)
 #define SYNC_OFF            (0)

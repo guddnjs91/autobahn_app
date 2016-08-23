@@ -17,31 +17,28 @@ void*
 monitor_thread_func(
     void* data)
 {
-//    printf("monitor thread running.....\n");
-
     while(sys_terminate == 0)
     {
         usleep(1 * 1000);
         nvm_monitor();
     }
     
-//    printf("monitor thread termintated.....\n");
-
     return NULL;
 }
 
 void
 nvm_monitor()
 {
-    static int counter = 0;
+    static int counter = 1000;
     printLFQueueGauge();
-    counter++;
 
     if(counter == 1000)
     {
         printThroughput();
         counter = 0;
     }
+
+    counter++;
 }
 
 void printLFQueueGauge()
@@ -54,7 +51,7 @@ void printLFQueueGauge()
 
     for(int i = 0; i < num_flusher; i++)
     {
-        printf("\t\t\t\t        dirty[%d]", i);
+        printf("\t\t\t\t        dirty[%2d]", i);
         inode_dirty_lfqueue[i]->monitor();
         printf("\n");
     }
@@ -62,7 +59,7 @@ void printLFQueueGauge()
     printf("\t");
     inode_free_lfqueue->monitor();
 
-    printf("\t  total]");
+    printf("\t   total]");
 
     /* sorry for hard coding */
     uint64_t total_size = 0;

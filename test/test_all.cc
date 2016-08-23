@@ -15,7 +15,7 @@ using namespace std;
 long long unsigned int total_file_size = DEFAULT_FILE_SIZE;
 int num_thread      = DEFAULT_NUM_THREAD;
 int num_flusher     = DEFAULT_NUM_FLUSH;
-int verbose_flag    = MONITOR_OFF;
+int verbose_flag    = MONITOR_ON;
 int sync_flag       = SYNC_ON;
 int write_mode      = WRITE_MODE_APPEND;
 

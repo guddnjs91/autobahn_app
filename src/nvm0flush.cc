@@ -49,9 +49,6 @@ flush_thread_func(
 void
 nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
 {
-
-#if testing
-
     int i, indexToWrite, batch_count;
     uint32_t curr_lbn, succ_lbn;
     inode_entry *inode, *start_inode;
@@ -113,20 +110,4 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
 
         indexToWrite += batch_count;
     }
-
-#else
-
-    inode_idx_t idx = inode_dirty_lfqueue[v_idx]->dequeue();
-    inode_entry* inode = &nvm->inode_table[idx];
-    
-    pthread_mutex_lock(&inode->lock);
-
-    pwrite(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size, (off_t) nvm->block_size * inode->lbn);
-
-    inode->state = INODE_STATE_SYNC;
-    inode_sync_lfqueue->enqueue(idx);
-    monitor.sync++;
-
-#endif
-
 }
