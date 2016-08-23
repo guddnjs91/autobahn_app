@@ -7,8 +7,8 @@
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
-#include "nvm0common.h"
 #include "test.h"
+#include "nvm0nvm.h"
 
 
 static double TimeSpecToSeconds(struct timespec* ts)
@@ -28,7 +28,7 @@ void
 
     for(i = 0; i < n; i++)
     {
-        nvm_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
+        nvm_durable_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
     }
 
     return NULL;
@@ -62,7 +62,7 @@ void
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
         off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
-        nvm_write(tid, rand_pos , buffer, nbytes);
+        nvm_durable_write(tid, rand_pos , buffer, nbytes);
     }
 
     return NULL;
@@ -109,9 +109,9 @@ test_nvm_durable_write(
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     //test
-    if(type == _WRITE_APPEND_) {
+    if(type == WRITE_MODE_APPEND) {
         test_nvm_durable_write_append();
-    } else if(type == _WRITE_RANDOM_) {
+    } else if(type == WRITE_MODE_RANDOM) {
         test_nvm_durable_write_random();
     }
 
@@ -123,7 +123,8 @@ test_nvm_durable_write(
     clock_gettime(CLOCK_MONOTONIC, &end);
     double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 
-    printf("total time after write finished: %f sec, time after system close(): %f sec\n\n", time, time2);
+    printf("\t>>>>>>>>> total time after write finished: %f sec, time after system close(): %f sec <<<<<<<<<<\n\n", time, time2);
+    dprintf(report_fd, "\t\t\t %6.3f\n",time);
    
     nvm_structure_destroy();
 

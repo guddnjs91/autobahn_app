@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
-#include "nvm0common.h"
+#include "nvm0nvm.h"
+#include "nvm0monitor.h"
+#include "nvm0inode.h"
 
 //private function declarations
 void nvm_sync();
@@ -13,8 +15,6 @@ void*
 sync_thread_func(
     void* data)
 {
-    printf("Sync thread running.....\n");
-
     while(sys_terminate == 0) {
 
         usleep( 10 * 1000 );
@@ -28,8 +28,6 @@ sync_thread_func(
         }
     }
     
-    printf("Sync thread termintated.....\n");
-
     return NULL;
 }
 
@@ -41,15 +39,17 @@ nvm_sync(
 {
     uint32_t n = inode_sync_lfqueue->get_size();
 
-    sync();
-    sync();
+    if(sync_flag) {
+        sync();
+    }
 
     for (uint32_t i = 0; i < n; i++) {
         inode_idx_t idx = inode_sync_lfqueue->dequeue();
         inode_entry* inode = &nvm->inode_table[idx];
 
         inode->state = INODE_STATE_CLEAN;
-
+        inode_clean_lfqueue->enqueue(idx);
+        monitor.clean++;
         pthread_mutex_unlock(&inode->lock);
     }
 }

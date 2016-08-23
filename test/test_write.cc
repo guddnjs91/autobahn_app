@@ -7,8 +7,8 @@
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
-#include "nvm0common.h"
 #include "test.h"
+using namespace std;
 
 static double TimeSpecToSeconds(struct timespec* ts)
 {
@@ -24,16 +24,27 @@ void
     long long unsigned int n = filesize / nthread / nbytes;
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
+    int fd;
 
-    int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    //int fd = open( ("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+
+    if(tid % 2 == 1)
+    {
+        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
+    else
+    {
+        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
 
     for(i = 0; i < n; i++)
     {
         write(fd, buffer, nbytes);
     }
 
-
     close(fd);
+
+    return nullptr;
 }
 
 void
@@ -43,14 +54,6 @@ test_write_append()
     int tid[nthread];
     int i;
 
-    printf("%u * Thread writes %u Bytes * %llu to each VOL_X.txt\n", nthread, nbytes,filesize / nthread / nbytes);
-    
-    struct timespec start;
-    struct timespec end;
-    double duration = 0;
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
     for(i=0; i<nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_write_append, (void *)&tid[i]);
@@ -59,12 +62,6 @@ test_write_append()
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
-
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    duration = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
-
-    printf("duration of %d thread : %f sec\n",nthread, duration);
 }
 
 void
@@ -74,18 +71,29 @@ void
     long long unsigned int n = filesize / nthread / nbytes;
     long long unsigned int i;
     uint32_t tid = *((uint32_t *)data);
+    int fd;
 
-    int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    //int fd = open(("VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+
+    if(tid % 2 == 1)
+    {
+        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
+    else
+    {
+        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+    }
 
     //TODO: fix to generate 64bit random value
     for(i = 0; i < n; i++) {
         off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
         lseek(fd, rand_pos, SEEK_SET);
         write(fd, buffer, nbytes);
-        //printf("thread %u writes %u Bytes to VOL_%u.txt : %llu / %llu\r", tid, nbytes, tid, i, n);
     }
 
     close(fd);
+
+    return nullptr;
 }
 
 void
@@ -100,21 +108,9 @@ test_write_random()
         pthread_create(&write_thread[i], NULL, thread_write_random, (void *)&tid[i]);
     }
 
-    struct timespec start;
-    struct timespec end;
-    double duration = 0;
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
     for(i=0; i<nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
-
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    duration = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
-
-    printf("duration of %d thread : %f sec\n",nthread, duration);
 }
 
 void
@@ -125,6 +121,9 @@ test_write(
     int type)
 {
     //declarations
+    struct timespec start;
+    struct timespec end;
+
     filesize = file_size;
     nthread = n_thread;
     nbytes = n_bytes;
@@ -132,12 +131,26 @@ test_write(
     buffer = (char*) malloc(nbytes);
     fill_buf(buffer, nbytes);
 
-    //test
-    if(type == _WRITE_APPEND_) {
-        test_write_append();
-    } else if(type == _WRITE_RANDOM_) {
-        test_write_random();
-    }
+     //test
+     clock_gettime(CLOCK_MONOTONIC, &start);
+     
+     if(type == WRITE_MODE_APPEND) {
+         test_write_append();
+     } else if(type == WRITE_MODE_RANDOM) {
+         test_write_random();
+     }
+
+    clock_gettime(CLOCK_MONOTONIC, &end); 
+    double time = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+    
+    sync();
+    sync();
+
+    clock_gettime(CLOCK_MONOTONIC, &end); 
+    double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
+
+    dprintf(report_fd, "write finished: %f sec \t sync finished : %f \n\n", time, time2);
+    printf("write finished: %f sec \t sync finished : %f \n\n", time, time2);
 
     free(buffer);
 }

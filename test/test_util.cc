@@ -32,7 +32,18 @@ void remove_files(int n)
     int i;
     for(i = 1; i <= n; i++)
     {
-        std::string filename = "VOL_";
+        std::string filename = "/opt";
+
+        if(i % 2 == 1)
+        {
+            filename += "/nvm1/NVM/VOL_";
+        }
+
+        else
+        {
+            filename += "/nvm2/NVM/VOL_";
+        }
+
         filename += std::to_string(i);
         filename += ".txt";
 

@@ -1,3 +1,4 @@
+#include <string>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/ipc.h>
@@ -5,28 +6,35 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include "nvm0common.h"
 #include <pthread.h>
+#include "nvm0nvm.h"
+#include "nvm0lfqueue.h"
+#include "nvm0monitor.h"
 
 
 //Declarations of global variables
 struct nvm_metadata* nvm;
+struct monitor monitor;
+int sys_terminate;
+int flush_idx[MAX_NUM_FLUSHER];
 
 lfqueue<volume_idx_t>*  volume_free_lfqueue;
 lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
+
 lfqueue<inode_idx_t>*   inode_free_lfqueue;
-lfqueue<inode_idx_t>*   inode_dirty_lfqueue;
+lfqueue<inode_idx_t>*   inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 lfqueue<inode_idx_t>*   inode_sync_lfqueue;
+lfqueue<inode_idx_t>*   inode_clean_lfqueue;
 
 pthread_rwlock_t     g_balloon_rwlock;   // global balloon read/write lock
 pthread_cond_t       g_balloon_cond;     // global balloon condition variable
 pthread_mutex_t      g_balloon_mutex;    // mutex for b_cond
 
-pthread_t flush_thread;
+pthread_t flush_thread[MAX_NUM_FLUSHER];
 pthread_t sync_thread;
 pthread_t balloon_thread;
+pthread_t monitor_thread;
 
-int sys_terminate;
 
 //private function declaration
 void recovery_start();
@@ -67,14 +75,14 @@ nvm_structure_build()
     nvm->block_size         = BLOCK_SIZE;
     nvm->volume_table       = (struct volume_entry*) (nvm + 1);
     nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
-    nvm->datablock_table    = (char *)               (nvm->inode_table + nvm->max_inode_entry);
+    nvm->datablock_table    = (char *)               ((char *)(nvm->inode_table + nvm->max_inode_entry)
+                                                      - (long unsigned int)(nvm->inode_table + nvm->max_inode_entry) % BLOCK_SIZE
+                                                      + BLOCK_SIZE);
 
     //Initialize all inode_entries to state_free
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
-
-    //TODO: what else?
 }
 
 /**
@@ -86,6 +94,7 @@ nvm_structure_build()
  *         - volume_inuse_lfqueue
  *         - inode_free_lfqueue
  *         - inode_dirty_lfqueue
+ *         - inode_clean_lfqueue
  *     - Create necessary locks (mutex lock, rw lock) for concurrency control.
  *     - Create necessary threads to aid NVM system.
  *         - flush_thread
@@ -102,35 +111,49 @@ nvm_system_init()
 
     //Starts NVM system
     printf("Starting NVM system...\n");
+
     //volume data structure
     volume_free_lfqueue =   new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     volume_inuse_lfqueue =  new lfqueue<volume_idx_t>(nvm->max_volume_entry);
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        nvm->volume_table[i].vid = 0x0U - 1;
         volume_free_lfqueue->enqueue(i);
     }
 
     //inode data structure
     inode_free_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-    inode_dirty_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    }
+
     inode_sync_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    inode_clean_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
+        nvm->inode_table[i].lock = PTHREAD_MUTEX_INITIALIZER;
         inode_free_lfqueue->enqueue(i);
     }
 
     //locks
-    pthread_rwlock_init(&g_balloon_rwlock, NULL);
     pthread_cond_init(&g_balloon_cond, NULL);
     pthread_mutex_init(&g_balloon_mutex, NULL);
 
     //create threads
     sys_terminate = 0;
-    pthread_create(&flush_thread, NULL, flush_thread_func, NULL);
-    printf("Flush thread created...\n");
+    for(int i = 0; i < num_flusher; i++) {
+        pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
+    }
+    printf("%d Flush thread created...\n", num_flusher);
     pthread_create(&sync_thread, NULL, sync_thread_func, NULL);
     printf("Sync thread created...\n");
     pthread_create(&balloon_thread, NULL, balloon_thread_func, NULL);
     printf("Balloon thread created...\n");
+
+    if(verbose_flag) {
+        pthread_create(&monitor_thread, NULL, monitor_thread_func, NULL);
+        printf("monitor thread created...\n");
+    }
 
     printf("NVM system successfully started!\n\n");
 }
@@ -149,12 +172,11 @@ nvm_system_init()
  *     - inode_free_lfqueue
  *     - inode_dirty_lfqueue
  *     - inode_sync_lfqueue
+ *     - inode_clean_lfqueue
  */
 void
 nvm_system_close()
 {
-    printf("Closing NVM system...\n");
-
     //Terminate threads
     sys_terminate = 1;
 
@@ -165,24 +187,45 @@ nvm_system_close()
     pthread_join(balloon_thread, NULL);
 
     //flush thread - notify lfqueue to avoid spinlock
-    inode_dirty_lfqueue->close();
-    pthread_join(flush_thread, NULL);
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
+    {
+        inode_dirty_lfqueue[i]->close();
+    }
+
+    for(int i = 0; i < num_flusher; i++)
+    {
+        pthread_join(flush_thread[i], NULL);
+    }
 
     //sync thread
     inode_sync_lfqueue->close();
     pthread_join(sync_thread, NULL);
 
+    if(verbose_flag) {
+        pthread_join(monitor_thread, NULL);
+        for(int i = 0; i < num_flusher + 4; i++)
+        {
+            printf("\n");
+        }
+    }
+
+    printf("Closing NVM system...\n");
+
     //flushes the remained dirty blocks in NVM to a permanent storage
     printf("Flushing NVM system...\n");
-    while(!inode_dirty_lfqueue->is_empty()) {
-        inode_idx_t idx = inode_dirty_lfqueue->dequeue();
-        inode_entry* inode = &nvm->inode_table[idx];
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        while(!inode_dirty_lfqueue[i]->is_empty()) {
+            inode_idx_t idx = inode_dirty_lfqueue[i]->dequeue();
+            inode_entry* inode = &nvm->inode_table[idx];
 
-        lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
-        write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+            lseek(inode->volume->fd, (off_t)nvm->block_size * inode->lbn, SEEK_SET);
+            write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+        }
     }
+
     sync();
     sync();
+
     for(inode_idx_t idx = 0; idx < nvm->max_inode_entry; idx++) {
         inode_entry* inode = &nvm->inode_table[idx];
         if(inode->state == INODE_STATE_DIRTY || inode->state == INODE_STATE_SYNC) {
@@ -193,17 +236,22 @@ nvm_system_close()
     //close files (volumes)
     printf("Closing volumes in NVM...\n");
     while(!volume_inuse_lfqueue->is_empty()) {
-        volume_idx_t v = volume_inuse_lfqueue->dequeue();
-        volume_entry* ve = &nvm->volume_table[v];
-        close(ve->fd);
+        volume_idx_t idx = volume_inuse_lfqueue->dequeue();
+        volume_entry* volume = &nvm->volume_table[idx];
+        close(volume->fd);
+        free(volume->hash_table);
     }
 
     //Deallocates data structures
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
     delete inode_free_lfqueue;
-    delete inode_dirty_lfqueue;
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        delete inode_dirty_lfqueue[i];
+    }
+
     delete inode_sync_lfqueue;
+    delete inode_clean_lfqueue;
 
     printf("NVM system successfully closed!\n\n");
 }
@@ -316,6 +364,12 @@ create_nvm_in_shm()
 
     printf("[Succeeded]\n");
 
+    char *page_fault_maker = (char*)shm_addr;
+#define PAGE_FAULT_UNIT_SIZE (1<<11)
+    while(page_fault_maker < (char*)shm_addr + NVM_SIZE) {
+        page_fault_maker += PAGE_FAULT_UNIT_SIZE;
+    }
+
     return (struct nvm_metadata*) shm_addr;
 }
 
@@ -326,7 +380,7 @@ remove_nvm_in_shm()
 {
     int shm_id;
 
-    printf("Removing NVM from DRAM (shared memory)...\n");
+    //printf("Removing NVM from DRAM (shared memory)...\n");
 
     //Make Shared Memory space.
     shm_id = shmget((key_t) SHM_KEY, NVM_SIZE, 0666 | IPC_CREAT);
@@ -345,5 +399,5 @@ remove_nvm_in_shm()
         exit(0);
     }
 
-    printf("[Succeeded]\n");
+    //printf("[Succeeded]\n");
 }

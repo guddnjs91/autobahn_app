@@ -6,10 +6,16 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <stack>
-#include "nvm0common.h"
+#include "nvm0nvm.h"
+#include "nvm0inode.h"
+#include "nvm0hash.h"
+#include "nvm0monitor.h"
 
 //private function declarations
 void nvm_balloon();
+void balloon_wait();
+void fill_free_inodes();
+bool try_lock_hash_node(struct hash_node *node);
 
 /**
 Balloon thread function wakes up when free inode shortage.*/
@@ -17,94 +23,91 @@ void*
 balloon_thread_func(
     void* data)
 {
-    printf("Balloon thread running.....\n");
+//    printf("Balloon thread running.....\n");
     
     while(sys_terminate == 0) {
         nvm_balloon();
     }
     
-    printf("Balloon thread terminated.....\n");
+//    printf("Balloon thread terminated.....\n");
     
     return NULL;
 }
 
 /**
-Balloon function traverses tree and reclaims free inodes
-in invalid tree nodes. */
+ * When necessary, balloon function takes inodes from inode_clean_list and fills up the inode_free_lfqueue.
+ */
 void
-nvm_balloon(
-    void)
+nvm_balloon()
 {
-    int rc;
-    struct timeval now;
-    struct timespec timeout;
-    gettimeofday(&now, NULL);
-    timeout.tv_sec = now.tv_sec + 10;
-    timeout.tv_nsec = now.tv_usec * 1000;
+    balloon_wait();
 
-    /* Wait signal from nvm_write() function. */
-    pthread_mutex_lock(&g_balloon_mutex);
-    rc = pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
-    pthread_mutex_unlock(&g_balloon_mutex);
-
-    if(sys_terminate) {
+    if(sys_terminate == 1) {
         return;
     }
 
-    /* Lock write-lock to be mutually exclusive to write threads. */
-    pthread_rwlock_wrlock(&g_balloon_rwlock);
+    fill_free_inodes();
+}
 
-    // switch(rc)
-    // {
-    //     case 0:
-    //     printf("\nballoon thread wakes up by write thread ...\n");
-    //     break;
-    // 
-    //     case ETIMEDOUT:
-    //     printf("\nballoon thread periodically wakes up ...\n");
-    //     break;
-    // 
-    //     default:
-    //     printf("\nsystem signaled balloon thread to wake up ...\n");
-    //     break;
-    // } 
+/**
+ * Wait for writer's signal or after 10 seconds.
+ * Writers will signal if there is no more free inodes.
+ */
+void
+balloon_wait()
+{
+    struct timeval now;
+    struct timespec timeout;
 
-    /* Traverse volume table that each entry has one tree structure. */
-    for(volume_idx_t v = 0; v < nvm->max_volume_entry; v++) {
-        if(nvm->volume_table[v].vid == 0) {
+    pthread_mutex_lock(&g_balloon_mutex);
+    gettimeofday(&now, NULL);
+    timeout.tv_sec = now.tv_sec + 10;
+    timeout.tv_nsec = now.tv_usec * 1000;
+    pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
+    pthread_mutex_unlock(&g_balloon_mutex);
+}
+
+/**
+ * 1. Looks through inode_clean_list,
+ * 2. invalidate the node in hash_table,
+ * 3. and fill up the inode_free_lfqueue.
+ */
+void
+fill_free_inodes()
+{
+    //Traverse volume table that each entry has a hash table.
+    while(!inode_clean_lfqueue->is_empty()) {
+
+        inode_idx_t idx = inode_clean_lfqueue->dequeue();
+        struct inode_entry* inode = &nvm->inode_table[idx];
+//concurrency problem may occur here!
+        if (inode->state != INODE_STATE_CLEAN)
+        {
+           continue; 
+        }
+
+        struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
+        if(!try_lock_hash_node(hash_node))
             continue;
-        }
 
-        tree_root* tree = nvm->volume_table[v].tree;
-        std::stack<tree_node*> tnode_stack;
-        tnode_stack.push(tree->root);
+        logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
-        /* Preorder traverse tree. */
-        while(!tnode_stack.empty() && tnode_stack.top() != nullptr) {
-            tree_node* tnode = tnode_stack.top();
-            tnode_stack.pop();
+        inode->state = INODE_STATE_FREE;
+        inode_free_lfqueue->enqueue(idx);
+        pthread_mutex_unlock(&hash_node->mutex);
+        monitor.free++;
+    }
+}
 
-            if(tnode->inode->state == INODE_STATE_CLEAN) {
-                /* Logical delete tree node. */
-                tnode->valid = TREE_INVALID;
-                tree->count_invalid++;
-
-                /* Reclaim to free inode LFQ. */
-                inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table) / sizeof(inode_entry);
-                inode_free_lfqueue->enqueue(idx);
-                tnode->inode->state = INODE_STATE_FREE;
-//                printf("reclaimed nvm->inode_table[%u]\n", idx);
-            }
-
-            if(tnode->right != nullptr) {
-                tnode_stack.push(tnode->right);
-            }
-            if(tnode->left != nullptr) {
-                tnode_stack.push(tnode->left);
-            }
-        }
+bool try_lock_hash_node(struct hash_node *node)
+{
+    pthread_mutex_lock(&node->mutex);
+    
+    if(node->inode->state != INODE_STATE_CLEAN)
+    {
+        pthread_mutex_unlock(&node->mutex);
+        return false;
     }
 
-    /* Unlock write-lock. */
-    pthread_rwlock_unlock(&g_balloon_rwlock);
+    return true;
 }
