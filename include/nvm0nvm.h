@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <sys/types.h>
 #include <pthread.h>
+#include <atomic>
 #include "nvm0inode.h"
 #include "nvm0volume.h"
 #include "nvm0lfqueue.h"
@@ -16,7 +17,10 @@
 #define FLUSH_BATCH_SIZE    (1024)
 #define FLUSH_LWM           (128) //not used anymore!
 
+#define MAX_NUM_SYNCER      (2)
 #define MIN_SYNC_FREQUENCY  (1<<14)
+
+#define MAX_NUM_BALLOON     (8)
 
 #define testing             (0)
 
@@ -56,13 +60,12 @@ struct nvm_metadata {
 //Global variables
 extern struct nvm_metadata* nvm; //holds information about NVM
 
-extern pthread_rwlock_t g_balloon_rwlock;   //balloon read/write lock
-extern pthread_cond_t   g_balloon_cond;     //balloon condition variable
-extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
+extern pthread_cond_t   g_balloon_cond[MAX_NUM_BALLOON];     //balloon condition variable
+extern pthread_mutex_t  g_balloon_mutex[MAX_NUM_BALLOON];    //mutex for b_cond
 
 extern pthread_t flush_thread[MAX_NUM_FLUSHER];
-extern pthread_t sync_thread;
-extern pthread_t balloon_thread;
+extern pthread_t sync_thread[MAX_NUM_SYNCER];
+extern pthread_t balloon_thread[MAX_NUM_BALLOON];
 extern pthread_t monitor_thread;
 
 //Conditional variable for system termination
@@ -74,8 +77,10 @@ extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
 extern lfqueue<inode_idx_t>* inode_free_lfqueue;
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
-extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
-extern lfqueue<inode_idx_t>* inode_clean_lfqueue;
+extern lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
+extern atomic<uint_fast64_t> sync_queue_idx;
+extern lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
+extern atomic<uint_fast64_t> clean_queue_idx;
 
 /* functions */
 

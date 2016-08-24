@@ -49,12 +49,20 @@ void printLFQueueGauge()
     printf("\t\t\t\t[clean LFQueue]");
     printf("\n");
 
-    for(int i = 0; i < num_flusher; i++)
+    for(int i = 0; i < num_flusher - 1; i++)
     {
         printf("\t\t\t\t        dirty[%2d]", i);
         inode_dirty_lfqueue[i]->monitor();
         printf("\n");
     }
+
+    printf("\t\t\t\t        dirty[%2d]", num_flusher - 1);
+    inode_dirty_lfqueue[num_flusher-1]->monitor();
+    printf("\tsync[%2d]", MAX_NUM_SYNCER - 2);
+    inode_sync_lfqueue[MAX_NUM_SYNCER-2]->monitor();
+    printf("\tballoon[%2d]", MAX_NUM_BALLOON - 2);
+    inode_clean_lfqueue[MAX_NUM_BALLOON-2]->monitor();
+    printf("\n");
 
     printf("\t");
     inode_free_lfqueue->monitor();
@@ -83,11 +91,11 @@ void printLFQueueGauge()
     printf(" %7.3lf %%", fullness);
     printf("\033[0m");
 
-    printf("\t\t");
-    inode_sync_lfqueue->monitor();
+    printf("\tsync[%2d]", MAX_NUM_SYNCER-1);
+    inode_sync_lfqueue[MAX_NUM_SYNCER-1]->monitor();
 
-    printf("\t\t");
-    inode_clean_lfqueue->monitor();
+    printf("\tballoon[%2d]", MAX_NUM_BALLOON-1);
+    inode_clean_lfqueue[MAX_NUM_BALLOON-1]->monitor();
 
     printf("\n");
 

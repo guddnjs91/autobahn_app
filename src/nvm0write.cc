@@ -23,9 +23,11 @@ bool isFreeLFQueueEnough()
 
 void awakeBalloonThread()
 {
-    pthread_mutex_lock(&g_balloon_mutex);
-    pthread_cond_signal(&g_balloon_cond);
-    pthread_mutex_unlock(&g_balloon_mutex);
+    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+        pthread_mutex_lock(&g_balloon_mutex[i]);
+        pthread_cond_signal(&g_balloon_cond[i]);
+        pthread_mutex_unlock(&g_balloon_mutex[i]);
+    }
 }
 
 inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)

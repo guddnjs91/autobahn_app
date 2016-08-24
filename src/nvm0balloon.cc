@@ -12,9 +12,9 @@
 #include "nvm0monitor.h"
 
 //private function declarations
-void nvm_balloon();
-void balloon_wait();
-void fill_free_inodes();
+void nvm_balloon(int index);
+void balloon_wait(int index);
+void fill_free_inodes(int index);
 bool try_lock_hash_node(struct hash_node *node);
 
 /**
@@ -23,13 +23,11 @@ void*
 balloon_thread_func(
     void* data)
 {
-//    printf("Balloon thread running.....\n");
-    
+    int index = *(int *)data;
+
     while(sys_terminate == 0) {
-        nvm_balloon();
+        nvm_balloon(index);
     }
-    
-//    printf("Balloon thread terminated.....\n");
     
     return NULL;
 }
@@ -38,15 +36,16 @@ balloon_thread_func(
  * When necessary, balloon function takes inodes from inode_clean_list and fills up the inode_free_lfqueue.
  */
 void
-nvm_balloon()
+nvm_balloon(
+    int index)
 {
-    balloon_wait();
+//    balloon_wait(index);
 
     if(sys_terminate == 1) {
         return;
     }
 
-    fill_free_inodes();
+    fill_free_inodes(index);
 }
 
 /**
@@ -54,17 +53,18 @@ nvm_balloon()
  * Writers will signal if there is no more free inodes.
  */
 void
-balloon_wait()
+balloon_wait(
+    int index)
 {
     struct timeval now;
     struct timespec timeout;
 
-    pthread_mutex_lock(&g_balloon_mutex);
+    pthread_mutex_lock(&g_balloon_mutex[index]);
     gettimeofday(&now, NULL);
     timeout.tv_sec = now.tv_sec + 10;
     timeout.tv_nsec = now.tv_usec * 1000;
-    pthread_cond_timedwait(&g_balloon_cond, &g_balloon_mutex, &timeout);
-    pthread_mutex_unlock(&g_balloon_mutex);
+    pthread_cond_timedwait(&g_balloon_cond[index], &g_balloon_mutex[index], &timeout);
+    pthread_mutex_unlock(&g_balloon_mutex[index]);
 }
 
 /**
@@ -73,14 +73,14 @@ balloon_wait()
  * 3. and fill up the inode_free_lfqueue.
  */
 void
-fill_free_inodes()
+fill_free_inodes(
+    int index)
 {
-    //Traverse volume table that each entry has a hash table.
-    while(!inode_clean_lfqueue->is_empty()) {
+    while(!inode_clean_lfqueue[index]->is_empty()) {
 
-        inode_idx_t idx = inode_clean_lfqueue->dequeue();
+        inode_idx_t idx = inode_clean_lfqueue[index]->dequeue();
         struct inode_entry* inode = &nvm->inode_table[idx];
-//concurrency problem may occur here!
+
         if (inode->state != INODE_STATE_CLEAN)
         {
            continue; 

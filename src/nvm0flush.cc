@@ -3,9 +3,11 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <sys/uio.h>
+#include <atomic>
 #include "nvm0nvm.h"
 #include "nvm0inode.h"
 #include "nvm0monitor.h"
+using namespace std;
 
 //private function declarations
 void nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov);
@@ -54,6 +56,7 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
     inode_entry *inode, *start_inode;
     inode_idx_t i_idx;
     ssize_t bytes_written;
+    int sync_idx;
 
     int num_dirty_inodes = inode_dirty_lfqueue[v_idx]->get_size()-1;
     int write_size = (num_dirty_inodes >= FLUSH_BATCH_SIZE) ? FLUSH_BATCH_SIZE : num_dirty_inodes;
@@ -104,7 +107,9 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
             inode = &nvm->inode_table[i_idx];
     
             inode->state = INODE_STATE_SYNC;
-            inode_sync_lfqueue->enqueue(i_idx);
+            //sync_idx = std::atomic_fetch_xor(&sync_queue_idx, 1);
+            sync_idx = sync_queue_idx.fetch_add(1);
+            inode_sync_lfqueue[sync_idx%MAX_NUM_SYNCER]->enqueue(i_idx);
             monitor.sync++;
         }
 
