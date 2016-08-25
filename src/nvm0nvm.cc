@@ -18,6 +18,9 @@ struct nvm_metadata* nvm;
 struct monitor monitor;
 int sys_terminate;
 
+atomic<uint_fast64_t> free_enqueue_idx;
+atomic<uint_fast64_t> free_dequeue_idx;
+
 int sync_idx[MAX_NUM_SYNCER];
 atomic<uint_fast64_t> sync_queue_idx;
 
@@ -27,7 +30,7 @@ atomic<uint_fast64_t> clean_queue_idx;
 lfqueue<volume_idx_t>*  volume_free_lfqueue;
 lfqueue<volume_idx_t>*  volume_inuse_lfqueue;
 
-lfqueue<inode_idx_t>*   inode_free_lfqueue;
+lfqueue<inode_idx_t>*   inode_free_lfqueue[MAX_NUM_FREE];
 lfqueue<inode_idx_t>*   inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 lfqueue<inode_idx_t>*   inode_sync_lfqueue[MAX_NUM_SYNCER];
 lfqueue<inode_idx_t>*   inode_clean_lfqueue[MAX_NUM_BALLOON];
@@ -126,7 +129,9 @@ nvm_system_init()
     }
 
     //inode data structure
-    inode_free_lfqueue  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    for(int i = 0; i < MAX_NUM_FREE; i++) {
+        inode_free_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
+    }
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
@@ -141,7 +146,7 @@ nvm_system_init()
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
         nvm->inode_table[i].lock = PTHREAD_MUTEX_INITIALIZER;
-        inode_free_lfqueue->enqueue(i);
+        inode_free_lfqueue[i%MAX_NUM_FREE]->enqueue(i);
     }
 
     //locks
@@ -152,6 +157,8 @@ nvm_system_init()
 
     //create threads
     sys_terminate = 0;
+    free_enqueue_idx = 0;
+    free_dequeue_idx = 0;
     for(int i = 0; i < num_flusher; i++) {
         pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
     }
@@ -264,7 +271,9 @@ nvm_system_close()
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
 
-    delete inode_free_lfqueue;
+    for(int i = 0; i < MAX_NUM_FREE; i++) {
+        delete inode_free_lfqueue[i];
+    }
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         delete inode_dirty_lfqueue[i];
     }

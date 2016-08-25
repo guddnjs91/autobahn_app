@@ -43,43 +43,60 @@ nvm_monitor()
 
 void printLFQueueGauge()
 {
-    printf("\t\t[free LFQueue]");
-    printf("\t\t\t\t[dirty LFQueue]");
-    printf("\t\t\t\t[sync LFQueue]");
-    printf("\t\t\t\t[clean LFQueue]");
+    printf("    [free LFQueue]                  ");
+    printf("    [dirty LFQueue]                 ");
+    printf("    [sync LFQueue]                  ");
+    printf("    [clean LFQueue]                 ");
     printf("\n");
 
-    for(int i = 0; i < num_flusher - 1; i++)
+    #define MONITORING_AMOUNT 7 
+    for(int i = MONITORING_AMOUNT; i >= 0; i--)
     {
-        printf("\t\t\t\t        dirty[%2d]", i);
-        inode_dirty_lfqueue[i]->monitor();
+        if(MAX_NUM_FREE - 1 < i) {
+                printf("                                    ");
+        } else {
+            printf("[%2d]", i);
+            inode_free_lfqueue[i]->monitor();
+            printf("  ");
+        }
+        if(num_flusher - 1 < i) {
+                printf("                                    ");
+        } else {
+            printf("[%2d]", i);
+            inode_dirty_lfqueue[i]->monitor();
+            printf("  ");
+        }
+        if(MAX_NUM_SYNCER - 1 < i) {
+                printf("                                    ");
+        } else {
+            printf("[%2d]", i);
+            inode_sync_lfqueue[i]->monitor();
+            printf("  ");
+        }
+        if(MAX_NUM_BALLOON - 1 < i) {
+                printf("                                    ");
+        } else {
+            printf("[%2d]", i);
+            inode_clean_lfqueue[i]->monitor();
+            printf("  ");
+        }
         printf("\n");
     }
 
-    printf("\t\t\t\t        dirty[%2d]", num_flusher - 1);
-    inode_dirty_lfqueue[num_flusher-1]->monitor();
-    printf("\tsync[%2d]", MAX_NUM_SYNCER - 2);
-    inode_sync_lfqueue[MAX_NUM_SYNCER-2]->monitor();
-    printf("\tballoon[%2d]", MAX_NUM_BALLOON - 2);
-    inode_clean_lfqueue[MAX_NUM_BALLOON-2]->monitor();
-    printf("\n");
-
-    printf("\t");
-    inode_free_lfqueue->monitor();
-
-    printf("\t   total]");
-
     /* sorry for hard coding */
     uint64_t total_size = 0;
-    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
-    {
-        total_size += inode_dirty_lfqueue[i]->get_size();
-    }
+    double fullness = 0;
 
-    double fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
+    for(int i = 0; i < MAX_NUM_FREE; i++)
+    {
+        total_size += inode_free_lfqueue[i]->get_size();
+    }
+ 
+    fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
 
     inode_dirty_lfqueue[0]->coloring(fullness);
 
+    printf("    ");
     for (int i = 0; i < 20; i++) {
         if(fullness < 5 * i) {
             printf("-");
@@ -89,23 +106,78 @@ void printLFQueueGauge()
     }
    
     printf(" %7.3lf %%", fullness);
-    printf("\033[0m");
+    printf("\033[0m  ");
 
-    printf("\tsync[%2d]", MAX_NUM_SYNCER-1);
-    inode_sync_lfqueue[MAX_NUM_SYNCER-1]->monitor();
-
-    printf("\tballoon[%2d]", MAX_NUM_BALLOON-1);
-    inode_clean_lfqueue[MAX_NUM_BALLOON-1]->monitor();
-
-    printf("\n");
-
-
-    for(int i = 0; i < num_flusher + 2; i++)
+    total_size = 0;
+    for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++)
     {
-        printf("\033[1A");
+        total_size += inode_dirty_lfqueue[i]->get_size();
+    }
+ 
+    fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
+ 
+    inode_dirty_lfqueue[0]->coloring(fullness);
+ 
+    printf("    ");
+    for (int i = 0; i < 20; i++) {
+        if(fullness < 5 * i) {
+            printf("-");
+        } else {
+            printf("|");
+        }
     }
 
-    printf("\r");
+    printf(" %7.3lf %%", fullness);
+    printf("\033[0m");
+    printf("\033[0m  ");
+ 
+    total_size = 0;
+    for(int i = 0; i < MAX_NUM_SYNCER; i++)
+    {
+        total_size += inode_sync_lfqueue[i]->get_size();
+    }
+ 
+    fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
+    inode_dirty_lfqueue[0]->coloring(fullness);
+ 
+    printf("    ");
+    for (int i = 0; i < 20; i++) {
+        if(fullness < 5 * i) {
+            printf("-");
+        } else {
+            printf("|");
+        }
+    }
+   
+    printf(" %7.3lf %%", fullness);
+    printf("\033[0m  ");
+ 
+    total_size = 0;
+    for(int i = 0; i < MAX_NUM_BALLOON; i++)
+    {
+        total_size += inode_clean_lfqueue[i]->get_size();
+    }
+
+    fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
+
+    inode_dirty_lfqueue[0]->coloring(fullness);
+
+    printf("    ");
+    for (int i = 0; i < 20; i++) {
+        if(fullness < 5 * i) {
+            printf("-");
+        } else {
+            printf("|");
+        }
+    }
+   
+    printf(" %7.3lf %%", fullness);
+    printf("\033[0m  ");
+
+    for(int i = 0; i < MONITORING_AMOUNT + 2; i++)
+    {
+        printf("\033[1A\r");
+    }
 }
 
 
@@ -123,30 +195,30 @@ void printThroughput()
     double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize / time_interval;
     double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize / time_interval;
 
-    for(int i = 0; i < num_flusher + 2; i++)
+    for(int i = 0; i < MONITORING_AMOUNT + 3; i++)
     {
         printf("\n \r");
     }
 
-    printf("\tclean->free: ");
+    printf("    clean->free: ");
     coloring(free);
-    printf("%.2lf GiB/s ", free); 
+    printf("%.2lf GiB/s         ", free); 
 
-    printf("\t\t\033[0mfree->dirty: ");
+    printf("\033[0m    free->dirty: ");
     coloring(dirty);
-    printf("%.2lf GiB/s ", dirty); 
+    printf("%.2lf GiB/s         ", dirty); 
 
-    printf("\t\t\033[0mdirty->sync: ");
+    printf("\033[0m    dirty->sync: ");
     coloring(sync);
-    printf("%.2lf GiB/s ", sync); 
+    printf("%.2lf GiB/s         ", sync); 
 
-    printf("\t\t\033[0msync->clean: ");
+    printf("\033[0m    sync->clean: ");
     coloring(clean);
-    printf("%.2lf GiB/s ", clean); 
+    printf("%.2lf GiB/s         ", clean); 
 
     printf("\033[0m");
 
-    for(int i = 0; i < num_flusher + 2; i++)
+    for(int i = 0; i < MONITORING_AMOUNT + 3; i++)
     {
         printf("\033[1A \r");
     }

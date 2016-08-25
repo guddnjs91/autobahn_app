@@ -9,13 +9,13 @@
 #include "nvm0lfqueue.h"
 
 //config (make changes here ONLY)
-#define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
+#define NVM_SIZE            (1LLU << 32)
 #define MAX_VOLUME_ENTRY    (128)
-#define BLOCK_SIZE          (16 * 1024)
+#define BLOCK_SIZE          (1 << 14)
 
+#define MAX_NUM_FREE        (2)
 #define MAX_NUM_FLUSHER     (32)
 #define FLUSH_BATCH_SIZE    (1024)
-#define FLUSH_LWM           (128) //not used anymore!
 
 #define MAX_NUM_SYNCER      (2)
 #define MIN_SYNC_FREQUENCY  (1<<14)
@@ -75,7 +75,9 @@ extern int sys_terminate;
 extern lfqueue<volume_idx_t>* volume_free_lfqueue;
 extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
-extern lfqueue<inode_idx_t>* inode_free_lfqueue;
+extern lfqueue<inode_idx_t>* inode_free_lfqueue[MAX_NUM_FREE];
+extern atomic<uint_fast64_t> free_enqueue_idx;
+extern atomic<uint_fast64_t> free_dequeue_idx;
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 extern lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
 extern atomic<uint_fast64_t> sync_queue_idx;

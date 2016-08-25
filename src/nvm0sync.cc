@@ -22,9 +22,11 @@ sync_thread_func(
 
         usleep( 10 * 1000 );
 
+        uint64_t free_idx = free_enqueue_idx.load();
+
         if(inode_sync_lfqueue[index]->get_size() >=
             MIN_SYNC_FREQUENCY + 
-            inode_free_lfqueue->get_size() / nvm->max_inode_entry * (nvm->max_inode_entry - MIN_SYNC_FREQUENCY)
+            inode_free_lfqueue[free_idx % MAX_NUM_FREE]->get_size() / (nvm->max_inode_entry / MAX_NUM_FREE)  * (nvm->max_inode_entry / MAX_NUM_FREE - MIN_SYNC_FREQUENCY)
         ) {
             nvm_sync(index);
         }

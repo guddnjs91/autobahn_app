@@ -93,7 +93,8 @@ fill_free_inodes(
         logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
         inode->state = INODE_STATE_FREE;
-        inode_free_lfqueue->enqueue(idx);
+        uint64_t free_idx = free_enqueue_idx.fetch_add(1);
+        inode_free_lfqueue[free_idx % MAX_NUM_FREE]->enqueue(idx);
         pthread_mutex_unlock(&hash_node->mutex);
         monitor.free++;
     }
