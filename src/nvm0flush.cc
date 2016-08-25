@@ -42,7 +42,7 @@ nvm_flush(
     pthread_mutex_lock(&inode->lock);
 
     //Flush one data block
-    lseek(inode->volume->fd, nvm->block_size * inode->lbn, SEEK_SET);
+    lseek(inode->volume->fd, (off_t)nvm->block_size * inode->lbn, SEEK_SET);
     write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
 
     inode->state = INODE_STATE_SYNC;
