@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <stack>
 #include "nvm0common.h"
-
+#include "nvm0monitor.h"
 //private function declarations
 void nvm_balloon();
 
@@ -54,24 +54,24 @@ nvm_balloon(
     /* Lock write-lock to be mutually exclusive to write threads. */
     pthread_rwlock_wrlock(&g_balloon_rwlock);
 
-    // switch(rc)
-    // {
-    //     case 0:
-    //     printf("\nballoon thread wakes up by write thread ...\n");
-    //     break;
-    // 
-    //     case ETIMEDOUT:
-    //     printf("\nballoon thread periodically wakes up ...\n");
-    //     break;
-    // 
-    //     default:
-    //     printf("\nsystem signaled balloon thread to wake up ...\n");
-    //     break;
-    // } 
+//    switch(rc)
+//    {
+//        case 0:
+//        printf("\nballoon thread wakes up by write thread ...\n");
+//        break;
+//    
+//        case ETIMEDOUT:
+//        printf("\nballoon thread periodically wakes up ...\n");
+//        break;
+//    
+//        default:
+//        printf("\nsystem signaled balloon thread to wake up ...\n");
+//        break;
+//    } 
 
     /* Traverse volume table that each entry has one tree structure. */
     for(volume_idx_t v = 0; v < nvm->max_volume_entry; v++) {
-        if(nvm->volume_table[v].vid == 0) {
+        if(nvm->volume_table[v].vid == 0x0U - 1) {
             continue;
         }
 
@@ -91,8 +91,9 @@ nvm_balloon(
 
                 /* Reclaim to free inode LFQ. */
                 inode_idx_t idx = (inode_idx_t)((char *)tnode->inode - (char *)nvm->inode_table) / sizeof(inode_entry);
-                inode_free_lfqueue->enqueue(idx);
                 tnode->inode->state = INODE_STATE_FREE;
+                inode_free_lfqueue->enqueue(idx);
+                monitor.free++;
 //                printf("reclaimed nvm->inode_table[%u]\n", idx);
             }
 

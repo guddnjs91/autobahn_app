@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "nvm0common.h"
-
+#include "nvm0monitor.h"
 //private function declarations
-void nvm_flush();
+void nvm_flush(int);
 
 /**
  * Flush thread function proactively runs and flushes dirty inodes. */
@@ -15,12 +15,13 @@ flush_thread_func(
 {
     printf("Flush thread running.....\n");
 
+    int flush_idx = *((int *)data);
     while(sys_terminate == 0) {
         
         usleep(10 * 1000);
         
-        while(inode_dirty_lfqueue->get_size() > FLUSH_LWM && sys_terminate == 0) {
-            nvm_flush();
+        while(inode_dirty_lfqueue[flush_idx]->get_size() > FLUSH_LWM && sys_terminate == 0) {
+            nvm_flush(flush_idx);
         }
     }
     
@@ -33,10 +34,10 @@ flush_thread_func(
  * Flush a batch of dirty data block from NVM to a permenant storage. */
 void
 nvm_flush(
-    void)
+    int flush_idx)
 {
     // inode_dirty_lfqueue->monitor();
-    inode_idx_t idx = inode_dirty_lfqueue->dequeue();
+    inode_idx_t idx = inode_dirty_lfqueue[flush_idx]->dequeue();
     inode_entry* inode = &nvm->inode_table[idx];
     
     pthread_mutex_lock(&inode->lock);
@@ -47,4 +48,5 @@ nvm_flush(
 
     inode->state = INODE_STATE_SYNC;
     inode_sync_lfqueue->enqueue(idx);
+    monitor.sync++;
 }

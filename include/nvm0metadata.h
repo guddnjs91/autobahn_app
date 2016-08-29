@@ -14,11 +14,16 @@ Created 2016/06/07 Sang Rhee
 #include <pthread.h>
 
 //config (make changes here ONLY)
-#define NVM_SIZE            (4 * 1024 * 1024 * 1024LLU)
+#define NVM_SIZE            (8 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY    (1024)
 #define BLOCK_SIZE          (16 * 1024)
-#define FLUSH_LWM           (1024 * 8)
-#define MIN_SYNC_FREQUENCY  (1024)
+#define FLUSH_LWM           (1024)
+#define MIN_SYNC_FREQUENCY  (1024 * 16)
+
+#define NVM_ALIGNED         (1)
+//#define VERBOSE             (0)
+#define MONITORING_AMOUNT   (7)
+#define NUM_FLUSHER         (8)
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {
@@ -41,9 +46,13 @@ extern pthread_rwlock_t g_balloon_rwlock;   //balloon read/write lock
 extern pthread_cond_t   g_balloon_cond;     //balloon condition variable
 extern pthread_mutex_t  g_balloon_mutex;    //mutex for b_cond
 
-extern pthread_t flush_thread;
+extern pthread_t flush_thread[NUM_FLUSHER];
 extern pthread_t sync_thread;
 extern pthread_t balloon_thread;
+
+extern lfqueue<inode_idx_t>* inode_free_lfqueue;
+extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[NUM_FLUSHER];
+extern lfqueue<inode_idx_t>* inode_sync_lfqueue;
 
 //Conditional variable for system termination
 extern int sys_terminate;

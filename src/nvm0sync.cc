@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "nvm0common.h"
-
+#include "nvm0monitor.h"
 //private function declarations
 void nvm_sync();
 
@@ -49,7 +49,7 @@ nvm_sync(
         inode_entry* inode = &nvm->inode_table[idx];
 
         inode->state = INODE_STATE_CLEAN;
-
+        monitor.clean++;
         pthread_mutex_unlock(&inode->lock);
     }
 }

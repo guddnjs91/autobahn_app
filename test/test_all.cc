@@ -32,33 +32,33 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
     printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
     getchar();
 
-    /* write (WRITE_BYTES2) bytes at a time */
-    printf("[Writing %d bytes at a time totaling %llu bytes]\n", WRITE_BYTES2, TOTAL_FILE_SIZE);
-    for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
-        printf("#-------- %d threads APPEND TEST -------\n", nthread);
-        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_APPEND_);
-//        printf("#-------------- RANDOM TEST ---------------------\n");
-//        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_RANDOM_);
-        printf("\n");
-        remove_files(nthread);
-    }
+//    /* write (WRITE_BYTES2) bytes at a time */
+//    printf("[Writing %d bytes at a time totaling %llu bytes]\n", WRITE_BYTES2, TOTAL_FILE_SIZE);
+//    for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
+//        printf("#-------- %d threads APPEND TEST -------\n", nthread);
+//        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_APPEND_);
+////        printf("#-------------- RANDOM TEST ---------------------\n");
+////        (*test_func)(TOTAL_FILE_SIZE, nthread, WRITE_BYTES2, _WRITE_RANDOM_);
+//        printf("\n");
+//        remove_files(nthread);
+//    }
 }
 
 int main()
 {
     system("clear");
 
-    //////////write//////////
-    printf("\n[write test]\n");
-    test_write_performance(test_write);
+    //////////NVM durable write//////////
+    printf("\n[nvm durable write test]\n");
+    test_write_performance(test_nvm_durable_write);
 
     printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
     getchar();
     system("clear");
 
-    //////////NVM durable write//////////
-    printf("\n[nvm durable write test]\n");
-    test_write_performance(test_nvm_durable_write);
+    //////////write//////////
+    printf("\n[write test]\n");
+    test_write_performance(test_write);
 
     printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
     getchar();

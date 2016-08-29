@@ -132,3 +132,32 @@ lfqueue<T>::close()
 {
     is_closed = true;
 }
+
+template <typename T>
+void
+lfqueue<T>::coloring(double state)
+{
+    //red
+    if(state > 75)
+    {
+        printf("\033[31m");
+    }
+
+    //yellow
+    else if(state > 50)
+    {
+        printf("\033[33m");
+    }
+
+    //green
+    else if(state > 25)
+    {
+        printf("\033[32m");
+    }
+
+    //blue
+    else
+    {
+        printf("\033[34m");
+    }
+};

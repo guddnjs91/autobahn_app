@@ -4,6 +4,7 @@
 #include <string.h>
 #include <string>
 #include "nvm0common.h"
+#include "nvm0monitor.h"
 
 //private function declarations
 const char* get_filename(uint32_t vid);
@@ -103,7 +104,8 @@ nvm_write(
         if(old_state != INODE_STATE_DIRTY) {
             /* Insert written inode to dirty_inode_lfqueue.
             Enqueued inode would be flushed by flush_thread at certain time. */
-            inode_dirty_lfqueue->enqueue(idx);
+            inode_dirty_lfqueue[vid % NUM_FLUSHER]->enqueue(idx);
+            monitor.dirty++;
         }
 
         /* Unlock inode lock */
@@ -243,7 +245,6 @@ alloc_inode_entry_idx(
      * Give inode its lbn, and make its state as ALLOCATED */
     nvm->inode_table[idx].lbn = lbn;
     nvm->inode_table[idx].volume = nullptr;
-    nvm->inode_table[idx].lock = PTHREAD_MUTEX_INITIALIZER;
     return idx;
 }
 
@@ -254,7 +255,8 @@ const char*
 get_filename(
     uint32_t vid) /* !<in: vid representing its own filename */
 {
-    std::string filename = "VOL_";
+    std::string filename;
+    filename = "/opt/nvm2/NVM/VOL_";
     filename += std::to_string(vid);
     filename += ".txt";
 
