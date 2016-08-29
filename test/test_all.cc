@@ -44,7 +44,7 @@ void test_write_performance(void (*test_func)(long long unsigned int, int, size_
     printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES1, total_file_size, num_flusher);
     dprintf(report_fd, "## threads \t|\tinterval(sec)\n");
 
-    for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
+    for(nthread = 8; nthread <= MAX_THREADS; nthread*=2) {
         printf("#-------- %d threads APPEND TEST -------\n", nthread);
         dprintf(report_fd, "\t%3d", nthread);
         (*test_func)(total_file_size, nthread, WRITE_BYTES1, WRITE_MODE_APPEND);
@@ -84,6 +84,7 @@ void start_recording_report()
     report_fd = open( ("./report/" + report_time_YMD).c_str() , O_RDWR | O_CREAT | O_APPEND, 0666 ); 
     dprintf(report_fd, "\n# Testing Start at : %s\n", report_time_HMS.c_str());
     dprintf(report_fd, "# %llu GiB file write, %d flushers running\n", total_file_size / 1024 / 1024 / 1024, num_flusher );
+    dprintf(report_fd, "# FREE LFQ: %d SYNC LFQ: %d CLEAN LFQ: %d\n", MAX_NUM_FREE, MAX_NUM_SYNCER, MAX_NUM_BALLOON );
 }
 
 int main(int argc, char** argv)
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
     }
     else {
         start_recording_report();
+
 
         //////////NVM durable write//////////
         dprintf(report_fd,"## [nvm durable write test]\n");

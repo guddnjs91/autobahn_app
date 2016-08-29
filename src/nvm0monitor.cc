@@ -49,7 +49,6 @@ void printLFQueueGauge()
     printf("    [clean LFQueue]                 ");
     printf("\n");
 
-    #define MONITORING_AMOUNT 7 
     for(int i = MONITORING_AMOUNT; i >= 0; i--)
     {
         if(MAX_NUM_FREE - 1 < i) {

@@ -30,11 +30,11 @@ void
 
     if(tid % 2 == 1)
     {
-        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_DIRECT | O_RDWR | O_CREAT, 0666);
     }
     else
     {
-        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
+        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_DIRECT | O_RDWR | O_CREAT, 0666);
     }
 
     for(i = 0; i < n; i++)

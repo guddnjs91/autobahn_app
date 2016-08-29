@@ -51,7 +51,7 @@ alloc_volume_entry_idx(
     volume_idx_t idx = volume_free_lfqueue->dequeue();
 
     nvm->volume_table[idx].vid = vid;
-    nvm->volume_table[idx].fd = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
+    nvm->volume_table[idx].fd = open(get_filename(vid), O_DIRECT| O_RDWR | O_CREAT, 0644);
     nvm->volume_table[idx].hash_table = new_hash_table();
 
     volume_inuse_lfqueue->enqueue(idx);

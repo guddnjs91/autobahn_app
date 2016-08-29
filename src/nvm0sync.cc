@@ -26,7 +26,7 @@ sync_thread_func(
 
         if(inode_sync_lfqueue[index]->get_size() >=
             MIN_SYNC_FREQUENCY + 
-            inode_free_lfqueue[free_idx % MAX_NUM_FREE]->get_size() / (nvm->max_inode_entry / MAX_NUM_FREE)  * (nvm->max_inode_entry / MAX_NUM_FREE - MIN_SYNC_FREQUENCY)
+            inode_free_lfqueue[free_idx % MAX_NUM_FREE]->get_size() / (nvm->max_inode_entry / MAX_NUM_FREE)  * (nvm->max_inode_entry / MAX_NUM_SYNCER - MIN_SYNC_FREQUENCY)
         ) {
             nvm_sync(index);
         }

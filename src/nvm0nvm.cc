@@ -228,7 +228,7 @@ nvm_system_close()
 
     if(verbose_flag) {
         pthread_join(monitor_thread, NULL);
-        for(int i = 0; i < num_flusher + 4; i++)
+        for(int i = 0; i < MONITORING_AMOUNT + 4; i++)
         {
             printf("\n");
         }
