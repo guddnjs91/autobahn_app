@@ -1,20 +1,12 @@
 #include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <fcntl.h>
-#include <string.h>
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
 #include "test.h"
 #include "nvm0nvm.h"
-
-
-static double TimeSpecToSeconds(struct timespec* ts)
-{
-    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
-}
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -22,13 +14,11 @@ void
 *thread_nvm_durable_write_append(
     void *data)
 {
-    long long unsigned int n = filesize / nthread / nbytes;
-    long long unsigned int i;
+    uint64_t n = TOTAL_FILE_SIZE / nthread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
-    for(i = 0; i < n; i++)
-    {
-        nvm_durable_write(tid, (off_t) (i * nbytes) , buffer, nbytes);
+    for(uint64_t i = 0; i < n; i++) {
+        nvm_durable_write(tid, (off_t) (i * BYTES_PER_WRITE) , buffer, BYTES_PER_WRITE);
     }
 
     return NULL;
@@ -39,14 +29,13 @@ test_nvm_durable_write_append()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
-    int i;
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_append, (void *)&tid[i]);
     }
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 }
@@ -55,14 +44,15 @@ void
 *thread_nvm_durable_write_random(
     void *data)
 {
-    long long unsigned int n = filesize / nthread / nbytes;
-    long long unsigned int i;
+    uint64_t n = TOTAL_FILE_SIZE / nthread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
+    srand(time(NULL));
+
     //TODO: fix to generate 64bit random value
-    for(i = 0; i < n; i++) {
-        off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
-        nvm_durable_write(tid, rand_pos , buffer, nbytes);
+    for(uint64_t i = 0; i < n; i++) {
+        off_t rand_pos = rand() % (TOTAL_FILE_SIZE / nthread - BYTES_PER_WRITE * 2);
+        nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
     }
 
     return NULL;
@@ -73,35 +63,26 @@ test_nvm_durable_write_random()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
-    int i;
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_random, (void *)&tid[i]);
     }
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 }
 void
 test_nvm_durable_write(
-    long long unsigned int file_size,
-    int n_thread,
-    size_t n_bytes,
-    int type)
+    int n_thread)
 {
-    //declarations
-    filesize = file_size;
     nthread = n_thread;
-    nbytes = n_bytes;
-    srand(time(NULL));
-    buffer = (char*) malloc(nbytes);
-    fill_buf(buffer, nbytes);
+    buffer = (char*) malloc(BYTES_PER_WRITE);
+    fill_buf(buffer, BYTES_PER_WRITE);
 
-    //nvm init
     nvm_structure_build();
     nvm_system_init();
-//    print_nvm_info();
+//  print_nvm_info();
 
     struct timespec start;
     struct timespec end;
@@ -109,9 +90,9 @@ test_nvm_durable_write(
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     //test
-    if(type == WRITE_MODE_APPEND) {
+    if(WRITE_MODE == WRITE_MODE_APPEND) {
         test_nvm_durable_write_append();
-    } else if(type == WRITE_MODE_RANDOM) {
+    } else if(WRITE_MODE == WRITE_MODE_RANDOM) {
         test_nvm_durable_write_random();
     }
 
@@ -124,7 +105,6 @@ test_nvm_durable_write(
     double time2 = TimeSpecToSeconds(&end) - TimeSpecToSeconds(&start);
 
     printf("\t>>>>>>>>> total time after write finished: %f sec, time after system close(): %f sec <<<<<<<<<<\n\n", time, time2);
-    dprintf(report_fd, "\t\t\t %6.3f\n",time);
    
     nvm_structure_destroy();
 

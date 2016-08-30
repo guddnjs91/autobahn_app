@@ -3,70 +3,248 @@
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
-#include <string>
-#include <string.h>
+#include <algorithm>
 #include "test.h"
 #include "nvm0nvm.h"
-#include <getopt.h>
 
 using namespace std;
 
 /* Command argument options */
-long long unsigned int total_file_size = DEFAULT_FILE_SIZE;
-int num_thread      = DEFAULT_NUM_THREAD;
-int num_flusher     = DEFAULT_NUM_FLUSH;
-int verbose_flag    = MONITOR_ON;
-int sync_flag       = SYNC_ON;
-int write_mode      = WRITE_MODE_APPEND;
+uint64_t NVM_SIZE               = DEFAULT_NVM_SIZE;
+uint32_t NUM_FLUSH              = DEFAULT_NUM_FLUSH;
+uint32_t SYNC_OPTION            = DEFAULT_SYNC_OPTION;
+uint32_t MONITOR_OPTION         = DEFAULT_MONITOR_OPTION;
+uint64_t TOTAL_FILE_SIZE        = DEFAULT_TOTAL_FILE_SIZE;
+uint32_t TEST_FILE_RANGE_START  = DEFAULT_TEST_FILE_RANGE_START;
+uint32_t TEST_FILE_RANGE_END    = DEFAULT_TEST_FILE_RANGE_END;
+uint32_t WRITE_MODE             = DEFAULT_WRITE_MODE;
+uint32_t TEST_CYCLE             = DEFAULT_TEST_CYCLE;
+uint32_t NVM_WRITE              = DEFAULT_NVM_WRITE;
+uint32_t BYTES_PER_WRITE        = DEFAULT_BYTES_PER_WRITE;
+uint32_t REGRESSION_TEST        = DEFAULT_REGRESSION_TEST;
+//string   DATAPATH               = DEFAULT_DATAPATH;
 
+/////////////////////////////////////////////////////////////
 int report_fd;
-FILE *report_fp;
 string report_time_YMD;
 string report_time_HMS;
-long long unsigned int filesize;
 int nthread;
-size_t nbytes;
 char* buffer;
-double* durations;
+bool run;
+char option_buf[256];
 
-void test_write(long long unsigned int, int, size_t, int);
-void test_durable_write(long long unsigned int, int, size_t, int);
-void test_nvm_durable_write(long long unsigned int, int, size_t, int);
+void test_write(int n_thread);
+void test_durable_write(int n_thread);
+void test_nvm_durable_write(int n_thread);
+
+void print_notice_board();
+void get_test_option();
+void set_test_option();
+void option_checker(string option);
+void start_testing();
 void remove_files(int);
-int  handle_cmd_arguments(int, char**);
-void usage(void);
+void start_recording_report();
+void reset();
 
-void test_write_performance(void (*test_func)(long long unsigned int, int, size_t, int) )
+int main()
 {
-    int nthread;
+    do {
+       print_notice_board();
+       get_test_option();
+       set_test_option();
+    } while ( !run );
 
-    /* write (WRITE_BYTES1) bytes at a time */
-    printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES1, total_file_size, num_flusher);
-    dprintf(report_fd, "## threads \t|\tinterval(sec)\n");
+    start_testing();
+}
 
-    for(nthread = 8; nthread <= MAX_THREADS; nthread*=2) {
-        printf("#-------- %d threads APPEND TEST -------\n", nthread);
-        dprintf(report_fd, "\t%3d", nthread);
-        (*test_func)(total_file_size, nthread, WRITE_BYTES1, WRITE_MODE_APPEND);
-//        printf("#-------------- RANDOM TEST ---------------------\n");
-//        (*test_func)(total_file_size, nthread, WRITE_BYTES1, WRITE_MODE_RANDOM);
-        remove_files(nthread);
+void print_notice_board()
+{
+    system("clear");
+    printf("\n\n");
+    printf("\t==========================================================================================================\n");
+    printf("\toptions               shortcut         now setting      example\n");
+    printf("\tnvm-size                (ns)            %3lu GiB    \tnvm-size=4G, ns=512M\n",
+            NVM_SIZE / 1024 / 1024 / 1024);
+    printf("\ttotal-file-size         (tfs)           %3lu GiB    \ttotal-file-size=80G, tfs=512M\n",
+            TOTAL_FILE_SIZE/ 1024 / 1024 / 1024);
+    printf("\ttest-file-range         (tfr)           %3d-%-3d     \ttest-file-range=16, tfr=4-128\n",
+            TEST_FILE_RANGE_START, TEST_FILE_RANGE_END);
+    printf("\tbytes-per-write         (bpw)           %3u KiB    \tbytes-per-write=1M, bpw=16k  \n",
+            BYTES_PER_WRITE / 1024 );
+    printf("\tnum-flush               (nf)               %-3d      \tnum-flush=8, nf=16\n", NUM_FLUSH);
+    printf("\tsync                    (s)                %-3s      \tsync=on, s=off\n", SYNC_OPTION ? "ON" : "OFF");
+    printf("\tmonitor                 (m)                %-3s      \tmonitor=on, m=off\n",
+            MONITOR_OPTION ? "ON" : "OFF");
+    printf("\twrite-mode              (wm)             %s    \twrite-mode=append, write-mode=a, wm=r, wm=random\n",
+            WRITE_MODE? "RANDOM" : "APPEND");
+    printf("\tnvm-write               (nw)               %-3s      \tnvm-write=on, nw=off\n", NVM_WRITE ? "ON" : "OFF");
+    printf("\ttest-cycle              (tc)               %-3d      \ttest-cycle=5, tc=10\n", TEST_CYCLE);
+    printf("\tregression-test         (rt)               %-3s      \tregression-test=on rt=off\n",
+            REGRESSION_TEST ? "ON" : "OFF");
+    //printf("\tdatapath                (dp)             %s     \tdatapath=path, dp=path\n", DATAPATH);
+    printf("\t\033[1mrun                     (r)                          \tstart testing\033[0m\n");
+    printf("\t=========================================================================================================\n");
+}
+void get_test_option()
+{
+    printf("\n\toptions > ");
+    fgets(option_buf, sizeof(option_buf), stdin);
+}
+
+void set_test_option()
+{
+    string option;
+
+    for (int i = 0; ; i++) {
+       if(option_buf[i] == ' ' || option_buf[i] == '\n') {
+           option_checker(option);
+           option.clear();
+
+           if (option_buf[i] == '\n') {
+               break;
+           }
+       } else {
+           option += option_buf[i];
+       }
+    }
+}
+
+void option_checker(string option)
+{
+    if (option == "run" || option == "r") {
+       run = true; 
+    } else {
+        size_t pos;
+        string option_name;
+        string option_value;
+        
+        pos = option.find("=");
+        if(pos == string::npos)
+            return;
+
+        option_name = option.substr(0, pos);
+        option_value = option.substr(pos + 1);
+        transform(option_value.begin(), option_value.end(), option_value.begin(), ::toupper);
+
+        if (option_name == "nvm_size" || option_name == "ns") {
+            uint64_t mult;
+
+            pos = option_value.find("G");
+            if(pos == string::npos) {
+                pos = option_value.find("M");
+                if(pos == string::npos) {
+                        return;
+                } else {
+                    mult = 1024 * 1024;
+                }
+            } else {
+                mult = 1024 * 1024 * 1024LLU;
+            }
+
+            NVM_SIZE = stoi(option_value.substr(0,pos)) * mult;
+        } else if (option_name == "sync" || option_name == "s") {
+            if (option_value == "ON") {
+                SYNC_OPTION = 1;
+            } else if(option_value == "OFF") {
+                SYNC_OPTION = 0;
+            }
+        } else if (option_name == "num-flush" || option_name == "nf") {
+            NUM_FLUSH = stoi(option_value);
+        } else if (option_name == "monitor" || option_name == "m") {
+            if (option_value == "ON") {
+                MONITOR_OPTION = 1;
+            } else if(option_value == "OFF") {
+                MONITOR_OPTION = 0;
+            }
+        } else if (option_name == "total-file-size" || option_name == "tfs") {
+            uint64_t mult;
+
+            pos = option_value.find("G");
+            if(pos == string::npos) {
+                pos = option_value.find("M");
+                if(pos == string::npos) {
+                        return;
+                } else {
+                    mult = 1024 * 1024;
+                }
+            } else {
+                mult = 1024 * 1024 * 1024LLU;
+            }
+
+            TOTAL_FILE_SIZE = stoi(option_value.substr(0,pos)) * mult;
+        } else if (option_name == "test-file-range" || option_name == "tfr") {
+            pos = option_value.find("-");
+            if (pos == string::npos) {
+               TEST_FILE_RANGE_START = stoi(option_value); 
+               TEST_FILE_RANGE_END   = stoi(option_value); 
+            } else {
+                TEST_FILE_RANGE_START = stoi(option_value.substr(0, pos));
+                TEST_FILE_RANGE_END   = stoi(option_value.substr(pos + 1));
+            }
+        } else if (option_name == "write-mode" || option_name == "wm") {
+            if(option_value == "APPEND" || option_value == "A") {
+                WRITE_MODE = WRITE_MODE_APPEND;
+            } else if(option_value == "RANDOM" || option_value == "R") {
+                WRITE_MODE = WRITE_MODE_RANDOM;
+            }
+        } else if (option_name == "test-cycle" || option_name == "tc") {
+            TEST_CYCLE = stoi(option_value);
+        } else if (option_name == "nvm-write" || option_name == "nw") {
+            if (option_value == "ON") {
+                NVM_WRITE = 1;
+            } else if(option_value == "OFF") {
+                NVM_WRITE = 0;
+            }
+        } else if (option_name == "bytes-per-write" || option_name == "bpw") {
+            uint64_t mult;
+
+            pos = option_value.find("M");
+            if(pos == string::npos) {
+                pos = option_value.find("K");
+                if(pos == string::npos) {
+                    mult = 1; 
+                } else {
+                    mult = 1024;
+                }
+            } else {
+                mult = 1024 * 1024 ;
+            }
+
+            BYTES_PER_WRITE = stoi(option_value.substr(0,pos)) * mult;
+        } else if (option_name == "datapath" || option_name == "dp") {
+            
+        } else if (option_name == "regression-test" || option_name == "rt") {
+            if (option_value == "ON") {
+                REGRESSION_TEST = 1;
+            } else if(option_value == "OFF") {
+                REGRESSION_TEST = 0;
+            }
+        }
+    }
+}
+
+void start_testing()
+{
+    system("clear");
+    //start_recording_report();
+    
+    if(NVM_WRITE) {
+        printf("nvm_write testing start > \n");
+    } else {
+        printf("system call write() testing start > \n");
     }
 
-    printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n");
-    getchar();
-
-    /* write (WRITE_BYTES2) bytes at a time */
-    printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES2, total_file_size, num_flusher);
-    dprintf(report_fd, "### \t# of threads \tinterval(sec)\n");
-
-    for(nthread = 1; nthread <= MAX_THREADS; nthread*=2) {
-        printf("#-------- %d threads APPEND TEST -------\n", nthread);
-        dprintf(report_fd, "\t%3d", nthread);
-        (*test_func)(total_file_size, nthread, WRITE_BYTES2, WRITE_MODE_APPEND);
-//        printf("#-------------- RANDOM TEST ---------------------\n");
-//        (*test_func)(total_file_size, nthread, WRITE_BYTES2, WRITE_MODE_RANDOM);
-        remove_files(nthread);
+    for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+        //dprintf cycle (1/5) like this
+        for (uint32_t n_thread = TEST_FILE_RANGE_START; n_thread <= TEST_FILE_RANGE_END; n_thread*= 2) {
+            printf("%u files start to be written\n", n_thread);
+            if(NVM_WRITE) {
+                test_nvm_durable_write(n_thread);
+            } else {
+                test_write(n_thread);
+            }
+            remove_files(n_thread);
+        }            
     }
 }
 
@@ -82,183 +260,12 @@ void start_recording_report()
     report_time_HMS = to_string(t->tm_hour) + ":" + to_string(t->tm_min) + ":" + to_string(t->tm_sec);
 
     report_fd = open( ("./report/" + report_time_YMD).c_str() , O_RDWR | O_CREAT | O_APPEND, 0666 ); 
-    dprintf(report_fd, "\n# Testing Start at : %s\n", report_time_HMS.c_str());
-    dprintf(report_fd, "# %llu GiB file write, %d flushers running\n", total_file_size / 1024 / 1024 / 1024, num_flusher );
-    dprintf(report_fd, "# FREE LFQ: %d SYNC LFQ: %d CLEAN LFQ: %d\n", MAX_NUM_FREE, MAX_NUM_SYNCER, MAX_NUM_BALLOON );
+    //dprintf(report_fd, "\n# Testing Start at : %s\n", report_time_HMS.c_str());
+    //dprintf(report_fd, "# %llu GiB file write, %d flushers running\n", TOTAL_FILE_SIZE / 1024 / 1024 / 1024, NUM_FLUSH );
+    //dprintf(report_fd, "# FREE LFQ: %d SYNC LFQ: %d CLEAN LFQ: %d\n", MAX_NUM_FREE, MAX_NUM_SYNCER, MAX_NUM_BALLOON );
 }
 
-int main(int argc, char** argv)
+double TimeSpecToSeconds(struct timespec* ts)
 {
-    system("clear");
-
-    if(argc > 1) {
-
-        if (handle_cmd_arguments(argc, argv) == -1) {
-            usage();
-            return -1;
-        }
-
-        start_recording_report();
-
-        //////////NVM durable write//////////
-        dprintf(report_fd, "\n## [nvm durable write test]\n"); 
-        printf("\n[nvm durable write test]\n");
-        printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES1, total_file_size, num_flusher);
-        test_nvm_durable_write(total_file_size, num_thread, WRITE_BYTES1, write_mode);
-        remove_files(num_thread);
-
-        printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n");
-        getchar();
-        
-        printf("[Writing %d bytes at a time totaling %llu bytes / %d flushers working]\n", WRITE_BYTES2, total_file_size, num_flusher);
-        test_nvm_durable_write(total_file_size, num_thread, WRITE_BYTES2, write_mode);
-    }
-    else {
-        start_recording_report();
-
-
-        //////////NVM durable write//////////
-        dprintf(report_fd,"## [nvm durable write test]\n");
-        printf("\n[nvm durable write test]\n");
-        test_write_performance(test_nvm_durable_write);
-
-        printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
-        getchar();
-        system("clear");
-
-        //////////write//////////
-        dprintf(report_fd,"## [write test]\n");
-        printf("\n[write test]\n");
-        test_write_performance(test_write);
-
-        printf("\n\n**PRESS ENTER TO CONTINUE TO NEXT TEST**\n\n");
-        getchar();
-        system("clear");
-
-        //////////durable write//////////
-        dprintf(report_fd,"## [durable write test]\n");
-        printf("\n[durable write test]\n");
-        test_write_performance(test_durable_write);
-    }
-
-    return 0;
-}
-
-int handle_cmd_arguments(int argc, char** argv)
-{
-    while(1) {
-        static struct option long_options[] = 
-        {
-            /* monitoring option */
-            {"verbose", no_argument, 0, 'v'},
-            /* sync option */
-            {"sync", required_argument, 0, 's'},
-            /* mode option */
-            {"mode", required_argument, 0, 'm'},
-            /* file size option */
-            {"total_size", required_argument, 0, 't'},
-            /* number of writer thread option */
-            {"num_thread", required_argument, 0, 'n'},
-            /* number of flusher thread option */
-            {"flusher", required_argument, 0, 'f'},
-            {0, 0, 0, 0}
-        };
-
-        int c;
-        string str;
-        long long unsigned int mult = 1;
-        int option_index = 0;
-        c = getopt_long(argc, argv, "vs:m:t:f:n:", long_options, &option_index);
-
-        if (c == -1) {
-            break;
-        }
-
-        switch(c) {
-            case 0:
-                printf("what is this case ??\n");
-                if (long_options[option_index].flag != 0)
-                    break;
-            /* monitoring option. */
-            case 'v':
-                printf("verbose option : %d\n", verbose_flag);
-                verbose_flag = 1;
-                printf("verbose option : %d\n", verbose_flag);
-                break;
-
-            /* sync option. */
-            case 's':
-                str = optarg;
-                if (str == "yes" || str == "Y" || str == "y") {
-                    sync_flag = 1;
-                } 
-                else if (str == "no" || str == "N" || str == "n") {
-                    sync_flag = 0;
-                }
-                printf("sync flag : %d\n", sync_flag);
-                break;
-
-            /* write mode : append or random. */
-            case 'm':
-                str = optarg;
-                if(str == "random" || str == "R" || str == "r") {
-                    write_mode = WRITE_MODE_RANDOM;
-                }
-                printf("write mode : %d\n", write_mode);
-                break;
-
-            /* total file size option */
-            case 't':
-                str = optarg;
-                if (str.back() == 'G' || str.back() == 'g') { // GiB
-                    mult = 1024 * 1024 * 1024;
-                }
-                else if (str.back() == 'M' || str.back() == 'm') { // MiB
-                    mult = 1024 * 1024; 
-                }
-                else if (str.back() == 'K' || str.back() == 'k') { // KiB
-                    mult = 1024; 
-                }
-                str.pop_back();
-                total_file_size = (long long unsigned int)(stod(str) * mult);
-                printf("total file size : %llu\n", total_file_size);
-                break;
-
-            /* number of write threads. */
-            case 'n':
-                num_thread = atoi(optarg);
-                printf("thread number = %d\n", num_thread);
-                break;
-
-            /* number of flush threads. */
-            case 'f':
-                num_flusher = atoi(optarg);
-                printf("flush thread number = %d\n", num_flusher);
-                break;
-
-            case '?':
-                printf("Unknown option argument\n");
-                return -1;
-        }
-    }
-
-    return 0;
-}
-
-void usage(void)
-{
-    printf("Usage : ./bin/test/ [opts]\n");
-    printf("Possible options \n");
-    printf("1. total size : '-t' or '--total_size'\t\t");
-    printf(" - You can define file size by typing '--total_size=20G' (Default : 20G)\n");
-    printf("2. num thread : '-n' or '--num_thread'\t\t");
-    printf(" - You can define thread number by typing '--num_thread=8' (Default : 1)\n");
-    printf("3. flusher : '-f' or '--flusher'\t\t");
-    printf(" - You can define flusher number by typing '--flusher=4' (Default : 8)\n");
-    printf("4. sync option : '-s' or '--sync' \t\t");
-    printf(" - You can rule out sync option by typing '--sync=no' (Default : yes)\n");
-    printf("5. write mode option : '-m' or '--mode'\t\t");
-    printf(" - You can test random write test by typing '--mode=random' (Default : append)\n");
-    printf("6. verbose option : '-v' or '--verbose'\t\t");
-    printf(" - Print out system progress status. (default : no monitoring)\n");
+    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
 }

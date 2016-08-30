@@ -3,17 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <string>
 #include <pthread.h>
 #include <sched.h>
 #include <time.h>
 #include "test.h"
 using namespace std;
-
-static double TimeSpecToSeconds(struct timespec* ts)
-{
-    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000.0;
-}
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -21,15 +15,13 @@ void
 *thread_durable_write_append(
    void *data)
 {
-    long long unsigned int n = filesize / nthread / nbytes;
-    long long unsigned int i;
+    uint64_t n = TOTAL_FILE_SIZE / nthread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
     int fd = open(("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
-    for(i = 0; i < n; i++)
-    {
-        write(fd, buffer, nbytes);
+    for(uint64_t i = 0; i < n; i++) {
+        write(fd, buffer, BYTES_PER_WRITE);
         fsync(fd);
         fsync(fd);
     }
@@ -44,14 +36,13 @@ test_durable_write_append()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
-    int i;
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_durable_write_append, (void *)&tid[i]);
     }
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 }
@@ -60,17 +51,18 @@ void
 *thread_durable_write_random(
     void *data)
 {
-    long long unsigned int n = filesize / nthread / nbytes;
-    long long unsigned int i;
+    uint64_t n = TOTAL_FILE_SIZE / nthread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
     int fd = open(("./VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
 
+    srand(time(NULL));
+
     //TODO: fix to generate 64bit random value
-    for(i = 0; i < n; i++) {
-        off_t rand_pos = rand() % (filesize/nthread - nbytes * 2);
+    for(uint64_t i = 0; i < n; i++) {
+        off_t rand_pos = rand() % (TOTAL_FILE_SIZE / nthread - BYTES_PER_WRITE * 2);
         lseek(fd, rand_pos, SEEK_SET);
-        write(fd, buffer, nbytes);
+        write(fd, buffer, BYTES_PER_WRITE);
         fsync(fd);
         fsync(fd);
     }
@@ -85,42 +77,35 @@ test_durable_write_random()
 {
     pthread_t write_thread[nthread];
     int tid[nthread];
-    int i;
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_durable_write_random, (void *)&tid[i]);
     }
 
-    for(i=0; i<nthread; i++) {
+    for(int i = 0; i < nthread; i++) {
         pthread_join(write_thread[i], NULL);
     }
 }
 
 void
 test_durable_write(
-    long long unsigned int file_size,
-    int n_thread,
-    size_t n_bytes,
-    int type)
+    int n_thread)
 {
     //declarations
     struct timespec start;
     struct timespec end;
 
-    filesize = file_size;
     nthread = n_thread;
-    nbytes = n_bytes;
-    srand(time(NULL));
-    buffer = (char*) malloc(nbytes);
-    fill_buf(buffer, nbytes);
+    buffer = (char*) malloc(BYTES_PER_WRITE);
+    fill_buf(buffer, BYTES_PER_WRITE);
 
     //test
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    if(type == WRITE_MODE_APPEND) {
+    if(WRITE_MODE == WRITE_MODE_APPEND) {
         test_durable_write_append();
-    } else if(type == WRITE_MODE_RANDOM) {
+    } else if(WRITE_MODE == WRITE_MODE_RANDOM) {
         test_durable_write_random();
     }
 

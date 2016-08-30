@@ -46,7 +46,7 @@ nvm_sync(
 
     uint32_t n = inode_sync_lfqueue[index]->get_size();
 
-    if(likely(sync_flag)) {
+    if(likely(SYNC_OPTION)) {
         sync();
     }
 

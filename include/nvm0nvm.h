@@ -9,42 +9,24 @@
 #include "nvm0lfqueue.h"
 
 //config (make changes here ONLY)
-#define NVM_SIZE            (1LLU << 32)
 #define MAX_VOLUME_ENTRY    (128)
 #define BLOCK_SIZE          (1 << 14)
-
 #define MAX_NUM_FREE        (2)
-
 #define MAX_NUM_FLUSHER     (32)
 #define FLUSH_BATCH_SIZE    (1024)
-
 #define MAX_NUM_SYNCER      (2)
 #define MIN_SYNC_FREQUENCY  (1<<13)
-
 #define MAX_NUM_BALLOON     (8)
-
 #define MONITORING_AMOUNT   (7) 
-
-#define testing             (0)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
-/* Command argument defined options */
-#define DEFAULT_FILE_SIZE   (80 * 1024 * 1024 * 1024LLU)
-#define DEFAULT_NUM_THREAD  (1)
-#define DEFAULT_NUM_FLUSH   (16)
-#define MONITOR_OFF         (0)
-#define MONITOR_ON          (1)
-#define SYNC_OFF            (0)
-#define SYNC_ON             (1)
-
-extern long long unsigned int total_file_size;
-extern int num_thread;
-extern int num_flusher;
-extern int verbose_flag;
-extern int sync_flag;
-extern int write_mode;
+/* NVM options */
+extern uint64_t NVM_SIZE;
+extern uint32_t NUM_FLUSH;
+extern uint32_t SYNC_OPTION;
+extern uint32_t MONITOR_OPTION;
 
 /** Represents the metadata of NVM */
 struct nvm_metadata {

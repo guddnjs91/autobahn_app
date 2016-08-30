@@ -58,7 +58,7 @@ void printLFQueueGauge()
             inode_free_lfqueue[i]->monitor();
             printf("  ");
         }
-        if(num_flusher - 1 < i) {
+        if((int)NUM_FLUSH - 1 < i) {
                 printf("                                    ");
         } else {
             printf("[%2d]", i);
