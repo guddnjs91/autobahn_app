@@ -30,10 +30,10 @@ monitor_thread_func(
 void
 nvm_monitor()
 {
-    static int counter = 1000;
+    static int counter = 200;
     printLFQueueGauge();
 
-    if(counter == 1000)
+    if(counter == 200)
     {
         printThroughput();
         counter = 0;

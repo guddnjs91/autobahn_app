@@ -3,6 +3,7 @@
 #include "nvm0nvm.h"
 #include "nvm0hash.h"
 #include "nvm0volume.h"
+#include <sys/stat.h>
 
 //private function declarations
 const char* get_filename(uint32_t vid);
@@ -53,6 +54,15 @@ alloc_volume_entry_idx(
     nvm->volume_table[idx].vid = vid;
     nvm->volume_table[idx].fd = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
     nvm->volume_table[idx].hash_table = new_hash_table();
+
+    //get file size
+    struct stat st;
+    if(stat(get_filename(vid), &st) == 0) {
+        nvm->volume_table[idx].file_size = st.st_size;
+    } else {
+        fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(vid), strerror(errno));
+        nvm->volume_table[idx].file_size = 0;
+    }
 
     volume_inuse_lfqueue->enqueue(idx);
 

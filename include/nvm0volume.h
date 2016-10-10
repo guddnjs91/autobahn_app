@@ -8,7 +8,8 @@ typedef uint32_t volume_idx_t;
 struct volume_entry {
     uint32_t            vid;    // volume id - implicit filename
     int                 fd;     // file descriptor
-    struct hash_table*  hash_table;   
+    struct hash_table*  hash_table;
+    off_t               file_size;
 };
 
 

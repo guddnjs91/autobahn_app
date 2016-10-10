@@ -2,6 +2,7 @@
 #include <sched.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/stat.h>
 #include "nvm0nvm.h"
 #include "nvm0hash.h"
 #include "nvm0inode.h"
@@ -32,6 +33,24 @@ void awakeBalloonThread()
     }
 }
 
+uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char *ptr, struct hash_node *hash_node)
+{
+    uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
+    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
+    char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
+    memcpy(data_dst, ptr, write_bytes);
+    //TODO:need cache line write guarantee
+    
+    return write_bytes;
+}
+
+/**
+ * Get filename with argument vid (vid maps filename 1 to 1)
+ @return const char* containing filename */
+const char*
+get_filename(
+    uint32_t vid) /* !<in: vid representing its own filename */
+;
 inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 {
     //TODO: synchronize getting free_idx time
@@ -41,19 +60,20 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 
     inode->lbn = lbn;
     inode->volume = ve;
+    
+    //read file to nvm data block
+    struct stat st; 
+    off_t file_size;
+    if(stat(get_filename(ve->vid), &st) == 0) {
+        file_size = st.st_size;
+    } else {
+        fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(ve->vid), strerror(errno));
+        file_size = 0;
+    }
+    lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
+    read(ve->fd, &nvm->datablock_table[idx], nvm->block_size);
 
     return idx;
-}
-
-uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char*ptr, struct hash_node *hash_node)
-{
-    uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
-    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
-    char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
-    memcpy(data_dst, ptr, write_bytes);
-    //TODO:need cache line write guarantee
-    
-    return write_bytes;
 }
 
 /**

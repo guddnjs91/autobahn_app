@@ -13,11 +13,11 @@
 #define BLOCK_SIZE          (1 << 14)
 #define MAX_NUM_FREE        (2)
 #define MAX_NUM_FLUSHER     (32)
-#define FLUSH_BATCH_SIZE    (1024)
+#define FLUSH_BATCH_SIZE    (1024)      // maximum batch size for writev is 1024
 #define MAX_NUM_SYNCER      (2)
 #define MIN_SYNC_FREQUENCY  (1<<13)
 #define MAX_NUM_BALLOON     (8)
-#define MONITORING_AMOUNT   (7) 
+#define MONITORING_AMOUNT   (7)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)

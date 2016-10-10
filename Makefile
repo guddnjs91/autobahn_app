@@ -8,7 +8,7 @@ MAKEFLAGS += -j
 
 # Pre-defined Macros 
 CPPFLAGS += -Iinclude
-CXXFLAGS += -std=c++11 -g -W -Wall
+CXXFLAGS += -std=c++11 -g -W -Wall -O3
 
 CXX_SRCS := $(wildcard test/*cc)         \
             $(wildcard src/*.cc)
