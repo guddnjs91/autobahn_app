@@ -1,7 +1,7 @@
 /**
   * This is the header file of class random 
   * which carries random numbers with various distribution.
-  * Supporting distribution is uniform and zipf.
+  * Supporting distribution is uniform and skewed form.
   *
   * @author Hyeongwon Jang
   * @since  2016-10-11
@@ -16,24 +16,20 @@ class random {
 
 public:
     random();
-    random(uint64_t n);
     ~random();
     
-    void unif_init();
     uint32_t unif_rand();
     uint64_t unif_rand64();
     
-    void zipf_init(double t);
-    uint32_t zipf_rand();
-    uint64_t zipf_rand64();
-    uint64_t zipf_rand_at(uint64_t i);
-
-    void print_dist();
+    int skew_init(double t, uint64_t n);
+    uint32_t skew_rand();
+    uint64_t skew_rand64();
+    uint64_t skew_rand_at(uint64_t i);
+    void skew_print_dist();
 
 private:
 
     uint64_t    *dist_;
-    double      theta_;
     uint64_t    n_;
 };
 

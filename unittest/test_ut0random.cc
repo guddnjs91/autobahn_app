@@ -17,23 +17,26 @@ int main(void) {
     uint64_t section_unit = N / SECTION_NUM;
     clock_t endwait;
 
-    random *ur = new random(N);
-    //random *zr = new random(N);
+    random *r = new random();
 
-    ur->unif_init();
-    //zr->zipf_init(THETA);
+    r->skew_init(THETA, N);
 
     endwait = clock() + TIMEOUT * CLOCKS_PER_SEC;
-    uint64_t i = 0;
+    
+    uint64_t unit = N / SECTION_NUM;
     while(clock() < endwait) {
-        //num = ur->unif_rand() % N;
-        num = ur->unif_rand64();
-        //num = zr->zipf_rand();
+        //num = r->unif_rand() % N;
+        num = r->unif_rand64();
+        //num = r->skew_rand();
+
+        g_section[(num % N)/ unit]++;
+        g_total++;
 
         printf("%llu\n", num);
     }
-
-    ur->print_dist();
-    //zr->print_dist();
-
+    //r->skew_print_dist();
+    for (int i = 0; i < 10; i++) {
+        printf("From %10llu to %10llu : %10llu\n",
+                i * unit, (i + 1) * unit, g_section[i]);
+    }
 }
