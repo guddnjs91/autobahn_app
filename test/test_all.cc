@@ -278,6 +278,8 @@ void start_test()
  */
 void start_regression_test()
 {
+    int fd = open("./test/regtest.txt", O_RDWR | O_CREAT | O_APPEND, 0666);
+
     printf("=================== REGRESSION TESTING START ===================\n");
     
     for (NVM_SIZE = 1024 * 1024 * 1024LLU; NVM_SIZE <= 64 * 1024 * 1024 * 1024LLU; NVM_SIZE *= 4) {
@@ -289,9 +291,12 @@ void start_regression_test()
             TEST_FILE_RANGE_END = 64;
             for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 4) {
                 for (BYTES_PER_WRITE = 256; BYTES_PER_WRITE <= 1024 * 1024; BYTES_PER_WRITE *= 64) {
-                    for (WRITE_MODE = 0; WRITE_MODE <= 2; WRITE_MODE++) {
+                    for (WRITE_MODE = 0; WRITE_MODE <= 0/*1*/; WRITE_MODE++) {
                         NVM_WRITE = 1;
                         TEST_CYCLE = 5;
+
+                        double time_avg = 0;
+
                         for(uint32_t i = 0; i < TEST_CYCLE; i++) {
                             printf(">> %u files start to be written <<\n", kNumThread);
                             if(NVM_WRITE) {
@@ -299,12 +304,25 @@ void start_regression_test()
                             } else {
                                 test_write();
                             }
+
+                            time_avg += kTimeSec;
                         }
+
+                        time_avg /= TEST_CYCLE;
+                        dprintf(fd, "*************************\n");
+                        dprintf(fd, "NVM SIZE        = %lu\n", NVM_SIZE);
+                        dprintf(fd, "SYNC OPTION     = %d\n", SYNC_OPTION);
+                        dprintf(fd, "NUM FILES       = %u\n", kNumThread);
+                        dprintf(fd, "BYTES PER WRITE = %u\n", BYTES_PER_WRITE);
+                        dprintf(fd, "WRITE MODE      = %u\n", WRITE_MODE);
+                        dprintf(fd, "TIME TAKEN      = %f\n", time_avg);
+                        dprintf(fd, "*************************\n");
                     }
                 }
             }
         }
     }
+    close(fd);
 }
 
 void start_recording_report()
