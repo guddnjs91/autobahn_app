@@ -5,91 +5,88 @@
 #include "nvm0volume.h"
 #include <sys/stat.h>
 
-//private function declarations
-const char* get_filename(uint32_t vid);
-
-/**
- * Get volume_entry object which has vid.
- * @return a free volume entry */
-volume_idx_t
-get_volume_entry_idx(
-    uint32_t vid) /* !<in: key to find volume_entry */
+volume_entry *get_volume_entry(volume_idx_t v_idx)
 {
-    volume_idx_t idx = search_volume_entry_idx(vid);
-    
-    if(idx == nvm->max_volume_entry) {
-        idx = alloc_volume_entry_idx(vid);
-    }
-    
-    return idx;
+    return &nvm->volume_table[v_idx];
 }
 
 /**
- * Search for a volume_entry object from Volume Table.
- * @return found entry */
-volume_idx_t
-search_volume_entry_idx(
-    uint32_t vid)     /* !<in: searching tree with vid */
+ * Finds/creates a volume entry with vid and gets an index of the volume entry.
+ *
+ * Searches through a volume entry with the vid.
+ * If found, return the index of the volume entry.
+ * If failed, allocate a new volume entry with vid and returns the index.
+ *
+ * @return an index of a volume entry with vid.
+ */
+volume_idx_t get_volume_entry_idx(uint32_t vid)
 {
-    volume_idx_t idx;
-
-    for(idx = 0; idx < nvm->max_volume_entry; idx++) {
-        if(nvm->volume_table[idx].vid == vid) {
-            break;
+    for (volume_idx_t v_idx = 0; v_idx < nvm->max_volume_entry; v_idx++) {
+        if (nvm->volume_table[v_idx].vid == vid) {
+            return v_idx;
         }
     }
+    
+    /* runs below if search above failed */
 
-    return idx;
+    return alloc_volume_entry_idx(vid);
 }
 
 /**
- * Allocate new volume_entry from volume_free_lfqueue
- * @return allocated volume entry */
-volume_idx_t
-alloc_volume_entry_idx(
-    uint32_t vid) /* !<in: given vid to new allocated volume_entry */
+ * Allocates a new volume_entry from the free volume list.
+ *
+ * @return index of the allocated volume entry.
+ */
+volume_idx_t alloc_volume_entry_idx(uint32_t vid)
 {
-    volume_idx_t idx = volume_free_lfqueue->dequeue();
-
-    nvm->volume_table[idx].vid = vid;
-    nvm->volume_table[idx].fd = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
-    nvm->volume_table[idx].hash_table = new_hash_table();
-
-    //get file size
-    struct stat st;
-    if(stat(get_filename(vid), &st) == 0) {
-        nvm->volume_table[idx].file_size = st.st_size;
+    volume_idx_t free_v_idx;
+    if (volume_free_lfqueue->is_empty()){
+        // TODO: if free volume entry is not available, 
+        // need to flush out some volume entries in use.
+        free_v_idx = -1;
     } else {
-        fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(vid), strerror(errno));
-        nvm->volume_table[idx].file_size = 0;
+        free_v_idx = volume_free_lfqueue->dequeue();
     }
 
-    volume_inuse_lfqueue->enqueue(idx);
+    volume_entry *ve = get_volume_entry(free_v_idx);
+    ve->vid         = vid;
+    ve->fd          = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
+    ve->hash_table  = new_hash_table();
 
-    return idx;
+    volume_inuse_lfqueue->enqueue(free_v_idx);
+
+    return free_v_idx;
 }
 
 /**
  * Get filename with argument vid (vid maps filename 1 to 1)
- @return const char* containing filename */
-const char*
-get_filename(
-    uint32_t vid) /* !<in: vid representing its own filename */
+ * 
+ * @return the file name for vid
+ */
+const char *get_filename(uint32_t vid)
 {
     std::string filename;
 
-    if(vid % 2 == 1)
-    {
+    if (vid % 2 == 1) {
         filename = "/opt/nvm1/NVM/VOL_";
         filename += std::to_string(vid);
         filename += ".txt";
-    }
-    else
-    {
+    } else {
         filename = "/opt/nvm2/NVM/VOL_";
         filename += std::to_string(vid);
         filename += ".txt";
     }
 
     return filename.c_str();
+}
+
+off_t get_filesize(uint32_t vid)
+{
+    struct stat st;
+    if (stat(get_filename(vid), &st) == 0) {
+        return st.st_size;
+    } else {
+        fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(vid), strerror(errno));
+        return -1;        
+    }
 }

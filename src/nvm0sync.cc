@@ -22,7 +22,7 @@ sync_thread_func(
 
         usleep( 10 * 1000 );
 
-        uint64_t free_idx = free_enqueue_idx.load();
+//        uint64_t free_idx = free_enqueue_idx.load();
 
         if(inode_sync_lfqueue[index]->get_size() >= 1
 //            MIN_SYNC_FREQUENCY + 

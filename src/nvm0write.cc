@@ -33,24 +33,19 @@ void awakeBalloonThread()
     }
 }
 
-uint32_t writeDataBlockToNVM(size_t len, uint32_t offset, const char *ptr, struct hash_node *hash_node)
-{
-    uint32_t write_bytes = (len > nvm->block_size - offset) ? (nvm->block_size - offset) : len;
-    inode_idx_t idx = (inode_idx_t)((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
-    char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
-    memcpy(data_dst, ptr, write_bytes);
-    //TODO:need cache line write guarantee
-    
-    return write_bytes;
+inline inode_idx_t get_inode_entry_idx_from_hash(struct hash_node *hash_node) {
+    return (inode_idx_t) ((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
 }
 
-/**
- * Get filename with argument vid (vid maps filename 1 to 1)
- @return const char* containing filename */
-const char*
-get_filename(
-    uint32_t vid) /* !<in: vid representing its own filename */
-;
+size_t writeDataToNvmBlock(inode_idx_t idx, uint32_t offset, const char *ptr, size_t count)
+{
+    char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
+    memcpy(data_dst, ptr, count);
+    //TODO:need cache line write guarantee
+
+    return count;
+}
+
 inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 {
     //TODO: synchronize getting free_idx time
@@ -60,110 +55,123 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
 
     inode->lbn = lbn;
     inode->volume = ve;
+    /* inode->state is already free */
     
     //read file to nvm data block
-    struct stat st; 
-    off_t file_size;
-    if(stat(get_filename(ve->vid), &st) == 0) {
-        file_size = st.st_size;
-    } else {
-        fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(ve->vid), strerror(errno));
-        file_size = 0;
+    off_t file_size = get_filesize(ve->vid);
+    if (file_size > nvm->block_size * lbn) {
+        size_t count = file_size - (nvm->block_size * lbn);
+        count = ((count - 1) % nvm->block_size) + 1;
+
+        lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
+        read(ve->fd, &nvm->datablock_table[idx], count);
     }
-    lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
-    read(ve->fd, &nvm->datablock_table[idx], nvm->block_size);
 
     return idx;
 }
 
-/**
- * Write out (len) bytes data pointed by ptr to nvm structure.
-After writing out to nvm, data blocks are enqueued to dirty LFQ.
-@return the byte size of data written to nvm */
-size_t
-nvm_durable_write(
-    uint32_t vid,       /* !<in: volume ID */
-    off_t    ofs,       /* !<in: volume offset */ 
-    const char* ptr,    /* !<in: buffer */
-    size_t   len )      /* !<in: size of buffer to be written */
+struct hash_node *get_hash_node_with_lock(
+        volume_entry *ve,
+        uint32_t lbn)
 {
-    //declaration
-    inode_idx_t i_idx;
+    while (1) {
+        struct hash_node *hash_node = search_hash_node(ve->hash_table, lbn);
+    
+        /* invalid hash node */
+        if (!isValidNode(hash_node)) {
 
-    /* Get the volume entry index from the nvm volume table.
-    The volume entry contains the hash structure, representing one file. */
-    volume_idx_t v_idx = get_volume_entry_idx(vid);
-    volume_entry* ve = &nvm->volume_table[v_idx];
-
-    /* Calculate how many blocks needed for writing */
-    uint32_t lbn_start = ofs / nvm->block_size;
-    uint32_t lbn_end = (ofs + len) / nvm->block_size;
-    if((ofs + len) % nvm->block_size == 0) {
-        lbn_end--; // To avoid dummy data block write
-    }
-    uint32_t offset = ofs % nvm->block_size;
-    size_t written_bytes = 0;
-
-    /* Each loop write one data block to nvm */
-    for(uint32_t lbn = lbn_start; lbn <= lbn_end; lbn++) {
-
-        hash_node* node_searched = search_hash_node(ve->hash_table, lbn);
-
-        if (!isValidNode(node_searched)) {
-
-            if(!isFreeLFQueueEnough()) {
+            /* get a new inode */
+            if (!isFreeLFQueueEnough()) {
                 awakeBalloonThread();
-
                 //TODO: do garbage collection in the mean time
+                continue;
+            }
+            inode_idx_t i_idx = getFreeInodeFromFreeLFQueue(ve, lbn);
+            inode_entry* new_inode = &nvm->inode_table[i_idx];
 
-                lbn--;
+            /* if hash was null */
+            if (!hash_node) {
+                hash_node = new_hash_node(new_inode);
+                insert_hash_node(ve->hash_table, hash_node);
+
+            /* if has was invalid */
+            } else if (!hash_node->is_valid) {
+                validate_hash_node(hash_node, new_inode);
+            }
+    
+            pthread_mutex_lock(&hash_node->mutex);
+            return hash_node;
+
+        /* valid hash node */
+        } else {
+            pthread_mutex_lock(&hash_node->mutex);
+
+            /* if balloon invalidated the hash node just before the mutex lock */
+            if (!hash_node->is_valid) {
+                pthread_mutex_unlock(&hash_node->mutex);
                 continue;
             }
 
-            i_idx = getFreeInodeFromFreeLFQueue(ve, lbn);
-            inode_entry* new_inode = &nvm->inode_table[i_idx];
-
-            if(node_searched == nullptr) {
-
-                node_searched = new_hash_node(new_inode);
-                insert_hash_node(ve->hash_table, node_searched);
-
-            } else if(!node_searched->is_valid) {
-
-                validate_hash_node(node_searched, new_inode);
-
-            }
-
+            return hash_node;
         }
+    }
+}
 
-        pthread_mutex_lock(&node_searched->mutex);
-        if(!node_searched->is_valid)
-        {
-            lbn--;
-            continue;
-        }
+/**
+ * Durably writes (count) bytes of data pointed by (buf) at (offset) in file described by (vid).
+ * Details:
+ * Uses non-volatile memory space to efficiently and durably write the data.
+ * The data is not necessarily written to the permanent storage at the point of this function's return.
+ * Instead, this function guarantees that the data is durably written to the non-volatile space.
+ * The data stored in non-volatile memory is later flushed into permanent storage.
+ *
+ * 1. look
+ * @return the actual bytes durably written.
+ */
+size_t nvm_durable_write(        
+        uint32_t vid,       /* !<in: volume ID, a unique file descriptor */
+        off_t    offset,    /* !<in: position of the file to write */ 
+        const char* buf,    /* !<in: buffer */
+        size_t   count)     /* !<in: size of the buffer */
+{
+    /* get volume entry using vid. */
+    volume_idx_t    v_idx   = get_volume_entry_idx(vid);
+    volume_entry    *ve     = get_volume_entry(v_idx);
 
-        pthread_mutex_lock(&node_searched->inode->lock);
+    /* find the range of blocks to write */
+    uint32_t lbn_start      = offset / nvm->block_size;
+    uint32_t lbn_end        = (offset + count - 1) / nvm->block_size;
+    uint32_t local_offset   = offset % nvm->block_size;
+    uint32_t local_count    = 0;
 
-        int old_state = node_searched->inode->state;
-        node_searched->inode->state = INODE_STATE_DIRTY;
+    /* let's write! */
+    size_t bytes_written = 0;
+    for (uint32_t lbn = lbn_start; lbn <= lbn_end;
+            lbn++, 
+            count= count - local_count, 
+            local_offset = 0) {
+        uint32_t local_count = (count > nvm->block_size - local_offset) ? (nvm->block_size - local_offset) : count;
 
-        int write_bytes = writeDataBlockToNVM(len, offset, ptr, node_searched);
+        /* get hash node and inode index with lbn */
+        struct hash_node *hash_node = get_hash_node_with_lock(ve, lbn);
+        inode_idx_t idx = get_inode_entry_idx_from_hash(hash_node);
 
-        if(old_state != INODE_STATE_DIRTY) {
-            inode_idx_t idx = (inode_idx_t)((char *)node_searched->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
+        /* let's write to a block */
+        pthread_mutex_lock(&hash_node->inode->lock);
+
+        int old_state = hash_node->inode->state;
+        hash_node->inode->state = INODE_STATE_DIRTY;
+
+        bytes_written += writeDataToNvmBlock(idx, local_offset, buf, local_count);
+
+        if (old_state != INODE_STATE_DIRTY) {
             inode_dirty_lfqueue[v_idx]->enqueue(idx);
             monitor.dirty++;
         }
 
-        pthread_mutex_unlock(&node_searched->mutex);
-        pthread_mutex_unlock(&node_searched->inode->lock);
-
-        /* Re-inintialize offset and len*/
-        offset = 0;
-        len -= write_bytes;
-        written_bytes += written_bytes;
+        pthread_mutex_unlock(&hash_node->inode->lock);
+        pthread_mutex_unlock(&hash_node->mutex);
     }
 
-    return written_bytes;
+    return bytes_written;
 }

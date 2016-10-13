@@ -7,6 +7,7 @@
 #include "nvm0nvm.h"
 #include "nvm0inode.h"
 #include "nvm0monitor.h"
+
 using namespace std;
 
 //private function declarations
@@ -20,8 +21,8 @@ flush_thread_func(
 {
     //init
     volume_idx_t    v_idx;
-    inode_idx_t*    i_idxs = (inode_idx_t*)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
-    struct iovec*   iov     = (struct iovec*) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
+    inode_idx_t     *i_idxs = (inode_idx_t*)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
+    struct iovec    *iov    = (struct iovec*) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
 
     while (sys_terminate == 0) {
         
@@ -61,8 +62,10 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
     int num_dirty_inodes = inode_dirty_lfqueue[v_idx]->get_size()-1;
     int write_size = (num_dirty_inodes >= FLUSH_BATCH_SIZE) ? FLUSH_BATCH_SIZE : num_dirty_inodes;
 
+    volume_entry *ve = get_volume_entry(v_idx);
+
     //dequeue from dirty and lock
-    for(i = 0; i < write_size; i++) {
+    for (i = 0; i < write_size; i++) {
         i_idxs[i] = inode_dirty_lfqueue[v_idx]->dequeue();
         inode = &nvm->inode_table[i_idxs[i]];
         pthread_mutex_lock(&inode->lock);
@@ -75,11 +78,11 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
         batch_count = 1;
         curr_lbn = (&nvm->inode_table[i_idxs[indexToWrite]])->lbn;
 
-        for(i = indexToWrite+1; i < write_size; i++) {
+        for (i = indexToWrite+1; i < write_size; i++) {
 
             succ_lbn = (&nvm->inode_table[i_idxs[i]])->lbn;
 
-            if(succ_lbn == curr_lbn + 1) {
+            if (succ_lbn == curr_lbn + 1) {
                 batch_count++;
                 curr_lbn = succ_lbn;
             } else {
@@ -88,9 +91,16 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
         }
 
         //batch
-        for(i = 0; i < batch_count; i++) {
+        for (i = 0; i < batch_count; i++) {
             iov[i].iov_base = nvm->datablock_table + nvm->block_size * i_idxs[indexToWrite+i];
-            iov[i].iov_len  = nvm->block_size;
+
+            off_t file_size = get_filesize(ve->vid);
+            uint32_t lbn = (&nvm->inode_table[i_idxs[indexToWrite+i]])->lbn;
+//            if ((file_size - 1) / nvm->block_size == lbn) {
+//                iov[i].iov_len = ((file_size - 1) % nvm->block_size) + 1;
+//            } else {
+                iov[i].iov_len  = nvm->block_size;
+//            }
         }
 
         //write
