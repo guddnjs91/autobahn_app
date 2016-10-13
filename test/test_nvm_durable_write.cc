@@ -6,7 +6,12 @@
 #include <sched.h>
 #include <time.h>
 #include "test.h"
+#include "ut0random.h"
 #include "nvm0nvm.h"
+
+#define THETA (0.25)                        // For zipf distribution
+#define DEFAULT_N (5 * 1024 * 1024)         // For zipf distribution
+Random * g_rand_obj; // Global Random class instance pointer. 
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -46,7 +51,23 @@ void *thread_nvm_durable_write_random(void *data)
 
     //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
-        off_t rand_pos = rand() - BYTES_PER_WRITE;//% (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
+        off_t rand_pos = g_rand_obj->unif_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
+        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
+        nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
+//        printf("TID%d: randon test running %ld out of %ld\n", tid, i, n);
+    }
+
+    return NULL;
+}
+
+void *thread_nvm_durable_write_skewed(void *data)
+{
+    uint64_t n = TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE;
+    uint32_t tid = *((uint32_t *)data);
+
+    //TODO: fix to generate 64bit random value
+    for (uint64_t i = 0; i < n; i++) {
+        off_t rand_pos = g_rand_obj->skew_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
         rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
         nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
 //        printf("TID%d: randon test running %ld out of %ld\n", tid, i, n);
@@ -69,6 +90,22 @@ void test_nvm_durable_write_random()
     }
 }
 
+void test_nvm_durable_write_skewed()
+{
+    pthread_t write_thread[kNumThread];
+    int tid[kNumThread];
+    uint64_t range = TOTAL_FILE_SIZE /  BYTES_PER_WRITE;
+    g_rand_obj->skew_init(THETA, DEFAULT_N);
+
+    for (uint32_t i = 0; i < kNumThread; i++) {
+        tid[i] = i + 1;
+        pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_skewed, (void *)&tid[i]);
+    }
+    for (uint32_t i = 0; i < kNumThread; i++) {
+        pthread_join(write_thread[i], NULL);
+    }
+}
+
 void test_nvm_durable_write()
 {
     // declarations
@@ -82,9 +119,12 @@ void test_nvm_durable_write()
     nvm_system_init();
 //  print_nvm_info();
 
+    g_rand_obj = new Random();
+
     // TODO: random
     if (WRITE_MODE == WRITE_MODE_RANDOM || WRITE_MODE == WRITE_MODE_SKEWED) {
         printf("Random Test: appending to a new file...\n");
+        fill_buf_append(buffer, BYTES_PER_WRITE);
         test_nvm_durable_write_append();
         nvm_system_close();
         nvm_structure_destroy();
@@ -98,9 +138,11 @@ void test_nvm_durable_write()
     if (WRITE_MODE == WRITE_MODE_APPEND) {
         test_nvm_durable_write_append();
     } else if (WRITE_MODE == WRITE_MODE_RANDOM) {
+        fill_buf_random(buffer, BYTES_PER_WRITE);
         test_nvm_durable_write_random();
     } else if (WRITE_MODE == WRITE_MODE_SKEWED) {
-        //test_nvm_durable_write_skewed();
+        fill_buf_random(buffer, BYTES_PER_WRITE);
+        test_nvm_durable_write_skewed();
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -118,4 +160,6 @@ void test_nvm_durable_write()
     free(buffer);
 
     remove_files(kNumThread);
+
+    delete g_rand_obj;
 }

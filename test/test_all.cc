@@ -243,7 +243,7 @@ void handle_user_input()
 void start_test()
 {
     system("clear");
-    start_recording_report();
+    //start_recording_report();
     
     if (NVM_WRITE) {
         printf("=================== NVM WRITE TESTING START ===================\n");

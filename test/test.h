@@ -40,5 +40,7 @@ extern int report_fd;
 
 /* utility functions */
 void fill_buf(char *buf, size_t size);
+void fill_buf_append(char *buf, size_t size);
+void fill_buf_random(char *buf, size_t size);
 void remove_files(int num_files);
 double TimeSpecToSeconds(struct timespec* ts);
