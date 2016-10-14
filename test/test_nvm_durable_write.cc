@@ -60,6 +60,20 @@ void *thread_nvm_durable_write_random(void *data)
     return NULL;
 }
 
+void test_nvm_durable_write_random()
+{
+    pthread_t write_thread[kNumThread];
+    int tid[kNumThread];
+
+    for (uint32_t i = 0; i < kNumThread; i++) {
+        tid[i] = i + 1;
+        pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_random, (void *)&tid[i]);
+    }
+    for (uint32_t i = 0; i < kNumThread; i++) {
+        pthread_join(write_thread[i], NULL);
+    }
+}
+
 void *thread_nvm_durable_write_skewed(void *data)
 {
     uint64_t n = TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE;
@@ -74,20 +88,6 @@ void *thread_nvm_durable_write_skewed(void *data)
     }
 
     return NULL;
-}
-
-void test_nvm_durable_write_random()
-{
-    pthread_t write_thread[kNumThread];
-    int tid[kNumThread];
-
-    for (uint32_t i = 0; i < kNumThread; i++) {
-        tid[i] = i + 1;
-        pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_random, (void *)&tid[i]);
-    }
-    for (uint32_t i = 0; i < kNumThread; i++) {
-        pthread_join(write_thread[i], NULL);
-    }
 }
 
 void test_nvm_durable_write_skewed()
@@ -130,6 +130,7 @@ void test_nvm_durable_write()
         nvm_structure_destroy();
         nvm_structure_build();
         nvm_system_init();
+        fill_buf_random(buffer, BYTES_PER_WRITE);
         printf("Random Test: Random test start\n");
     }
 
@@ -138,10 +139,8 @@ void test_nvm_durable_write()
     if (WRITE_MODE == WRITE_MODE_APPEND) {
         test_nvm_durable_write_append();
     } else if (WRITE_MODE == WRITE_MODE_RANDOM) {
-        fill_buf_random(buffer, BYTES_PER_WRITE);
         test_nvm_durable_write_random();
     } else if (WRITE_MODE == WRITE_MODE_SKEWED) {
-        fill_buf_random(buffer, BYTES_PER_WRITE);
         test_nvm_durable_write_skewed();
     }
 

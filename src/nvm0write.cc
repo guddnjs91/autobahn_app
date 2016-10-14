@@ -59,7 +59,7 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
     
     //read file to nvm data block
     off_t file_size = get_filesize(ve->vid);
-    if (file_size > nvm->block_size * lbn) {
+    if ((file_size-1) / nvm->block_size > (off_t) lbn) {
         size_t count = file_size - (nvm->block_size * lbn);
         count = ((count - 1) % nvm->block_size) + 1;
 
