@@ -36,6 +36,7 @@ int report_fd;
 
 /* write test functions */
 void test_write();
+void test_durable_write();
 void test_nvm_durable_write();
 
 /* private function declaration */
@@ -258,7 +259,11 @@ void start_test()
             if (NVM_WRITE) {
                 test_nvm_durable_write();
             } else {
-                test_write();
+                if (SYNC_OPTION) {
+                    test_durable_write();
+                } else {
+                    test_write();
+                }
             }
         }            
     }
