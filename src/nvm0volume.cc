@@ -4,6 +4,8 @@
 #include "nvm0hash.h"
 #include "nvm0volume.h"
 #include <sys/stat.h>
+#include <assert.h>
+#include <errno.h>
 
 volume_entry *get_volume_entry(volume_idx_t v_idx)
 {
@@ -43,7 +45,9 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
     if (volume_free_lfqueue->is_empty()){
         // TODO: if free volume entry is not available, 
         // need to flush out some volume entries in use.
-        free_v_idx = -1;
+        fprintf(stderr, "volume free queue need to be flushed\n");
+        assert(0);
+        // temporary protection
     } else {
         free_v_idx = volume_free_lfqueue->dequeue();
     }
@@ -51,6 +55,12 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
     volume_entry *ve = get_volume_entry(free_v_idx);
     ve->vid         = vid;
     ve->fd          = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
+    if (ve->fd < 0) {
+        printf("Opening file: failed\n");
+        printf("Error no is : %d\n", errno);
+        printf("Error description : %s\n", strerror(errno));
+        assert(0);
+    }
     ve->hash_table  = new_hash_table();
 
     volume_inuse_lfqueue->enqueue(free_v_idx);
@@ -66,7 +76,6 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
 const char *get_filename(uint32_t vid)
 {
     std::string filename;
-
     if (vid % 2 == 1) {
         filename = "/opt/nvm1/NVM/VOL_";
         filename += std::to_string(vid);
@@ -87,6 +96,6 @@ off_t get_filesize(uint32_t vid)
         return st.st_size;
     } else {
         fprintf(stderr, "Cannot determine size of %s: %s\n", get_filename(vid), strerror(errno));
-        return -1;        
+        assert(0);
     }
 }

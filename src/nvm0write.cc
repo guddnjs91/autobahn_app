@@ -39,14 +39,14 @@ inline inode_idx_t get_inode_entry_idx_from_hash(struct hash_node *hash_node) {
 
 size_t writeDataToNvmBlock(inode_idx_t idx, uint32_t offset, const char *ptr, size_t count)
 {
-    char* data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
+    char *data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
     memcpy(data_dst, ptr, count);
     //TODO:need cache line write guarantee
 
     return count;
 }
 
-inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
+inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
 {
     //TODO: synchronize getting free_idx time
     uint64_t free_idx = free_dequeue_idx.fetch_add(1);
@@ -59,8 +59,8 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry* ve, uint32_t lbn)
     
     //read file to nvm data block
     off_t file_size = get_filesize(ve->vid);
-    if ((file_size-1) / nvm->block_size > (off_t) lbn) {
-        size_t count = file_size - (nvm->block_size * lbn);
+    if ((file_size-1) / nvm->block_size > lbn) {
+        size_t count = file_size - ((size_t) nvm->block_size * lbn);
         count = ((count - 1) % nvm->block_size) + 1;
 
         lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
@@ -126,13 +126,14 @@ struct hash_node *get_hash_node_with_lock(
  * The data stored in non-volatile memory is later flushed into permanent storage.
  *
  * 1. look
+ * TODO: fill in
  * @return the actual bytes durably written.
  */
 size_t nvm_durable_write(        
-        uint32_t vid,       /* !<in: volume ID, a unique file descriptor */
-        off_t    offset,    /* !<in: position of the file to write */ 
-        const char* buf,    /* !<in: buffer */
-        size_t   count)     /* !<in: size of the buffer */
+        uint32_t    vid,    /* !<in: volume ID, a unique file descriptor */
+        off_t       offset, /* !<in: position of the file to write */ 
+        const char  *buf,   /* !<in: buffer */
+        size_t      count)  /* !<in: size of the buffer */
 {
     /* get volume entry using vid. */
     volume_idx_t    v_idx   = get_volume_entry_idx(vid);

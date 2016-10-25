@@ -21,8 +21,8 @@ flush_thread_func(
 {
     //init
     volume_idx_t    v_idx;
-    inode_idx_t     *i_idxs = (inode_idx_t*)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
-    struct iovec    *iov    = (struct iovec*) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
+    inode_idx_t     *i_idxs = (inode_idx_t *)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
+    struct iovec    *iov    = (struct iovec *) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
 
     while (sys_terminate == 0) {
         
