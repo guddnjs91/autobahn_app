@@ -1,18 +1,35 @@
 # NVM Burst Buffer
+
 ## Getting Started
+
 ### Install
+
 ```
 $ git clone -recursive http://166.104.29.119:3389/guddnjs91/atomic-durable-nvm.git
 ```
+
 or
+
 ```
 $ git clone http://166.104.140.26:3389/guddnjs91/atomic-durable-nvm.git
-$ update
+$ git submodule update
 ```
-### Compile
-Compile : make
 
-Execute : bin/test
+### Compile
+```
+$ make
+```
+
+### Run
+```
+$ bin/test
+```
+
+### Clean
+```
+$ make clean
+$ bin/shm-remove
+```
 
 After Execution, there are leftover data in shared memory.
 So need to bin/shm-remove for deallocating shared memory.
