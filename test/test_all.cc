@@ -12,6 +12,7 @@ using namespace std;
 /* command argument options */
 uint64_t NVM_SIZE               = DEFAULT_NVM_SIZE;
 uint32_t NUM_FLUSH              = DEFAULT_NUM_FLUSH;
+uint64_t FLUSH_LWM              = DEFAULT_FLUSH_LWM;
 uint32_t SYNC_OPTION            = DEFAULT_SYNC_OPTION;
 uint32_t MONITOR_OPTION         = DEFAULT_MONITOR_OPTION;
 

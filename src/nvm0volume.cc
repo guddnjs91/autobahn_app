@@ -53,8 +53,8 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
     }
 
     volume_entry *ve = get_volume_entry(free_v_idx);
-    ve->vid         = vid;
-    ve->fd          = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
+    ve->vid = vid;
+    ve->fd  = open(get_filename(vid), O_DIRECT | O_RDWR | O_CREAT, 0644);
     if (ve->fd < 0) {
         printf("Opening file: failed\n");
         printf("Error no is : %d\n", errno);

@@ -19,6 +19,8 @@ struct nvm_metadata* nvm;
 struct monitor monitor;
 int sys_terminate;
 
+uint64_t kFlushLwm;
+
 int sync_idx[MAX_NUM_SYNCER];
 int clean_idx[MAX_NUM_BALLOON];
 
@@ -90,6 +92,7 @@ nvm_structure_build()
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
+    kFlushLwm = 1;//DEFAULT_FLUSH_LWM;
 }
 
 /**
