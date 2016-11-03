@@ -9,6 +9,7 @@
 #include <time.h>
 #include "test.h"
 #include "ut0random.h"
+#include "nvm0volume.h"
 
 using namespace std;
 
