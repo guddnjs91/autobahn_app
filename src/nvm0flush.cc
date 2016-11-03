@@ -69,6 +69,17 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
         i_idxs[i] = inode_dirty_lfqueue[v_idx]->dequeue();
         inode = &nvm->inode_table[i_idxs[i]];
         pthread_mutex_lock(&inode->lock);
+        ////////////////////////////////////////////////////
+//        if (pthread_mutex_trylock(&inode->lock)) {
+//            //lock failed
+//            inode_dirty_lfqueue[v_idx]->enqueue(i_idx[i]);
+//            i--;
+//
+//            if(--num_drty_inodes < FLUSH_BATCH_SIZE) {
+//                write_size--;
+//            }
+//        }
+        ////////////////////////////////////////////////////
     }
 
     indexToWrite = 0;
