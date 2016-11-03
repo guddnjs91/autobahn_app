@@ -33,7 +33,7 @@ flush_thread_func(
 
         v_idx = volume_inuse_lfqueue->dequeue();
         
-        while (inode_dirty_lfqueue[v_idx]->get_size() > 1 && sys_terminate == 0) {
+        while (inode_dirty_lfqueue[v_idx]->get_size() > kFlushLwm && sys_terminate == 0) {
             nvm_flush(v_idx, i_idxs, iov);
         }
 
@@ -108,9 +108,29 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
         bytes_written = pwritev(start_inode->volume->fd, iov, batch_count, (off_t) nvm->block_size * start_inode->lbn);
         if(bytes_written != nvm->block_size * batch_count) {
             printf("ERROR: writev failed to write requested number of bytes! bytes_written: %ld, bytes_requested: %d\n", bytes_written, nvm->block_size * batch_count);
+extern uint64_t kFlushLwm;
             exit(0);
         }
 
+#ifdef TEMP_FIX
+        // In this case, sync() is processed in flush thread.
+        uint_fast64_t clean_idx;
+
+        if(likely(SYNC_OPTION)) {
+            sync();
+        }
+
+        for (i = 0; i < batch_count; i++) {
+            inode_idx_t idx = i_idxs[indexToWrite+i];
+            inode = &nvm->inode_table[idx];
+
+            inode->state = INODE_STATE_CLEAN;
+            clean_idx = clean_queue_idx.fetch_add(1);
+            inode_clean_lfqueue[clean_idx%MAX_NUM_BALLOON]->enqueue(idx);
+            monitor.clean++;
+            pthread_mutex_unlock(&inode->lock);
+        }
+#else
         //enqueue into sync
         for(i = 0; i < batch_count; i++) {
             i_idx = i_idxs[indexToWrite+i];
@@ -122,7 +142,7 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
             inode_sync_lfqueue[sync_idx%MAX_NUM_SYNCER]->enqueue(i_idx);
             monitor.sync++;
         }
-
+#endif
         indexToWrite += batch_count;
     }
 }
