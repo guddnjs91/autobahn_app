@@ -76,6 +76,8 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
 const char *get_filename(uint32_t vid)
 {
     std::string filename;
+
+#ifdef MULTIPLE_STORAGE_ON
     if (vid % 2 == 1) {
         filename = "/opt/nvm1/NVM/VOL_";
         filename += std::to_string(vid);
@@ -85,6 +87,11 @@ const char *get_filename(uint32_t vid)
         filename += std::to_string(vid);
         filename += ".txt";
     }
+#else
+        filename = "./VOL_";
+        filename += std::to_string(vid);
+        filename += ".txt";
+#endif
 
     return filename.c_str();
 }

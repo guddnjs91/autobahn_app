@@ -8,6 +8,7 @@
 #include <time.h>
 #include "test.h"
 #include "ut0random.h"
+#include "nvm0volume.h"
 
 using namespace std;
 
@@ -21,11 +22,7 @@ void *thread_durable_write_append(void *data)
     uint32_t tid = *((uint32_t *)data);
     int fd;
 
-    if (tid % 2 == 1) {
-        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    } else {
-        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    }
+    fd = open( get_filename(tid), O_RDWR | O_CREAT, 0666);
 
     for (uint64_t i = 0; i < n; i++) {
         write(fd, buffer, BYTES_PER_WRITE);
@@ -59,11 +56,7 @@ void *thread_durable_write_random(void *data)
     uint32_t tid = *((uint32_t *)data);
     int fd;
 
-    if (tid % 2 == 1) {
-        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    } else {
-        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    }
+    fd = open( get_filename(tid), O_RDWR | O_CREAT, 0666);
 
     srand(time(NULL));
 
@@ -103,11 +96,7 @@ void *thread_durable_write_skewed(void *data)
     uint32_t tid = *((uint32_t *)data);
     int fd;
     
-    if (tid % 2 == 1) {
-        fd = open( ("/opt/nvm1/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    } else {
-        fd = open( ("/opt/nvm2/NVM/VOL_" + to_string(tid) + ".txt").c_str(), O_RDWR | O_CREAT, 0666);
-    }
+    fd = open( get_filename(tid), O_RDWR | O_CREAT, 0666);
 
     srand(time(NULL));
 

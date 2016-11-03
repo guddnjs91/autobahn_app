@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string>
 #include <time.h>
+#include "nvm0volume.h"
 
 using namespace std;
 
@@ -53,16 +54,8 @@ void fill_buf_random(char *buf, size_t size)
 void remove_files(int num_files)
 {
     for (int i = 1; i <= num_files; i++) {
-        string filename = "/opt";
 
-        if (i % 2 == 1) {
-            filename += "/nvm1/NVM/VOL_";
-        } else {
-            filename += "/nvm2/NVM/VOL_";
-        }
-
-        filename += std::to_string(i);
-        filename += ".txt";
+        string filename = get_filename(i);
 
         int x = remove(filename.c_str());
         if(x == -1) {

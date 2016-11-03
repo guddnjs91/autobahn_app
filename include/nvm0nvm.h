@@ -23,6 +23,7 @@
 #define unlikely(x)     __builtin_expect((x),0)
 
 //#define TEMP_FIX
+//#define MULTIPLE_STORAGE_ON
 
 /* NVM options */
 extern uint64_t NVM_SIZE;
