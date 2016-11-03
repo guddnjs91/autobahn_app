@@ -30,13 +30,3 @@ $ bin/test
 $ make clean
 $ bin/shm-remove
 ```
-
-### Submodule Update
-```
-$ git submodule update --remote
-```
-or
-```
-$ git fetch
-$ git merge origin/master
-```
