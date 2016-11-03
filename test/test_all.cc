@@ -25,9 +25,6 @@ uint32_t NVM_WRITE              = DEFAULT_NVM_WRITE;
 uint32_t TEST_CYCLE             = DEFAULT_TEST_CYCLE;
 //string   DATAPATH               = DEFAULT_DATAPATH;
 
-bool reg_test;
-bool run;
-bool quit;
 
 /* global variables */
 uint32_t kNumThread;
@@ -43,10 +40,14 @@ void test_nvm_durable_write();
 /* private function declaration */
 void print_notice_board();
 void handle_user_input();
-
 void start_test();
-void start_regression_test();
+void start_reg_test();
 void start_recording_report();
+
+/* private variables */
+bool reg_test;
+bool run;
+bool quit;
 
 /**
  *  1. nvm-size
@@ -282,7 +283,7 @@ void start_test()
  * nvm-write        = on
  * test-cycle       = 5
  */
-void start_regression_test()
+void start_reg_test()
 {
     int fd = open("./test/regtest.txt", O_RDWR | O_CREAT | O_APPEND, 0666);
 
@@ -353,7 +354,7 @@ int main()
             start_test();
             run = false;
         } else if (reg_test) {
-            start_regression_test();
+            start_reg_test();
             reg_test = false;
         }
     } while (!quit);

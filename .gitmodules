@@ -1,0 +1,3 @@
+[submodule "include/libcuckoo"]
+	path = include/libcuckoo
+	url = https://github.com/efficient/libcuckoo.git
