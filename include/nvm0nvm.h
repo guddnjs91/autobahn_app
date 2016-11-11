@@ -68,9 +68,13 @@ extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 extern lfqueue<inode_idx_t>* inode_free_lfqueue[MAX_NUM_FREE];
 extern atomic<uint_fast64_t> free_enqueue_idx;
 extern atomic<uint_fast64_t> free_dequeue_idx;
+
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
+extern atomic<inode_idx_t>   inode_dirty_count;
+
 extern lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
 extern atomic<uint_fast64_t> sync_queue_idx;
+
 extern lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
 extern atomic<uint_fast64_t> clean_queue_idx;
 

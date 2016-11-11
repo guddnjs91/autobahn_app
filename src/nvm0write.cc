@@ -167,6 +167,7 @@ size_t nvm_durable_write(
         bytes_written += writeDataToNvmBlock(idx, local_offset, buf, local_count);
 
         if (old_state != INODE_STATE_DIRTY) {
+            inode_dirty_count++;
             inode_dirty_lfqueue[v_idx]->enqueue(idx);
             monitor.dirty++;
         }

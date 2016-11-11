@@ -24,19 +24,25 @@ uint64_t kFlushLwm;
 int sync_idx[MAX_NUM_SYNCER];
 int clean_idx[MAX_NUM_BALLOON];
 
-atomic<uint_fast64_t> free_enqueue_idx;
-atomic<uint_fast64_t> free_dequeue_idx;
-atomic<uint_fast64_t> sync_queue_idx;
-atomic<uint_fast64_t> clean_queue_idx;
-
+/* volume lfqueues */
 lfqueue<volume_idx_t>* volume_free_lfqueue;
 lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
+/* inode lfqueues */
 lfqueue<inode_idx_t>* inode_free_lfqueue[MAX_NUM_FREE];
-lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
-lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
-lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
+atomic<uint_fast64_t> free_enqueue_idx;
+atomic<uint_fast64_t> free_dequeue_idx;
 
+lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
+atomic<inode_idx_t>   inode_dirty_count;
+
+lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
+atomic<uint_fast64_t> sync_queue_idx;
+
+lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
+atomic<uint_fast64_t> clean_queue_idx;
+
+/* lpthreads */
 pthread_cond_t   g_balloon_cond[MAX_NUM_BALLOON];
 pthread_mutex_t  g_balloon_mutex[MAX_NUM_BALLOON];
 
@@ -108,7 +114,7 @@ nvm_structure_build()
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
-    kFlushLwm = 1;//DEFAULT_FLUSH_LWM;
+    kFlushLwm = 1; //DEFAULT_FLUSH_LWM;
 }
 
 /**
@@ -144,19 +150,23 @@ nvm_system_init()
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         nvm->volume_table[i].vid = 0x0U - 1;
         volume_free_lfqueue->enqueue(i);
-    }
+   }
 
-    //inode data structure
+    /* inode lfqueues */
+    /* free lfqueue */
     for(int i = 0; i < MAX_NUM_FREE; i++) {
         inode_free_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
+    /* dirty lfqueue */
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
-
+    inode_dirty_count = 0;    
+    /* sync lfqueue */
     for(int i = 0; i < MAX_NUM_SYNCER; i++) {
         inode_sync_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
+    /* clean lfqueue */
     for(int i = 0; i < MAX_NUM_BALLOON; i++) {
         inode_clean_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }

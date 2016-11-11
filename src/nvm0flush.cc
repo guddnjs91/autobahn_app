@@ -20,7 +20,6 @@ flush_thread_func(
     void* data)
 {
     //init
-    volume_idx_t    v_idx;
     inode_idx_t     *i_idxs = (inode_idx_t *)  malloc( FLUSH_BATCH_SIZE * sizeof(inode_idx_t));
     struct iovec    *iov    = (struct iovec *) malloc( FLUSH_BATCH_SIZE * sizeof(struct iovec));
 
@@ -31,9 +30,9 @@ flush_thread_func(
             continue;
         }
 
-        v_idx = volume_inuse_lfqueue->dequeue();
+        volume_idx_t v_idx = volume_inuse_lfqueue->dequeue();
         
-        while (inode_dirty_lfqueue[v_idx]->get_size() > kFlushLwm && sys_terminate == 0) {
+        while (!sys_terminate && inode_dirty_count >= kFlushLwm && inode_dirty_lfqueue[v_idx]->get_size() > 0) {
             nvm_flush(v_idx, i_idxs, iov);
         }
 
@@ -135,9 +134,12 @@ extern uint64_t kFlushLwm;
             inode_idx_t idx = i_idxs[indexToWrite+i];
             inode = &nvm->inode_table[idx];
 
+            /* hands off dirty */
+            inode_dirty_count--;
+
+            /* hands on clean */
             inode->state = INODE_STATE_CLEAN;
-            clean_idx = clean_queue_idx.fetch_add(1);
-            inode_clean_lfqueue[clean_idx%MAX_NUM_BALLOON]->enqueue(idx);
+            inode_clean_lfqueue[ clean_queue_idx++ % MAX_NUM_BALLOON ]->enqueue(idx);
             monitor.clean++;
             pthread_mutex_unlock(&inode->lock);
         }
@@ -146,11 +148,13 @@ extern uint64_t kFlushLwm;
         for(i = 0; i < batch_count; i++) {
             i_idx = i_idxs[indexToWrite+i];
             inode = &nvm->inode_table[i_idx];
-    
+
+            /* hands off dirty */
+            inode_dirty_count--;
+
+            /* hands on sync */
             inode->state = INODE_STATE_SYNC;
-            //sync_idx = std::atomic_fetch_xor(&sync_queue_idx, 1);
-            sync_idx = sync_queue_idx.fetch_add(1);
-            inode_sync_lfqueue[sync_idx%MAX_NUM_SYNCER]->enqueue(i_idx);
+            inode_sync_lfqueue[ sync_queue_idx++ % MAX_NUM_SYNCER ]->enqueue(i_idx);
             monitor.sync++;
         }
 #endif
