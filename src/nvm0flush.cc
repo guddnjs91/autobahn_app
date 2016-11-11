@@ -139,7 +139,7 @@ extern uint64_t kFlushLwm;
 
             /* hands on clean */
             inode->state = INODE_STATE_CLEAN;
-            inode_clean_lfqueue[ clean_queue_idx++ % MAX_NUM_BALLOON ]->enqueue(idx);
+            inode_clean_lfqueue[ clean_queue_idx++ % DEFAULT_NUM_BALLOON ]->enqueue(idx);
             monitor.clean++;
             pthread_mutex_unlock(&inode->lock);
         }
@@ -154,7 +154,7 @@ extern uint64_t kFlushLwm;
 
             /* hands on sync */
             inode->state = INODE_STATE_SYNC;
-            inode_sync_lfqueue[ sync_queue_idx++ % MAX_NUM_SYNCER ]->enqueue(i_idx);
+            inode_sync_lfqueue[ sync_queue_idx++ % DEFAULT_NUM_SYNCER ]->enqueue(i_idx);
             monitor.sync++;
         }
 #endif

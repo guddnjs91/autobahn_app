@@ -22,12 +22,12 @@ bool isFreeLFQueueEnough()
 {
     //TODO: synchronize getting free_idx time
     uint64_t free_idx = free_dequeue_idx.load();
-    return inode_free_lfqueue[free_idx % MAX_NUM_FREE]->get_size() > 1000 ? true : false;
+    return inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->get_size() > 1000 ? true : false;
 }
 
 void awakeBalloonThread()
 {
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         pthread_mutex_lock(&g_balloon_mutex[i]);
         pthread_cond_signal(&g_balloon_cond[i]);
         pthread_mutex_unlock(&g_balloon_mutex[i]);
@@ -51,7 +51,7 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
 {
     //TODO: synchronize getting free_idx time
     uint64_t free_idx = free_dequeue_idx.fetch_add(1);
-    inode_idx_t idx = inode_free_lfqueue[free_idx % MAX_NUM_FREE]->dequeue();
+    inode_idx_t idx = inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->dequeue();
     struct inode_entry* inode = &nvm->inode_table[idx];
 
     inode->lbn = lbn;

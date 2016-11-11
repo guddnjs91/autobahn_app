@@ -51,7 +51,7 @@ void printLFQueueGauge()
 
     for(int i = MONITORING_AMOUNT; i >= 0; i--)
     {
-        if(MAX_NUM_FREE - 1 < i) {
+        if(DEFAULT_NUM_FREE - 1 < i) {
                 printf("                                    ");
         } else {
             printf("[%2d]", i);
@@ -65,14 +65,14 @@ void printLFQueueGauge()
             inode_dirty_lfqueue[i]->monitor();
             printf("  ");
         }
-        if(MAX_NUM_SYNCER - 1 < i) {
+        if(DEFAULT_NUM_SYNCER - 1 < i) {
                 printf("                                    ");
         } else {
             printf("[%2d]", i);
             inode_sync_lfqueue[i]->monitor();
             printf("  ");
         }
-        if(MAX_NUM_BALLOON - 1 < i) {
+        if(DEFAULT_NUM_BALLOON - 1 < i) {
                 printf("                                    ");
         } else {
             printf("[%2d]", i);
@@ -86,7 +86,7 @@ void printLFQueueGauge()
     uint64_t total_size = 0;
     double fullness = 0;
 
-    for(int i = 0; i < MAX_NUM_FREE; i++)
+    for(int i = 0; i < DEFAULT_NUM_FREE; i++)
     {
         total_size += inode_free_lfqueue[i]->get_size();
     }
@@ -131,7 +131,7 @@ void printLFQueueGauge()
     printf("\033[0m  ");
  
     total_size = 0;
-    for(int i = 0; i < MAX_NUM_SYNCER; i++)
+    for(int i = 0; i < DEFAULT_NUM_SYNCER; i++)
     {
         total_size += inode_sync_lfqueue[i]->get_size();
     }
@@ -152,7 +152,7 @@ void printLFQueueGauge()
     printf("\033[0m  ");
  
     total_size = 0;
-    for(int i = 0; i < MAX_NUM_BALLOON; i++)
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++)
     {
         total_size += inode_clean_lfqueue[i]->get_size();
     }

@@ -9,15 +9,23 @@
 #include "nvm0lfqueue.h"
 
 //config (make changes here ONLY)
-#define MAX_VOLUME_ENTRY    (128)
-#define BLOCK_SIZE          (1 << 14)
-#define MAX_NUM_FREE        (2)
-#define MAX_NUM_FLUSHER     (32)
-#define FLUSH_BATCH_SIZE    (1024)      // maximum batch size for writev is 1024
-#define MAX_NUM_SYNCER      (2)
-#define MIN_SYNC_FREQUENCY  (1 << 13)
-#define MAX_NUM_BALLOON     (8)
-#define MONITORING_AMOUNT   (7)
+#define DEFAULT_NVM_SIZE        (4 * 1024 * 1024 * 1024LLU)
+#define MAX_VOLUME_ENTRY        (128)
+#define BLOCK_SIZE              (1 << 14)
+
+#define DEFAULT_NUM_FREE        (2)
+#define DEFAULT_NUM_FLUSH       (16)
+#define DEFAULT_NUM_SYNCER      (2)
+#define DEFAULT_NUM_BALLOON     (8)
+
+#define DEFAULT_FLUSH_LWM       (1)
+#define DEFAULT_SYNC_LWM        (1 << 13)
+
+#define FLUSH_BATCH_SIZE        (1024)      // maximum batch size for writev is 1024
+
+#define DEFAULT_SYNC_OPTION     (1)
+#define DEFAULT_MONITOR_OPTION  (1)
+#define MONITORING_AMOUNT       (7)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -50,12 +58,12 @@ struct nvm_metadata {
 //Global variables
 extern struct nvm_metadata* nvm; //holds information about NVM
 
-extern pthread_cond_t   g_balloon_cond[MAX_NUM_BALLOON];     //balloon condition variable
-extern pthread_mutex_t  g_balloon_mutex[MAX_NUM_BALLOON];    //mutex for b_cond
+extern pthread_cond_t   g_balloon_cond[DEFAULT_NUM_BALLOON];     //balloon condition variable
+extern pthread_mutex_t  g_balloon_mutex[DEFAULT_NUM_BALLOON];    //mutex for b_cond
 
-extern pthread_t flush_thread[MAX_NUM_FLUSHER];
-extern pthread_t sync_thread[MAX_NUM_SYNCER];
-extern pthread_t balloon_thread[MAX_NUM_BALLOON];
+extern pthread_t flush_thread[DEFAULT_NUM_FLUSH];
+extern pthread_t sync_thread[DEFAULT_NUM_SYNCER];
+extern pthread_t balloon_thread[DEFAULT_NUM_BALLOON];
 extern pthread_t monitor_thread;
 
 //Conditional variable for system termination
@@ -65,17 +73,17 @@ extern int sys_terminate;
 extern lfqueue<volume_idx_t>* volume_free_lfqueue;
 extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
-extern lfqueue<inode_idx_t>* inode_free_lfqueue[MAX_NUM_FREE];
+extern lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
 extern atomic<uint_fast64_t> free_enqueue_idx;
 extern atomic<uint_fast64_t> free_dequeue_idx;
 
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 extern atomic<inode_idx_t>   inode_dirty_count;
 
-extern lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
+extern lfqueue<inode_idx_t>* inode_sync_lfqueue[DEFAULT_NUM_SYNCER];
 extern atomic<uint_fast64_t> sync_queue_idx;
 
-extern lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
+extern lfqueue<inode_idx_t>* inode_clean_lfqueue[DEFAULT_NUM_BALLOON];
 extern atomic<uint_fast64_t> clean_queue_idx;
 
 /* functions */

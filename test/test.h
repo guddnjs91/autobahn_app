@@ -5,12 +5,6 @@
 using namespace std;
 
 /* options */
-#define DEFAULT_NVM_SIZE                (4 * 1024 * 1024 * 1024LLU)
-#define DEFAULT_NUM_FLUSH               (16)
-#define DEFAULT_FLUSH_LWM               (1)
-#define DEFAULT_SYNC_OPTION             (1)
-#define DEFAULT_MONITOR_OPTION          (1)
-
 #define DEFAULT_TOTAL_FILE_SIZE         (80 * 1024 * 1024 * 1024LLU)
 #define DEFAULT_TEST_FILE_RANGE_START   (1)
 #define DEFAULT_TEST_FILE_RANGE_END     (64)

@@ -28,7 +28,7 @@ sync_thread_func(
 
         if(inode_sync_lfqueue[index]->get_size() >= 1
 //            MIN_SYNC_FREQUENCY + 
-//            inode_free_lfqueue[free_idx % MAX_NUM_FREE]->get_size() / (nvm->max_inode_entry / MAX_NUM_FREE)  * (nvm->max_inode_entry / MAX_NUM_SYNCER - MIN_SYNC_FREQUENCY)
+//            inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->get_size() / (nvm->max_inode_entry / DEFAULT_NUM_FREE)  * (nvm->max_inode_entry / DEFAULT_NUM_SYNCER - MIN_SYNC_FREQUENCY)
         ) {
             nvm_sync(index);
         }
@@ -59,7 +59,7 @@ nvm_sync(
 
         inode->state = INODE_STATE_CLEAN;
         clean_idx = clean_queue_idx.fetch_add(1);
-        inode_clean_lfqueue[clean_idx%MAX_NUM_BALLOON]->enqueue(idx);
+        inode_clean_lfqueue[clean_idx%DEFAULT_NUM_BALLOON]->enqueue(idx);
         monitor.clean++;
         pthread_mutex_unlock(&inode->lock);
     }

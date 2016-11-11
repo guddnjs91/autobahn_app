@@ -21,34 +21,34 @@ int sys_terminate;
 
 uint64_t kFlushLwm;
 
-int sync_idx[MAX_NUM_SYNCER];
-int clean_idx[MAX_NUM_BALLOON];
+int sync_idx[DEFAULT_NUM_SYNCER];
+int clean_idx[DEFAULT_NUM_BALLOON];
 
 /* volume lfqueues */
 lfqueue<volume_idx_t>* volume_free_lfqueue;
 lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
 /* inode lfqueues */
-lfqueue<inode_idx_t>* inode_free_lfqueue[MAX_NUM_FREE];
+lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
 atomic<uint_fast64_t> free_enqueue_idx;
 atomic<uint_fast64_t> free_dequeue_idx;
 
 lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 atomic<inode_idx_t>   inode_dirty_count;
 
-lfqueue<inode_idx_t>* inode_sync_lfqueue[MAX_NUM_SYNCER];
+lfqueue<inode_idx_t>* inode_sync_lfqueue[DEFAULT_NUM_SYNCER];
 atomic<uint_fast64_t> sync_queue_idx;
 
-lfqueue<inode_idx_t>* inode_clean_lfqueue[MAX_NUM_BALLOON];
+lfqueue<inode_idx_t>* inode_clean_lfqueue[DEFAULT_NUM_BALLOON];
 atomic<uint_fast64_t> clean_queue_idx;
 
 /* lpthreads */
-pthread_cond_t   g_balloon_cond[MAX_NUM_BALLOON];
-pthread_mutex_t  g_balloon_mutex[MAX_NUM_BALLOON];
+pthread_cond_t   g_balloon_cond[DEFAULT_NUM_BALLOON];
+pthread_mutex_t  g_balloon_mutex[DEFAULT_NUM_BALLOON];
 
-pthread_t flush_thread[MAX_NUM_FLUSHER];
-pthread_t sync_thread[MAX_NUM_SYNCER];
-pthread_t balloon_thread[MAX_NUM_BALLOON];
+pthread_t flush_thread[DEFAULT_NUM_FLUSH];
+pthread_t sync_thread[DEFAULT_NUM_SYNCER];
+pthread_t balloon_thread[DEFAULT_NUM_BALLOON];
 pthread_t monitor_thread;
 
 //private function declaration
@@ -114,7 +114,6 @@ nvm_structure_build()
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
     }
-    kFlushLwm = 1; //DEFAULT_FLUSH_LWM;
 }
 
 /**
@@ -154,7 +153,7 @@ nvm_system_init()
 
     /* inode lfqueues */
     /* free lfqueue */
-    for(int i = 0; i < MAX_NUM_FREE; i++) {
+    for(int i = 0; i < DEFAULT_NUM_FREE; i++) {
         inode_free_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
     /* dirty lfqueue */
@@ -163,27 +162,28 @@ nvm_system_init()
     }
     inode_dirty_count = 0;    
     /* sync lfqueue */
-    for(int i = 0; i < MAX_NUM_SYNCER; i++) {
+    for(int i = 0; i < DEFAULT_NUM_SYNCER; i++) {
         inode_sync_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
     /* clean lfqueue */
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         inode_clean_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     }
 
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
         nvm->inode_table[i].lock = PTHREAD_MUTEX_INITIALIZER;
-        inode_free_lfqueue[i%MAX_NUM_FREE]->enqueue(i);
+        inode_free_lfqueue[i%DEFAULT_NUM_FREE]->enqueue(i);
     }
 
     //locks
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         pthread_cond_init(&g_balloon_cond[i], NULL);
         pthread_mutex_init(&g_balloon_mutex[i], NULL);
     }
 
     //create threads
+    kFlushLwm = DEFAULT_FLUSH_LWM;
     sys_terminate = 0;
     free_enqueue_idx = 0;
     free_dequeue_idx = 0;
@@ -192,14 +192,14 @@ nvm_system_init()
     }
     printf("%d Flush thread created...\n", NUM_FLUSH);
 
-    for(int i = 0; i < MAX_NUM_SYNCER; i++) {
+    for(int i = 0; i < DEFAULT_NUM_SYNCER; i++) {
         sync_idx[i] = i;
         pthread_create(&sync_thread[i], NULL, sync_thread_func, (void *)&sync_idx[i]);
     }
     sync_queue_idx = 0;
-    printf("%d Sync thread created...\n", MAX_NUM_SYNCER);
+    printf("%d Sync thread created...\n", DEFAULT_NUM_SYNCER);
 
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         clean_idx[i] = i;
         pthread_create(&balloon_thread[i], NULL, balloon_thread_func, (void *)&clean_idx[i]);
     }
@@ -237,7 +237,7 @@ nvm_system_close()
     sys_terminate = 1;
 
     //balloon thread - wakes up balloon thread if sleeping
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         pthread_mutex_lock(&g_balloon_mutex[i]);
         pthread_cond_signal(&g_balloon_cond[i]);
         pthread_mutex_unlock(&g_balloon_mutex[i]); 
@@ -250,7 +250,7 @@ nvm_system_close()
     }
 
     //sync thread
-    for(int i = 0; i < MAX_NUM_SYNCER; i++) {
+    for(int i = 0; i < DEFAULT_NUM_SYNCER; i++) {
         pthread_join(sync_thread[i], NULL);
     }
 
@@ -307,16 +307,16 @@ nvm_system_close()
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
 
-    for(int i = 0; i < MAX_NUM_FREE; i++) {
+    for(int i = 0; i < DEFAULT_NUM_FREE; i++) {
         delete inode_free_lfqueue[i];
     }
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         delete inode_dirty_lfqueue[i];
     }
-    for(int i = 0; i < MAX_NUM_SYNCER; i++) {
+    for(int i = 0; i < DEFAULT_NUM_SYNCER; i++) {
         delete inode_sync_lfqueue[i];
     }
-    for(int i = 0; i < MAX_NUM_BALLOON; i++) {
+    for(int i = 0; i < DEFAULT_NUM_BALLOON; i++) {
         delete inode_clean_lfqueue[i];
     }
 
