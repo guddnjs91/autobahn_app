@@ -57,16 +57,21 @@ void remove_nvm_in_shm();
  *     - volume_table
  *     - inode_table
  *     - block_table
+ *
+ *********************NOTE********************
+ * - The space left at the end after the 16KiB alignment will not be utilized.
+ *
+ *  TODO: Update the table once the design is finalized!
  *  +---------------------------------------------------------------------------------------+
  *  |                                  NON-VOLATILE MEMORY                                  |
  *  +--------------------------+------------------+-----------------------+-----------------+
  *  |         METADATA         |   VOLUME TABLE   |      INODE TABLE      |   BLOCK TABLE   |
  *  +--------------------------+------------------+-----------------------+-----------------+
- *  | nvm_size                 | volume id        | logical block number  |                 |
- *  | max volume entry         | fd               | state                 |                 |
- *  | max inode entry          | inode root       | its volume entry      |                 |
- *  | block size               |                  |                       |                 |
- *  | volume table             |                  |                       |                 |
+ *  | nvm_size                 | volume id        | logical block number  | (looks small,   |
+ *  | max volume entry         | fd               | state                 |  but actually   |
+ *  | max inode entry          | inode root       | its volume entry      |  takes up most  |
+ *  | block size               |                  |                       |  of the nvm     |
+ *  | volume table             |                  |                       |  space)         |
  *  | inode table              |                  |                       |                 |
  *  | data block table         |                  |                       |                 |
  *  +--------------------------+------------------+-----------------------+-----------------+
@@ -74,19 +79,30 @@ void remove_nvm_in_shm();
 void
 nvm_structure_build()
 {
-    //Initialize nvm_metadata structure
-    nvm = create_nvm_in_shm();
-    nvm->nvm_size           = NVM_SIZE;
-    nvm->max_volume_entry   = MAX_VOLUME_ENTRY;
-    nvm->max_inode_entry    = ( NVM_SIZE - sizeof(struct nvm_metadata)
-                                - sizeof(struct volume_entry) * MAX_VOLUME_ENTRY )
-                              / ( sizeof(struct inode_entry) + BLOCK_SIZE );
-    nvm->block_size         = BLOCK_SIZE;
+    /* get the starting address of the non-volatile memory */
+    nvm = create_nvm_in_shm();  /* temportarily gets from shm;
+                                   later should be modified to possibly
+                                   automatically detect nvm space & size */
+
+    /* initialize and divide up the nvm structure */
+    nvm->nvm_size           = NVM_SIZE;         /* this could be moved up if system can 
+                                                   automatically detects the size of nvm. */
+    nvm->max_volume_entry   = MAX_VOLUME_ENTRY; /* recommended value = nvm_size / avg_file_size */
+    nvm->block_size         = BLOCK_SIZE;       /* this should be 16KiB (SSD alignment) */
+    
+    int unused_end_space    = ((uint64_t)nvm + nvm->nvm_size) % nvm->block_size;        /* yeah, it's complicated */
+    nvm->max_inode_entry    =  (  nvm->nvm_size                                         /*  free space  */
+                                - sizeof(struct nvm_metadata)                           /* ----over---- */
+                                - sizeof(struct volume_entry) * nvm->max_volume_entry   /*  entry size  */
+                                - unused_end_space )                                    /* => possible  */
+                             / ( sizeof(struct inode_entry) + nvm->block_size );        /*    number of */
+                                                                                        /*    entries   */
+
     nvm->volume_table       = (struct volume_entry*) (nvm + 1);
     nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
-    nvm->datablock_table    = (char *)               ((char *)(nvm->inode_table + nvm->max_inode_entry)
-                                                      - (long unsigned int)(nvm->inode_table + nvm->max_inode_entry) % BLOCK_SIZE
-                                                      + BLOCK_SIZE);
+    nvm->datablock_table    = (char *)               (  (uint64_t)(nvm->inode_table + nvm->max_inode_entry)
+                                                      - (uint64_t)(nvm->inode_table + nvm->max_inode_entry) % nvm->block_size
+                                                      + nvm->block_size );
 
     //Initialize all inode_entries to state_free
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
