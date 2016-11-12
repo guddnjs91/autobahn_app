@@ -32,7 +32,7 @@ flush_thread_func(
 
         volume_idx_t v_idx = volume_inuse_lfqueue->dequeue();
         
-        while (!sys_terminate && inode_dirty_count >= kFlushLwm && inode_dirty_lfqueue[v_idx]->get_size() > 0) {
+        if (inode_dirty_count >= kFlushLwm && inode_dirty_lfqueue[v_idx]->get_size() > 1) {
             nvm_flush(v_idx, i_idxs, iov);
         }
 
