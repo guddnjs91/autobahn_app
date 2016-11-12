@@ -54,7 +54,6 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
     int i, indexToWrite, batch_count;
     uint32_t curr_lbn, succ_lbn;
     inode_entry *inode, *start_inode;
-    inode_idx_t i_idx;
     ssize_t bytes_written;
     int sync_idx;
 
@@ -67,17 +66,18 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
     for (i = 0; i < write_size; i++) {
         i_idxs[i] = inode_dirty_lfqueue[v_idx]->dequeue();
         inode = &nvm->inode_table[i_idxs[i]];
-        pthread_mutex_lock(&inode->lock);
+        ///////////////////////////////////////
+//        pthread_mutex_lock(&inode->lock);
         ////////////////////////////////////////////////////
-//        if (pthread_mutex_trylock(&inode->lock)) {
-//            //lock failed
-//            inode_dirty_lfqueue[v_idx]->enqueue(i_idx[i]);
-//            i--;
-//
-//            if(--num_drty_inodes < FLUSH_BATCH_SIZE) {
-//                write_size--;
-//            }
-//        }
+        if (pthread_mutex_trylock(&inode->lock)) {
+            //lock failed
+            inode_dirty_lfqueue[v_idx]->enqueue(i_idxs[i]);
+            i--;
+
+            if(--num_dirty_inodes < FLUSH_BATCH_SIZE) {
+                write_size--;
+            }
+        }
         ////////////////////////////////////////////////////
     }
 
@@ -146,7 +146,7 @@ extern uint64_t kFlushLwm;
 #else
         //enqueue into sync
         for(i = 0; i < batch_count; i++) {
-            i_idx = i_idxs[indexToWrite+i];
+            inode_idx_t i_idx = i_idxs[indexToWrite+i];
             inode = &nvm->inode_table[i_idx];
 
             /* hands off dirty */
