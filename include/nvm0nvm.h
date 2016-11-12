@@ -18,8 +18,9 @@
 #define DEFAULT_NUM_SYNCER      (2)
 #define DEFAULT_NUM_BALLOON     (8)
 
-#define DEFAULT_FLUSH_LWM       (1)
-#define DEFAULT_SYNC_LWM        (1 << 13)
+#define DEFAULT_FREE_MIN_COUNT  (100)         // if it's 100, then 100 left is enough, 99 is not enough.
+#define DEFAULT_FLUSH_LWM       (1)         // this is not currently used. it is instead set to max_inode_entry
+#define DEFAULT_SYNC_LWM        (1)
 
 #define FLUSH_BATCH_SIZE        (1024)      // maximum batch size for writev is 1024
 
@@ -76,6 +77,7 @@ extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 extern lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
 extern atomic<uint_fast64_t> free_enqueue_idx;
 extern atomic<uint_fast64_t> free_dequeue_idx;
+extern atomic<inode_idx_t>   inode_free_count;
 
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 extern atomic<inode_idx_t>   inode_dirty_count;

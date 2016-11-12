@@ -21,8 +21,7 @@ bool isValidNode(struct hash_node *node)
 bool isFreeLFQueueEnough()
 {
     //TODO: synchronize getting free_idx time
-    uint64_t free_idx = free_dequeue_idx.load();
-    return inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->get_size() > 1000 ? true : false;
+    return inode_free_count >= DEFAULT_FREE_MIN_COUNT ? true : false;
 }
 
 void awakeBalloonThread()
@@ -67,6 +66,8 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
         lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
         read(ve->fd, &nvm->datablock_table[idx], count);
     }
+
+    inode_free_count--;
 
     return idx;
 }

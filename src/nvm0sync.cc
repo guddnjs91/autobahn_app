@@ -24,9 +24,7 @@ sync_thread_func(
 
 #ifdef TEMP_FIX
 #else
-        uint64_t free_idx = free_enqueue_idx.load();
-
-        if(inode_sync_lfqueue[index]->get_size() >= 1
+        if(inode_sync_lfqueue[index]->get_size() >= DEFAULT_SYNC_LWM
 //            MIN_SYNC_FREQUENCY + 
 //            inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->get_size() / (nvm->max_inode_entry / DEFAULT_NUM_FREE)  * (nvm->max_inode_entry / DEFAULT_NUM_SYNCER - MIN_SYNC_FREQUENCY)
         ) {

@@ -39,6 +39,7 @@ void
 nvm_balloon(
     int index)
 {
+    //TODO: uncomment this
 //    balloon_wait(index);
 
     if(sys_terminate == 1) {
@@ -93,8 +94,8 @@ fill_free_inodes(
         logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
         inode->state = INODE_STATE_FREE;
-        uint64_t free_idx = free_enqueue_idx.fetch_add(1);
-        inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->enqueue(idx);
+        inode_free_count++;
+        inode_free_lfqueue[free_enqueue_idx++ % DEFAULT_NUM_FREE]->enqueue(idx);
         pthread_mutex_unlock(&hash_node->mutex);
         monitor.free++;
     }
