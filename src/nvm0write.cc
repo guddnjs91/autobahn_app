@@ -64,17 +64,14 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
         size_t count = file_size - ((size_t) nvm->block_size * lbn);
         count = ((count - 1) % nvm->block_size) + 1;
         
-        static char buffer[16384] __attribute__ ((__aligned__ (512)));
         off_t result = lseek(ve->fd, (off_t) nvm->block_size * lbn, SEEK_SET);
-        ssize_t read_bytes = read(ve->fd, buffer, count);
+        ssize_t read_bytes = read(ve->fd, &nvm->datablock_table[idx * nvm->block_size], count);
         if (read_bytes < 0) {
             printf("Read file failed\n");
             printf("Error no is : %d\n", errno);
             printf("Error description : %s\n", strerror(errno));
             assert(0);
         }
-        char *data_dst = nvm->datablock_table + idx * nvm->block_size;
-        memcpy(data_dst, buffer, count);
     }
 
     inode_free_count--;
