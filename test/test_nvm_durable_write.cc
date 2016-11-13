@@ -52,7 +52,7 @@ void *thread_nvm_durable_write_random(void *data)
     //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
         off_t rand_pos = g_rand_obj->unif_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
-        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
+//        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
         nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
 //        printf("TID%d: randon test running %ld out of %ld\n", tid, i, n);
     }

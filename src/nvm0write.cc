@@ -9,7 +9,8 @@
 #include "nvm0inode.h"
 #include "nvm0volume.h"
 #include "nvm0monitor.h"
-
+#include <assert.h>
+#include <errno.h>
 //private function declarations
 
 
@@ -62,9 +63,18 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
     if ((file_size-1) / nvm->block_size > lbn) {
         size_t count = file_size - ((size_t) nvm->block_size * lbn);
         count = ((count - 1) % nvm->block_size) + 1;
-
-        lseek(ve->fd, nvm->block_size * lbn, SEEK_SET);
-        read(ve->fd, &nvm->datablock_table[idx], count);
+        
+        static char buffer[16384] __attribute__ ((__aligned__ (512)));
+        off_t result = lseek(ve->fd, (off_t) nvm->block_size * lbn, SEEK_SET);
+        ssize_t read_bytes = read(ve->fd, buffer, count);
+        if (read_bytes < 0) {
+            printf("Read file failed\n");
+            printf("Error no is : %d\n", errno);
+            printf("Error description : %s\n", strerror(errno));
+            assert(0);
+        }
+        char *data_dst = nvm->datablock_table + idx * nvm->block_size;
+        memcpy(data_dst, buffer, count);
     }
 
     inode_free_count--;
@@ -147,6 +157,7 @@ size_t nvm_durable_write(
     uint32_t local_offset   = offset % nvm->block_size;
     uint32_t local_count    = 0;
 
+#ifdef WRITE_DEBUG
     /* let's write! */
     size_t bytes_written = 0;
     for (uint32_t lbn = lbn_start; lbn <= lbn_end;
@@ -176,6 +187,36 @@ size_t nvm_durable_write(
         pthread_mutex_unlock(&hash_node->inode->lock);
         pthread_mutex_unlock(&hash_node->mutex);
     }
+#else
+    ssize_t bytes_written = 0;
+    uint32_t lbn = lbn_start;
+    local_count = nvm->block_size - local_offset;
+    do {
+        /* get hash node and inode index with lbn */
+        struct hash_node *hash_node = get_hash_node_with_lock(ve, lbn);
+        inode_idx_t idx = get_inode_entry_idx_from_hash(hash_node);
 
+        /* let's write to a block */
+        pthread_mutex_lock(&hash_node->inode->lock);
+
+        int old_state = hash_node->inode->state;
+        hash_node->inode->state = INODE_STATE_DIRTY;
+
+        bytes_written += writeDataToNvmBlock(idx, local_offset, buf, local_count);
+
+        if (old_state != INODE_STATE_DIRTY) {
+            inode_dirty_count++;
+            inode_dirty_lfqueue[v_idx]->enqueue(idx);
+            monitor.dirty++;
+        }
+
+        pthread_mutex_unlock(&hash_node->inode->lock);
+        pthread_mutex_unlock(&hash_node->mutex);
+        
+        count -= bytes_written;
+        local_count = (count > nvm->block_size) ? nvm->block_size : count;
+        lbn++;
+    } while(lbn <= lbn_end);
+#endif
     return bytes_written;
 }
