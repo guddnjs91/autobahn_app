@@ -185,6 +185,7 @@ size_t nvm_durable_write(
         pthread_mutex_unlock(&hash_node->mutex);
     }
 #else
+    ssize_t write_count = 0;
     ssize_t bytes_written = 0;
     uint32_t lbn = lbn_start;
     local_count = nvm->block_size - local_offset;
@@ -199,7 +200,7 @@ size_t nvm_durable_write(
         int old_state = hash_node->inode->state;
         hash_node->inode->state = INODE_STATE_DIRTY;
 
-        bytes_written += writeDataToNvmBlock(idx, local_offset, buf, local_count);
+        write_count = writeDataToNvmBlock(idx, local_offset, buf, local_count);
 
         if (old_state != INODE_STATE_DIRTY) {
             inode_dirty_count++;
@@ -210,8 +211,10 @@ size_t nvm_durable_write(
         pthread_mutex_unlock(&hash_node->inode->lock);
         pthread_mutex_unlock(&hash_node->mutex);
         
-        count -= bytes_written;
-        local_count = (count > nvm->block_size) ? nvm->block_size : count;
+        count -= write_count;                                               /* leftover */
+        bytes_written += write_count;                                       /* cumulative written bytes */
+        local_count = (count > nvm->block_size) ? nvm->block_size : count;  /* either block size or leftover */
+        local_offset = 0;                                                   /* offset set to 0 */
         lbn++;
     } while(lbn <= lbn_end);
 #endif
