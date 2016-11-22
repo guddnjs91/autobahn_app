@@ -103,7 +103,7 @@ struct hash_node *get_hash_node_with_lock(
                 hash_node = new_hash_node(new_inode);
                 insert_hash_node(ve->hash_table, hash_node);
 
-            /* if has was invalid */
+            /* if hash was invalid */
             } else if (!hash_node->is_valid) {
                 validate_hash_node(hash_node, new_inode);
             }

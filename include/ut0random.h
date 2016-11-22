@@ -123,10 +123,10 @@ public:
             n_ = n;
         }
         
-        printf("Hello\n");
+        //printf("Hello\n");
         dist_ = new uint64_t[n];
         //dist_ = (uint64_t *)malloc(sizeof(uint64_t) * n);
-        printf("Hello\n");
+        //printf("Hello\n");
 
         /* sum = {1/1 + 1/2 + 1/3 + ... + 1/n} ,
            when theta goes to 0. */

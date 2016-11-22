@@ -25,6 +25,11 @@ flush_thread_func(
 
     while (sys_terminate == 0) {
         
+        //TODO: put more comments here
+        if (inode_dirty_count < kFlushLwm) {
+            usleep(10);
+            continue;
+        }
         if (unlikely(volume_inuse_lfqueue->get_size() == 0)) {
             pthread_yield();
             continue;
@@ -32,12 +37,11 @@ flush_thread_func(
 
         volume_idx_t v_idx = volume_inuse_lfqueue->dequeue();
         
-        if (inode_dirty_count >= kFlushLwm && inode_dirty_lfqueue[v_idx]->get_size() > 1) {
+        if (inode_dirty_lfqueue[v_idx]->get_size() > 1) {
             nvm_flush(v_idx, i_idxs, iov);
         }
 
         volume_inuse_lfqueue->enqueue(v_idx);
-
     }
     
     free(i_idxs);
@@ -66,19 +70,17 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
     for (i = 0; i < write_size; i++) {
         i_idxs[i] = inode_dirty_lfqueue[v_idx]->dequeue();
         inode = &nvm->inode_table[i_idxs[i]];
-        ///////////////////////////////////////
-//        pthread_mutex_lock(&inode->lock);
-        ////////////////////////////////////////////////////
-        if (pthread_mutex_trylock(&inode->lock)) {
-            //lock failed
-            inode_dirty_lfqueue[v_idx]->enqueue(i_idxs[i]);
-            i--;
 
-            if(--num_dirty_inodes < FLUSH_BATCH_SIZE) {
+        ////inode lock/////////////////////////////////////////
+        int error = pthread_mutex_trylock(&inode->lock);
+
+        if (error) { //lock failed
+            inode_dirty_lfqueue[v_idx]->enqueue(i_idxs[i--]);
+            if (--num_dirty_inodes < FLUSH_BATCH_SIZE) {
                 write_size--;
             }
         }
-        ////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////
     }
 
     indexToWrite = 0;

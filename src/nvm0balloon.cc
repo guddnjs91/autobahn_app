@@ -18,34 +18,28 @@ void fill_free_inodes(int index);
 bool try_lock_hash_node(struct hash_node *node);
 
 /**
-Balloon thread function wakes up when free inode shortage.*/
-void*
-balloon_thread_func(
-    void* data)
+ * Balloon thread function wakes up when free inode shortage.
+ */
+void* balloon_thread_func(void* data)
 {
-    int index = *(int *)data;
-
-    while(sys_terminate == 0) {
+    int index = *(int *) data;
+    while (sys_terminate == 0) {
         nvm_balloon(index);
     }
-    
     return NULL;
 }
 
 /**
  * When necessary, balloon function takes inodes from inode_clean_list and fills up the inode_free_lfqueue.
  */
-void
-nvm_balloon(
-    int index)
+void nvm_balloon(int index)
 {
     //TODO: uncomment this
-//    balloon_wait(index);
+    //balloon_wait(index);
 
-    if(sys_terminate == 1) {
+    if (sys_terminate == 1) {
         return;
     }
-
     fill_free_inodes(index);
 }
 
@@ -53,9 +47,7 @@ nvm_balloon(
  * Wait for writer's signal or after 10 seconds.
  * Writers will signal if there is no more free inodes.
  */
-void
-balloon_wait(
-    int index)
+void balloon_wait(int index)
 {
     struct timeval now;
     struct timespec timeout;
@@ -73,23 +65,21 @@ balloon_wait(
  * 2. invalidate the node in hash_table,
  * 3. and fill up the inode_free_lfqueue.
  */
-void
-fill_free_inodes(
-    int index)
+void fill_free_inodes(int index)
 {
-    while(!inode_clean_lfqueue[index]->is_empty()) {
+    while (!inode_clean_lfqueue[index]->is_empty()) {
 
         inode_idx_t idx = inode_clean_lfqueue[index]->dequeue();
         struct inode_entry* inode = &nvm->inode_table[idx];
 
-        if (inode->state != INODE_STATE_CLEAN)
-        {
+        if (inode->state != INODE_STATE_CLEAN) {
            continue; 
         }
 
         struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
-        if(!try_lock_hash_node(hash_node))
+        if (!try_lock_hash_node(hash_node)) {
             continue;
+        }
 
         logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
@@ -101,15 +91,20 @@ fill_free_inodes(
     }
 }
 
-bool try_lock_hash_node(struct hash_node *node)
+bool try_lock_hash_node(struct hash_node *hash_node)
 {
-    pthread_mutex_lock(&node->mutex);
-    
-    if(node->inode->state != INODE_STATE_CLEAN)
-    {
-        pthread_mutex_unlock(&node->mutex);
+    ////hash_node lock/////////////////////////////////////////
+    int error = pthread_mutex_trylock(&hash_node->mutex);
+
+    if (error) { //lock failed
+        return false; /* writer will make it dirty anyways */
+    }
+    ///////////////////////////////////////////////////////////
+
+    /* if the node became dirty just before the trylock */
+    if (hash_node->inode->state != INODE_STATE_CLEAN) {
+        pthread_mutex_unlock(&hash_node->mutex);
         return false;
     }
-
     return true;
 }
