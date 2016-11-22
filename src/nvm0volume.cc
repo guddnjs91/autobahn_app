@@ -75,6 +75,7 @@ volume_idx_t alloc_volume_entry_idx(uint32_t vid)
  */
 const char *get_filename(uint32_t vid)
 {
+    //TODO: the local variable, filename, can cause a problem when the function returns. 
     std::string filename;
 
 #ifdef MULTIPLE_STORAGE_ON
