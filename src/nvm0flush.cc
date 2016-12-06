@@ -104,15 +104,20 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
 
         //batch
         for (i = 0; i < batch_count; i++) {
-            iov[i].iov_base = nvm->datablock_table + nvm->block_size * i_idxs[indexToWrite+i];
+            block_idx_t block_index = nvm->inode_table[i_idxs[indexToWrite+i]].block_index;
+            iov[i].iov_base = nvm->block_table[block_index].data;
+            //iov[i].iov_base = nvm->block_table[i_idxs[indexToWrite+i]].data;
 
             off_t file_size = get_filesize(ve->vid);
             uint32_t lbn = (&nvm->inode_table[i_idxs[indexToWrite+i]])->lbn;
-//            if ((file_size - 1) / nvm->block_size == lbn) {
-//                iov[i].iov_len = ((file_size - 1) % nvm->block_size) + 1;
-//            } else {
+            
+            iov[i].iov_len  = nvm->block_size;
+
+            /*if ((file_size - 1) / nvm->block_size == lbn) {
+                iov[i].iov_len = ((file_size - 1) % nvm->block_size) + 1;
+            } else {
                 iov[i].iov_len  = nvm->block_size;
-//            }
+            }*/
         }
 
         //write

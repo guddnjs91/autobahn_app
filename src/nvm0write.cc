@@ -38,10 +38,18 @@ inline inode_idx_t get_inode_entry_idx_from_hash(struct hash_node *hash_node) {
     return (inode_idx_t) ((char *)hash_node->inode - (char *)nvm->inode_table)/sizeof(inode_entry);
 }
 
-size_t writeDataToNvmBlock(inode_idx_t idx, uint32_t offset, const char *ptr, size_t count)
+size_t writeDataToNvmBlock(inode_idx_t inode_index, uint32_t offset, const char *ptr, size_t count)
 {
-    char *data_dst = nvm->datablock_table + nvm->block_size * idx + offset; 
-    memcpy(data_dst, ptr, count);
+    inode_entry *inode = &nvm->inode_table[inode_index];
+    block_idx_t ownerless_block_index = inode->volume->block_index;
+    char *ownerless_block = nvm->block_table[ownerless_block_index].data;
+    //char *ownerless_block = nvm->block_table[inode_index].data + offset;
+
+    memcpy(ownerless_block, ptr, count);
+
+    inode->volume->block_index = inode->block_index;
+    inode->block_index = ownerless_block_index;
+
     //TODO:need cache line write guarantee
 
     return count;
@@ -58,6 +66,7 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
     inode->volume = ve;
     /* inode->state is already free */
     
+    /*
     //read file to nvm data block
     off_t file_size = get_filesize(ve->vid);
     if ((file_size-1) / nvm->block_size > lbn) {
@@ -72,7 +81,7 @@ inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
             printf("Error description : %s\n", strerror(errno));
             assert(0);
         }
-    }
+    }*/
 
     inode_free_count--;
 

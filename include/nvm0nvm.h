@@ -11,6 +11,7 @@
 //config (make changes here ONLY)
 #define DEFAULT_NVM_SIZE        (4 * 1024 * 1024 * 1024LLU)
 #define MAX_VOLUME_ENTRY        (128)
+#define MAX_OWNERLESS_BLOCK     (MAX_VOLUME_ENTRY)
 #define BLOCK_SIZE              (1 << 14)
 
 #define DEFAULT_NUM_FREE        (2)
@@ -19,7 +20,7 @@
 #define DEFAULT_NUM_BALLOON     (8)
 
 #define DEFAULT_FREE_MIN_COUNT  (100)         // if it's 100, then 100 left is enough, 99 is not enough.
-#define DEFAULT_FLUSH_LWM       (1)         // this is not currently used. it is instead set to max_inode_entry
+#define DEFAULT_FLUSH_LWM       (1)         // this is not currently used. it is instead set to max_inode_entry * p
 #define DEFAULT_SYNC_LWM        (1)
 
 #define FLUSH_BATCH_SIZE        (1024)      // maximum batch size for writev is 1024
@@ -48,12 +49,13 @@ struct nvm_metadata {
     uint64_t    nvm_size;
     uint32_t    max_volume_entry;
     uint32_t    max_inode_entry;
+    uint32_t    max_ownerless_block;
     uint32_t    block_size;
 
     //Base address of each table
     volume_entry*   volume_table;
     inode_entry*    inode_table;
-    char*           datablock_table;
+    block_entry*    block_table;
 };
 
 //Global variables
@@ -70,23 +72,31 @@ extern pthread_t monitor_thread;
 //Conditional variable for system termination
 extern int sys_terminate; 
 
-//lfqueues
+//=================== lfqueues ====================//
+/* for volumes */
 extern lfqueue<volume_idx_t>* volume_free_lfqueue;
 extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
+/* for free inodes */
 extern lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
 extern atomic<uint_fast64_t> free_enqueue_idx;
 extern atomic<uint_fast64_t> free_dequeue_idx;
 extern atomic<inode_idx_t>   inode_free_count;
 
+/* for dirty inodes */
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 extern atomic<inode_idx_t>   inode_dirty_count;
 
+/* for sync inodes */
 extern lfqueue<inode_idx_t>* inode_sync_lfqueue[DEFAULT_NUM_SYNCER];
 extern atomic<uint_fast64_t> sync_queue_idx;
 
+/* for clean inodes */
 extern lfqueue<inode_idx_t>* inode_clean_lfqueue[DEFAULT_NUM_BALLOON];
 extern atomic<uint_fast64_t> clean_queue_idx;
+
+/* for ownerless blocks */
+extern lfqueue<inode_idx_t>* block_ownerless_lfqueue;
 
 /* functions */
 

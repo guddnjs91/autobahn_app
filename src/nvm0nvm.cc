@@ -11,6 +11,7 @@
 #include "nvm0nvm.h"
 #include "nvm0lfqueue.h"
 #include "nvm0monitor.h"
+#include "nvm0block.h"
 
 //options
 
@@ -92,28 +93,34 @@ nvm_structure_build()
                                    automatically detect nvm space & size */
 
     /* initialize and divide up the nvm structure */
-    nvm->nvm_size           = NVM_SIZE;         /* this could be moved up if system can 
-                                                   automatically detects the size of nvm. */
-    nvm->max_volume_entry   = MAX_VOLUME_ENTRY; /* recommended value = nvm_size / avg_file_size */
-    nvm->block_size         = BLOCK_SIZE;       /* this should be 16KiB (SSD alignment) */
+    nvm->nvm_size           = NVM_SIZE;             /* this could be moved up if system can 
+                                                       automatically detects the size of nvm. */
+    nvm->max_volume_entry   = MAX_VOLUME_ENTRY;     /* recommended value = nvm_size / avg_file_size */
+    nvm->max_ownerless_block= MAX_OWNERLESS_BLOCK;  /* recommended value = MAX_VOLUME_ENTRY */
+    nvm->block_size         = BLOCK_SIZE;           /* this should be 16KiB (SSD alignment) */
     
-    int unused_end_space    = ((uint64_t)nvm + nvm->nvm_size) % nvm->block_size;        /* yeah, it's complicated */
-    nvm->max_inode_entry    =  (  nvm->nvm_size                                         /*  free space  */
+    int unused_end_space    = ((uint64_t)nvm + nvm->nvm_size) % nvm->block_size;   /* yeah, it's complicated */
+    uint32_t max_block      =  (  nvm->nvm_size                                         /*  free space  */
                                 - sizeof(struct nvm_metadata)                           /* ----over---- */
                                 - sizeof(struct volume_entry) * nvm->max_volume_entry   /*  entry size  */
                                 - unused_end_space )                                    /* => possible  */
                              / ( sizeof(struct inode_entry) + nvm->block_size );        /*    number of */
                                                                                         /*    entries   */
+    nvm->max_inode_entry    = max_block - nvm->max_ownerless_block;
 
-    nvm->volume_table       = (struct volume_entry*) (nvm + 1);
-    nvm->inode_table        = (struct inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
-    nvm->datablock_table    = (char *)               (  (uint64_t)(nvm->inode_table + nvm->max_inode_entry)
-                                                      - (uint64_t)(nvm->inode_table + nvm->max_inode_entry) % nvm->block_size
-                                                      + nvm->block_size );
+    nvm->volume_table   = (volume_entry*) (nvm + 1);
+    nvm->inode_table    = (inode_entry*)  (nvm->volume_table + nvm->max_volume_entry);
+    nvm->block_table    = (block_entry*)  (  (uint64_t)(nvm->inode_table + max_block)
+                                           - (uint64_t)(nvm->inode_table + max_block) % nvm->block_size
+                                           + nvm->block_size );
 
     //Initialize all inode_entries to state_free
-    for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
+    for (inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
+        nvm->inode_table[i].block_index = i;
+    }
+    for (volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
+        nvm->volume_table[i].block_index = i + nvm->max_inode_entry;
     }
 }
 
@@ -283,7 +290,7 @@ nvm_system_close()
 //            }
 
             lseek(inode->volume->fd, (off_t) nvm->block_size * inode->lbn, SEEK_SET);
-            write(inode->volume->fd, nvm->datablock_table + nvm->block_size * idx, count);
+            write(inode->volume->fd, nvm->block_table[inode->block_index].data, count);
         }
     }
 
@@ -357,7 +364,7 @@ recovery_start()
             vid = inode->volume->vid;
             fd = open(("VOL_" + to_string(vid) + ".txt").c_str(), O_RDWR | O_CREAT, 0644);
             lseek(fd, nvm->block_size * inode->lbn, SEEK_SET);
-            write(fd, nvm->datablock_table + nvm->block_size * idx, nvm->block_size);
+            write(fd, nvm->block_table[inode->block_index].data, nvm->block_size);
             close(fd);
         }
     }
@@ -394,7 +401,7 @@ print_nvm_info()
     printf("Volume Table Size : %u\n", (unsigned int) sizeof(struct volume_entry) * nvm->max_volume_entry);
     printf("Inode Table Addr  : %p\n", nvm->inode_table);
     printf("Inode Table Size  : %u\n", (unsigned int) sizeof(struct inode_entry) * nvm->max_inode_entry);
-    printf("Data Block Table  : %p\n", nvm->datablock_table);
+    printf("Data Block Table  : %p\n", nvm->block_table);
     printf("Block Table Size  : %llu\n", (long long unsigned int) nvm->block_size * 
                                          (long long unsigned int) nvm->max_inode_entry);
 //    printf("Volume Table Addr : %llu\n", 
@@ -402,7 +409,7 @@ print_nvm_info()
 //    printf("Inode Table Addr  : %llu\n", 
 //            (long long unsigned int) nvm->inode_table - (long long unsigned int) nvm);
 //    printf("Data Block Table  : %llu\n", 
-//            (long long unsigned int) nvm->datablock_table - (long long unsigned int) nvm);
+//            (long long unsigned int) nvm->block_table - (long long unsigned int) nvm);
     printf("====================NVM Information====================\n");
 }
 
