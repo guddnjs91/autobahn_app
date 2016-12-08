@@ -14,12 +14,11 @@
 #define MAX_OWNERLESS_BLOCK     (MAX_VOLUME_ENTRY)
 #define BLOCK_SIZE              (1 << 14)
 
-#define DEFAULT_NUM_FREE        (2)
 #define DEFAULT_NUM_FLUSH       (16)
 #define DEFAULT_NUM_SYNCER      (2)
 #define DEFAULT_NUM_BALLOON     (8)
 
-#define DEFAULT_FREE_MIN_COUNT  (100)         // if it's 100, then 100 left is enough, 99 is not enough.
+#define DEFAULT_FREE_MIN_COUNT  (100)       // if it's 100, then 100 left is enough, 99 is not enough.
 #define DEFAULT_FLUSH_LWM       (1)         // this is not currently used. it is instead set to max_inode_entry * p
 #define DEFAULT_SYNC_LWM        (1)
 
@@ -27,7 +26,7 @@
 
 #define DEFAULT_SYNC_OPTION     (1)
 #define DEFAULT_MONITOR_OPTION  (1)
-#define MONITORING_AMOUNT       (7)
+#define MONITORING_AMOUNT       (16)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -78,10 +77,7 @@ extern lfqueue<volume_idx_t>* volume_free_lfqueue;
 extern lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
 /* for free inodes */
-extern lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
-extern atomic<uint_fast64_t> free_enqueue_idx;
-extern atomic<uint_fast64_t> free_dequeue_idx;
-extern atomic<inode_idx_t>   inode_free_count;
+extern lfqueue<inode_idx_t>* inode_free_lfqueue;
 
 /* for dirty inodes */
 extern lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];

@@ -49,15 +49,12 @@ void printLFQueueGauge()
     printf("    [clean LFQueue]                 ");
     printf("\n");
 
-    for(int i = MONITORING_AMOUNT; i >= 0; i--)
+    for(int i = MONITORING_AMOUNT - 1; i >= 0; i--)
     {
-        if(DEFAULT_NUM_FREE - 1 < i) {
-                printf("                                    ");
-        } else {
-            printf("[%2d]", i);
-            inode_free_lfqueue[i]->monitor();
-            printf("  ");
-        }
+        /* free */
+        printf("                                    ");
+
+        /* flush */
         if((int)NUM_FLUSH - 1 < i) {
                 printf("                                    ");
         } else {
@@ -65,6 +62,8 @@ void printLFQueueGauge()
             inode_dirty_lfqueue[i]->monitor();
             printf("  ");
         }
+
+        /* sync */
         if(DEFAULT_NUM_SYNCER - 1 < i) {
                 printf("                                    ");
         } else {
@@ -72,6 +71,8 @@ void printLFQueueGauge()
             inode_sync_lfqueue[i]->monitor();
             printf("  ");
         }
+        
+        /* reclaim */
         if(DEFAULT_NUM_BALLOON - 1 < i) {
                 printf("                                    ");
         } else {
@@ -86,12 +87,9 @@ void printLFQueueGauge()
     uint64_t total_size = 0;
     double fullness = 0;
 
-    for(int i = 0; i < DEFAULT_NUM_FREE; i++)
-    {
-        total_size += inode_free_lfqueue[i]->get_size();
-    }
+    total_size += inode_free_lfqueue->get_size();
  
-    fullness = (double)total_size / (double)nvm->max_inode_entry * 100;
+    fullness = (double) total_size / nvm->max_inode_entry * 100;
 
     inode_dirty_lfqueue[0]->coloring(fullness);
 
@@ -173,7 +171,7 @@ void printLFQueueGauge()
     printf(" %7.3lf %%", fullness);
     printf("\033[0m  ");
 
-    for(int i = 0; i < MONITORING_AMOUNT + 2; i++)
+    for(int i = 0; i < MONITORING_AMOUNT + 1; i++)
     {
         printf("\033[1A\r");
     }
@@ -194,7 +192,7 @@ void printThroughput()
     double sync = (double)monitor.sync.load() * 16 * 1024 / unitSize / time_interval;
     double clean = (double)monitor.clean.load() * 16 * 1024 / unitSize / time_interval;
 
-    for(int i = 0; i < MONITORING_AMOUNT + 3; i++)
+    for(int i = 0; i < MONITORING_AMOUNT + 2; i++)
     {
         printf("\n \r");
     }
@@ -217,7 +215,7 @@ void printThroughput()
 
     printf("\033[0m");
 
-    for(int i = 0; i < MONITORING_AMOUNT + 3; i++)
+    for(int i = 0; i < MONITORING_AMOUNT + 2; i++)
     {
         printf("\033[1A \r");
     }

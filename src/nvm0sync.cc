@@ -12,9 +12,7 @@ void nvm_sync(int index);
 
 /**
  * Sync thread function ... */
-void*
-sync_thread_func(
-    void* data)
+void* sync_thread_func(void* data)
 {
     int index = *(int *)data;
 
@@ -22,25 +20,16 @@ sync_thread_func(
 
         usleep( 10 * 1000 );
 
-#ifdef TEMP_FIX
-#else
-        if(inode_sync_lfqueue[index]->get_size() >= DEFAULT_SYNC_LWM
-//            MIN_SYNC_FREQUENCY + 
-//            inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->get_size() / (nvm->max_inode_entry / DEFAULT_NUM_FREE)  * (nvm->max_inode_entry / DEFAULT_NUM_SYNCER - MIN_SYNC_FREQUENCY)
-        ) {
+        if(inode_sync_lfqueue[index]->get_size() >= DEFAULT_SYNC_LWM) {
             nvm_sync(index);
         }
-#endif
     }
-    
     return NULL;
 }
 
 /**
  * Sync ... */
-void
-nvm_sync(
-    int index)
+void nvm_sync(int index)
 {
     uint_fast64_t clean_idx;
     uint32_t i;

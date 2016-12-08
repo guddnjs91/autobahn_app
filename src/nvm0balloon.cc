@@ -15,7 +15,7 @@
 void nvm_balloon(int index);
 void balloon_wait(int index);
 void fill_free_inodes(int index);
-bool try_lock_hash_node(struct hash_node *node);
+bool trylock_hash_node(struct hash_node *node);
 
 /**
  * Balloon thread function wakes up when free inode shortage.
@@ -69,42 +69,46 @@ void fill_free_inodes(int index)
 {
     while (!inode_clean_lfqueue[index]->is_empty()) {
 
+        /* 1. get inode from clean queue */
         inode_idx_t idx = inode_clean_lfqueue[index]->dequeue();
         struct inode_entry* inode = &nvm->inode_table[idx];
 
+        /* 2. check if really clean & lock */
+        /* filter 1 */
         if (inode->state != INODE_STATE_CLEAN) {
-           continue; 
+            continue; 
         }
-
+        /* get hash node */
         struct hash_node* hash_node = search_hash_node(inode->volume->hash_table, inode->lbn);
-        if (!try_lock_hash_node(hash_node)) {
+        /* filter 2 */
+        if (!trylock_hash_node(hash_node)) {
             continue;
         }
 
+        /* 3. invalidate the hash node */
         logical_delete_hash_node(inode->volume->hash_table, hash_node);
 
+        /* 4. insert the inode into free queue */
         inode->state = INODE_STATE_FREE;
-        inode_free_count++;
-        inode_free_lfqueue[free_enqueue_idx++ % DEFAULT_NUM_FREE]->enqueue(idx);
+        inode_free_lfqueue->enqueue(idx);
         pthread_mutex_unlock(&hash_node->mutex);
         monitor.free++;
     }
 }
 
-bool try_lock_hash_node(struct hash_node *hash_node)
+inline bool trylock_hash_node(struct hash_node *hash_node)
 {
-    ////hash_node lock/////////////////////////////////////////
+    /* hash_node trylock */
     int error = pthread_mutex_trylock(&hash_node->mutex);
-
-    if (error) { //lock failed
+    if (error) { //trylock failed
         return false; /* writer will make it dirty anyways */
     }
-    ///////////////////////////////////////////////////////////
 
     /* if the node became dirty just before the trylock */
     if (hash_node->inode->state != INODE_STATE_CLEAN) {
         pthread_mutex_unlock(&hash_node->mutex);
         return false;
     }
+
     return true;
 }

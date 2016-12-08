@@ -22,7 +22,7 @@ bool isValidNode(struct hash_node *node)
 bool isFreeLFQueueEnough()
 {
     //TODO: synchronize getting free_idx time
-    return inode_free_count >= DEFAULT_FREE_MIN_COUNT ? true : false;
+    return inode_free_lfqueue->get_size() >= DEFAULT_FREE_MIN_COUNT ? true : false;
 }
 
 void awakeBalloonThread()
@@ -57,35 +57,12 @@ size_t writeDataToNvmBlock(inode_idx_t inode_index, uint32_t offset, const char 
 
 inode_idx_t getFreeInodeFromFreeLFQueue(struct volume_entry *ve, uint32_t lbn)
 {
-    //TODO: synchronize getting free_idx time
-    uint64_t free_idx = free_dequeue_idx.fetch_add(1);
-    inode_idx_t idx = inode_free_lfqueue[free_idx % DEFAULT_NUM_FREE]->dequeue();
+    inode_idx_t idx = inode_free_lfqueue->dequeue();
     struct inode_entry* inode = &nvm->inode_table[idx];
 
     inode->lbn = lbn;
     inode->volume = ve;
     /* inode->state is already free */
-    
-    /*
-    //read file to nvm data block
-    off_t file_size = get_filesize(ve->vid);
-    if ((file_size-1) / nvm->block_size > lbn) {
-
-		// TODO: fix count
-		size_t count = file_size - ((size_t) nvm->block_size * lbn);
-        count = ((count - 1) % nvm->block_size) + 1;
-        
-        off_t result = lseek(ve->fd, (off_t) nvm->block_size * lbn, SEEK_SET);
-        ssize_t read_bytes = read(ve->fd, &nvm->datablock_table[idx * nvm->block_size], count);
-        if (read_bytes < 0) {
-            printf("Read file failed\n");
-            printf("Error no is : %d\n", errno);
-            printf("Error description : %s\n", strerror(errno));
-            assert(0);
-        }
-    }*/
-
-    inode_free_count--;
 
     return idx;
 }

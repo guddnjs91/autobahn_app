@@ -30,10 +30,7 @@ lfqueue<volume_idx_t>* volume_free_lfqueue;
 lfqueue<volume_idx_t>* volume_inuse_lfqueue;
 
 /* inode lfqueues */
-lfqueue<inode_idx_t>* inode_free_lfqueue[DEFAULT_NUM_FREE];
-atomic<uint_fast64_t> free_enqueue_idx;
-atomic<uint_fast64_t> free_dequeue_idx;
-atomic<inode_idx_t>   inode_free_count;
+lfqueue<inode_idx_t>* inode_free_lfqueue;
 
 lfqueue<inode_idx_t>* inode_dirty_lfqueue[MAX_VOLUME_ENTRY];
 atomic<inode_idx_t>   inode_dirty_count;
@@ -161,9 +158,7 @@ nvm_system_init()
 
     /* inode lfqueues */
     /* free lfqueue */
-    for(int i = 0; i < DEFAULT_NUM_FREE; i++) {
-        inode_free_lfqueue[i]  = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
-    }
+    inode_free_lfqueue = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
     /* dirty lfqueue */
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         inode_dirty_lfqueue[i] = new lfqueue<inode_idx_t>(nvm->max_inode_entry);
@@ -179,11 +174,10 @@ nvm_system_init()
     }
 
     /* fill free lfqueue */
-    inode_free_count = nvm->max_inode_entry;
     for(inode_idx_t i = 0; i < nvm->max_inode_entry; i++) {
         nvm->inode_table[i].state = INODE_STATE_FREE;
         nvm->inode_table[i].lock = PTHREAD_MUTEX_INITIALIZER;
-        inode_free_lfqueue[i%DEFAULT_NUM_FREE]->enqueue(i);
+        inode_free_lfqueue->enqueue(i);
     }
 
     //locks
@@ -195,8 +189,6 @@ nvm_system_init()
     //create threads
     kFlushLwm = nvm->max_inode_entry * 0.1;
     sys_terminate = 0;
-    free_enqueue_idx = 0;
-    free_dequeue_idx = 0;
     for(uint32_t i = 0; i < NUM_FLUSH; i++) {
         pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);
     }
@@ -317,9 +309,7 @@ nvm_system_close()
     delete volume_free_lfqueue;
     delete volume_inuse_lfqueue;
 
-    for(int i = 0; i < DEFAULT_NUM_FREE; i++) {
-        delete inode_free_lfqueue[i];
-    }
+    delete inode_free_lfqueue;
     for(volume_idx_t i = 0; i < nvm->max_volume_entry; i++) {
         delete inode_dirty_lfqueue[i];
     }
