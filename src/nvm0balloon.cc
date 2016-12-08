@@ -12,7 +12,6 @@
 #include "nvm0monitor.h"
 
 //private function declarations
-void nvm_balloon(int index);
 void balloon_wait(int index);
 void fill_free_inodes(int index);
 bool trylock_hash_node(struct hash_node *node);
@@ -24,23 +23,9 @@ void* balloon_thread_func(void* data)
 {
     int index = *(int *) data;
     while (sys_terminate == 0) {
-        nvm_balloon(index);
+        fill_free_inodes(index);
     }
     return NULL;
-}
-
-/**
- * When necessary, balloon function takes inodes from inode_clean_list and fills up the inode_free_lfqueue.
- */
-void nvm_balloon(int index)
-{
-    //TODO: uncomment this
-    //balloon_wait(index);
-
-    if (sys_terminate == 1) {
-        return;
-    }
-    fill_free_inodes(index);
 }
 
 /**
@@ -109,6 +94,5 @@ inline bool trylock_hash_node(struct hash_node *hash_node)
         pthread_mutex_unlock(&hash_node->mutex);
         return false;
     }
-
     return true;
 }

@@ -5,10 +5,7 @@
  */
 struct hash_table *new_hash_table()
 {
-    struct hash_table *hash_table = new struct hash_table;
-    hash_table->invalid_list = new_list();
-
-    return hash_table;
+    return new struct hash_table;
 }
 
 /**
@@ -17,24 +14,22 @@ struct hash_table *new_hash_table()
  */
 struct hash_node *new_hash_node(inode_entry* inode)
 {
-    struct hash_node *node = new struct hash_node;
+    struct hash_node *hash_node = new struct hash_node;
 
-    node->inode = inode;
-    node->lbn = inode->lbn;
-    node->is_valid = true;
-    node->mutex = PTHREAD_MUTEX_INITIALIZER;
-    node->prev = nullptr;
-    node->next = nullptr;
+    hash_node->inode    = inode;
+    hash_node->lbn      = inode->lbn;
+    hash_node->is_valid = true;
+    hash_node->mutex    = PTHREAD_MUTEX_INITIALIZER;
 
-    return node;
+    return hash_node;
 }
 
 void validate_hash_node(
-        struct hash_node *hash_node,
-        struct inode_entry *inode)
+        struct hash_node    *hash_node,
+        struct inode_entry  *inode)
 {
-    hash_node->inode = inode;
-    hash_node->lbn = inode->lbn;
+    hash_node->inode    = inode;
+    hash_node->lbn      = inode->lbn;
     hash_node->is_valid = true;
 }
 
@@ -43,9 +38,9 @@ void validate_hash_node(
  */
 void insert_hash_node(
         struct hash_table *table,
-        struct hash_node *node)
+        struct hash_node  *hash_node)
 {
-    table->map[node->inode->lbn] = node;
+    table->map[hash_node->inode->lbn] = hash_node;
 }
 
 /**
@@ -56,10 +51,10 @@ struct hash_node *search_hash_node(
         struct hash_table *table,
         uint32_t lbn)
 {
-    struct hash_node *node = nullptr;
-    table->map.find(lbn, node);
+    struct hash_node *hash_node = nullptr;
+    table->map.find(lbn, hash_node);
 
-    return node;
+    return hash_node;
 }
 
 /**
@@ -67,11 +62,10 @@ struct hash_node *search_hash_node(
  */
 void logical_delete_hash_node(
         struct hash_table *table,
-        struct hash_node *node)
+        struct hash_node *hash_node)
 {
-    node->inode = nullptr;
-    node->is_valid = false;
-    push_back_list_node(table->invalid_list, node);
+    hash_node->inode = nullptr;
+    hash_node->is_valid = false;
 }
 
 /**
