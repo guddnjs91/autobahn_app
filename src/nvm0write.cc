@@ -43,9 +43,8 @@ size_t writeDataToNvmBlock(inode_idx_t inode_index, uint32_t offset, const char 
     inode_entry *inode = &nvm->inode_table[inode_index];
     block_idx_t ownerless_block_index = inode->volume->block_index;
     char *ownerless_block = nvm->block_table[ownerless_block_index].data;
-    //char *ownerless_block = nvm->block_table[inode_index].data + offset;
 
-    memcpy(ownerless_block, ptr, count);
+    memcpy(ownerless_block + offset, ptr, count);
 
     inode->volume->block_index = inode->block_index;
     inode->block_index = ownerless_block_index;
@@ -132,36 +131,33 @@ size_t nvm_durable_write(
         const char  *buf,   /* !<in: buffer */
         size_t      count)  /* !<in: size of the buffer */
 {
+    /* exception handling */
+    //vid
+    //offset?
+    //buf?
+    //count <= 0
+    //count % block_size != 0
+
     /* get volume entry using vid. */
     volume_idx_t    v_idx   = get_volume_entry_idx(vid);
     volume_entry    *ve     = get_volume_entry(v_idx);
 
-    /* find the range of blocks to write */
-    uint32_t lbn_start      = offset / nvm->block_size;
-    uint32_t lbn_end        = (offset + count - 1) / nvm->block_size;
-    uint32_t local_offset   = offset % nvm->block_size;
-    uint32_t local_count    = 0;
-
-#ifdef WRITE_DEBUG
     /* let's write! */
+    uint32_t curr_lbn = offset / nvm->block_size;
     size_t bytes_written = 0;
-    for (uint32_t lbn = lbn_start; lbn <= lbn_end;
-            lbn++, 
-            count= count - local_count, 
-            local_offset = 0) {
-        uint32_t local_count = (count > nvm->block_size - local_offset) ? (nvm->block_size - local_offset) : count;
+    for (uint32_t i = 0; i < count / nvm->block_size; i++, curr_lbn++) {
 
-        /* get hash node and inode index with lbn */
-        struct hash_node *hash_node = get_hash_node_with_lock(ve, lbn);
+        /* 1. get hash node and inode index with lbn */
+        struct hash_node *hash_node = get_hash_node_with_lock(ve, curr_lbn);
         inode_idx_t idx = get_inode_entry_idx_from_hash(hash_node);
 
-        /* let's write to a block */
-        pthread_mutex_lock(&hash_node->inode->lock);
+        /* 2. let's write to a block */
+        pthread_mutex_lock(&hash_node->inode->lock);    /* critical section start */
 
         int old_state = hash_node->inode->state;
         hash_node->inode->state = INODE_STATE_DIRTY;
 
-        bytes_written += writeDataToNvmBlock(idx, local_offset, buf, local_count);
+        bytes_written += writeDataToNvmBlock(idx, 0, buf + nvm->block_size * i, nvm->block_size);
 
         if (old_state != INODE_STATE_DIRTY) {
             inode_dirty_count++;
@@ -169,42 +165,9 @@ size_t nvm_durable_write(
             monitor.dirty++;
         }
 
-        pthread_mutex_unlock(&hash_node->inode->lock);
+        pthread_mutex_unlock(&hash_node->inode->lock);  /* critical section finish */
+
         pthread_mutex_unlock(&hash_node->mutex);
     }
-#else
-    ssize_t write_count = 0;
-    ssize_t bytes_written = 0;
-    uint32_t lbn = lbn_start;
-    local_count = nvm->block_size - local_offset;
-    do {
-        /* get hash node and inode index with lbn */
-        struct hash_node *hash_node = get_hash_node_with_lock(ve, lbn);
-        inode_idx_t idx = get_inode_entry_idx_from_hash(hash_node);
-
-        /* let's write to a block */
-        pthread_mutex_lock(&hash_node->inode->lock);
-
-        int old_state = hash_node->inode->state;
-        hash_node->inode->state = INODE_STATE_DIRTY;
-
-        write_count = writeDataToNvmBlock(idx, local_offset, buf, local_count);
-
-        if (old_state != INODE_STATE_DIRTY) {
-            inode_dirty_count++;
-            inode_dirty_lfqueue[v_idx]->enqueue(idx);
-            monitor.dirty++;
-        }
-
-        pthread_mutex_unlock(&hash_node->inode->lock);
-        pthread_mutex_unlock(&hash_node->mutex);
-        
-        count -= write_count;                                               /* leftover */
-        bytes_written += write_count;                                       /* cumulative written bytes */
-        local_count = (count > nvm->block_size) ? nvm->block_size : count;  /* either block size or leftover */
-        local_offset = 0;                                                   /* offset set to 0 */
-        lbn++;
-    } while(lbn <= lbn_end);
-#endif
     return bytes_written;
 }

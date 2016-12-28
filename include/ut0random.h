@@ -22,6 +22,8 @@
 #endif
 
 #define DEFAULT_DISTR_N (5 * 1024 * 1024)
+#define THETA (0.25)                // For zipf distribution
+#define DEFAULT_N (5 * 1024 * 1024) // For zipf distribution
 
 class Random {
 

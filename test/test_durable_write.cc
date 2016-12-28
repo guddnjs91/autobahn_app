@@ -58,13 +58,9 @@ void *thread_durable_write_random(void *data)
 
     fd = open( get_filename(tid), O_RDWR | O_CREAT | O_DIRECT | O_SYNC, 0666);
 
-    srand(time(NULL));
-
-    //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
-        off_t rand_pos = g_rand_obj->unif_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
-        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
-        lseek(fd, rand_pos, SEEK_SET);
+        off_t pos = g_rand_obj->unif_rand64() % n;
+        lseek(fd, pos * BYTES_PER_WRITE, SEEK_SET);
         write(fd, buffer, BYTES_PER_WRITE);
         fsync(fd);
         fsync(fd);
@@ -98,13 +94,9 @@ void *thread_durable_write_skewed(void *data)
     
     fd = open( get_filename(tid), O_RDWR | O_CREAT | O_DIRECT | O_SYNC, 0666);
 
-    srand(time(NULL));
-
-    //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
-        off_t rand_pos = g_rand_obj->skew_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
-        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
-        lseek(fd, rand_pos, SEEK_SET);
+        off_t pos = g_rand_obj->skew_rand64() % n;
+        lseek(fd, pos * BYTES_PER_WRITE, SEEK_SET);
         write(fd, buffer, BYTES_PER_WRITE);
         fsync(fd);
         fsync(fd);
@@ -119,6 +111,8 @@ void test_durable_write_skewed()
 {
     pthread_t write_thread[kNumThread];
     int tid[kNumThread];
+
+    g_rand_obj->skew_init(THETA, DEFAULT_N);
 
     for (uint32_t i = 0; i < kNumThread; i++) {
         tid[i] = i + 1;

@@ -23,6 +23,9 @@ void* balloon_thread_func(void* data)
 {
     int index = *(int *) data;
     while (sys_terminate == 0) {
+
+        usleep( 10 * 1000 );
+
         fill_free_inodes(index);
     }
     return NULL;

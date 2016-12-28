@@ -9,8 +9,6 @@
 #include "ut0random.h"
 #include "nvm0nvm.h"
 
-#define THETA (0.25)                        // For zipf distribution
-#define DEFAULT_N (5 * 1024 * 1024)         // For zipf distribution
 Random * g_rand_obj; // Global Random class instance pointer. 
 
 /**
@@ -21,7 +19,7 @@ void *thread_nvm_durable_write_append(void *data)
     uint32_t tid = *((uint32_t *)data);
 
     for (uint64_t i = 0; i < n; i++) {
-        nvm_durable_write(tid, (off_t) (i * BYTES_PER_WRITE) , buffer, BYTES_PER_WRITE);
+        nvm_durable_write(tid, (off_t) (i * BYTES_PER_WRITE), buffer, BYTES_PER_WRITE);
     }
 
     return NULL;
@@ -47,14 +45,9 @@ void *thread_nvm_durable_write_random(void *data)
     uint64_t n = TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
-    srand(time(NULL));
-
-    //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
-        off_t rand_pos = g_rand_obj->unif_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
-//        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
-        nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
-//        printf("TID%d: randon test running %ld out of %ld\n", tid, i, n);
+        off_t pos = g_rand_obj->unif_rand64() % n;
+        nvm_durable_write(tid, pos * BYTES_PER_WRITE, buffer, BYTES_PER_WRITE);
     }
 
     return NULL;
@@ -79,12 +72,9 @@ void *thread_nvm_durable_write_skewed(void *data)
     uint64_t n = TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE;
     uint32_t tid = *((uint32_t *)data);
 
-    //TODO: fix to generate 64bit random value
     for (uint64_t i = 0; i < n; i++) {
-        off_t rand_pos = g_rand_obj->skew_rand64() % (TOTAL_FILE_SIZE / kNumThread - BYTES_PER_WRITE * 2);
-        rand_pos = rand_pos - (rand_pos % BYTES_PER_WRITE);
-        nvm_durable_write(tid, rand_pos , buffer, BYTES_PER_WRITE);
-//        printf("TID%d: randon test running %ld out of %ld\n", tid, i, n);
+        off_t pos = g_rand_obj->skew_rand64() % n;
+        nvm_durable_write(tid, pos * BYTES_PER_WRITE, buffer, BYTES_PER_WRITE);
     }
 
     return NULL;
@@ -94,7 +84,7 @@ void test_nvm_durable_write_skewed()
 {
     pthread_t write_thread[kNumThread];
     int tid[kNumThread];
-    uint64_t range = TOTAL_FILE_SIZE /  BYTES_PER_WRITE;
+
     g_rand_obj->skew_init(THETA, DEFAULT_N);
 
     for (uint32_t i = 0; i < kNumThread; i++) {
