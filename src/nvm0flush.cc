@@ -106,18 +106,10 @@ nvm_flush(volume_idx_t v_idx, inode_idx_t* i_idxs, struct iovec* iov)
         for (i = 0; i < batch_count; i++) {
             block_idx_t block_index = nvm->inode_table[i_idxs[indexToWrite+i]].block_index;
             iov[i].iov_base = nvm->block_table[block_index].data;
-            //iov[i].iov_base = nvm->block_table[i_idxs[indexToWrite+i]].data;
 
-            off_t file_size = get_filesize(ve->vid);
             uint32_t lbn = (&nvm->inode_table[i_idxs[indexToWrite+i]])->lbn;
             
             iov[i].iov_len  = nvm->block_size;
-
-            /*if ((file_size - 1) / nvm->block_size == lbn) {
-                iov[i].iov_len = ((file_size - 1) % nvm->block_size) + 1;
-            } else {
-                iov[i].iov_len  = nvm->block_size;
-            }*/
         }
 
         //write
@@ -129,28 +121,6 @@ extern uint64_t kFlushLwm;
             exit(0);
         }
 
-#ifdef TEMP_FIX
-        // In this case, sync() is processed in flush thread.
-        uint_fast64_t clean_idx;
-
-        if(likely(SYNC_OPTION)) {
-            sync();
-        }
-
-        for (i = 0; i < batch_count; i++) {
-            inode_idx_t idx = i_idxs[indexToWrite+i];
-            inode = &nvm->inode_table[idx];
-
-            /* hands off dirty */
-            inode_dirty_count--;
-
-            /* hands on clean */
-            inode->state = INODE_STATE_CLEAN;
-            inode_clean_lfqueue[ clean_queue_idx++ % DEFAULT_NUM_BALLOON ]->enqueue(idx);
-            monitor.clean++;
-            pthread_mutex_unlock(&inode->lock);
-        }
-#else
         //enqueue into sync
         for(i = 0; i < batch_count; i++) {
             inode_idx_t i_idx = i_idxs[indexToWrite+i];
@@ -164,7 +134,6 @@ extern uint64_t kFlushLwm;
             inode_sync_lfqueue[ sync_queue_idx++ % DEFAULT_NUM_SYNCER ]->enqueue(i_idx);
             monitor.sync++;
         }
-#endif
         indexToWrite += batch_count;
     }
 }
