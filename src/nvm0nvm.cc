@@ -187,7 +187,7 @@ nvm_system_init()
     }
 
     //create threads
-    kFlushLwm = nvm->max_inode_entry * 0.1;
+    kFlushLwm = nvm->max_inode_entry * 0.5;
     sys_terminate = 0;
     for(uint32_t i = 0; i < NUM_FLUSH; i++) {
         pthread_create(&flush_thread[i], NULL, flush_thread_func, NULL);

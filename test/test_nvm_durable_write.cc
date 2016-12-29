@@ -9,7 +9,7 @@
 #include "ut0random.h"
 #include "nvm0nvm.h"
 
-Random * g_rand_obj; // Global Random class instance pointer. 
+Random *g_rand_obj; // Global Random class instance pointer. 
 
 /**
  * Write thread fills in buffer and write it to nvm */
@@ -85,8 +85,6 @@ void test_nvm_durable_write_skewed()
     pthread_t write_thread[kNumThread];
     int tid[kNumThread];
 
-    g_rand_obj->skew_init(THETA, DEFAULT_N);
-
     for (uint32_t i = 0; i < kNumThread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_nvm_durable_write_skewed, (void *)&tid[i]);
@@ -107,12 +105,11 @@ void test_nvm_durable_write()
 
     nvm_structure_build();
     nvm_system_init();
-//  print_nvm_info();
 
+    // for random tests
     g_rand_obj = new Random();
-
-    // TODO: random
     if (WRITE_MODE == WRITE_MODE_RANDOM || WRITE_MODE == WRITE_MODE_SKEWED) {
+        g_rand_obj->skew_init(THETA, TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE);
         printf("Random Test: appending to a new file...\n");
         fill_buf_append(buffer, BYTES_PER_WRITE);
         test_nvm_durable_write_append();

@@ -285,50 +285,196 @@ void start_test()
  */
 void start_reg_test()
 {
-    int fd = open("./test/regtest.txt", O_RDWR | O_CREAT | O_APPEND, 0666);
+//    int fd = open("./test/regtest.txt", O_RDWR | O_CREAT | O_APPEND, 0666);
+//
+//    printf("=================== REGRESSION TESTING START ===================\n");
+//    
+//    for (NVM_SIZE = 1024 * 1024 * 1024LLU; NVM_SIZE <= 64 * 1024 * 1024 * 1024LLU; NVM_SIZE *= 4) {
+//        NUM_FLUSH = 16;
+//        for (SYNC_OPTION = 0; SYNC_OPTION <= 1; SYNC_OPTION++) {
+//            MONITOR_OPTION = 0;
+//            TOTAL_FILE_SIZE = 80 * 1024 * 1024 * 1024LLU;
+//            TEST_FILE_RANGE_START = 1;
+//            TEST_FILE_RANGE_END = 64;
+//            for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 4) {
+//                for (BYTES_PER_WRITE = 256; BYTES_PER_WRITE <= 1024 * 1024; BYTES_PER_WRITE *= 64) {
+//                    for (WRITE_MODE = 0; WRITE_MODE <= 0/*1*/; WRITE_MODE++) {
+//                        NVM_WRITE = 1;
+//                        TEST_CYCLE = 5;
+//
+//                        double time_avg = 0;
+//
+//                        for(uint32_t i = 0; i < TEST_CYCLE; i++) {
+//                            printf(">> %u files start to be written <<\n", kNumThread);
+//                            if(NVM_WRITE) {
+//                                test_nvm_durable_write();
+//                            } else {
+//                                test_write();
+//                            }
+//
+//                            time_avg += kTimeSec;
+//                        }
+//
+//                        time_avg /= TEST_CYCLE;
+//                        dprintf(fd, "*************************\n");
+//                        dprintf(fd, "NVM SIZE        = %lu\n", NVM_SIZE);
+//                        dprintf(fd, "SYNC OPTION     = %d\n", SYNC_OPTION);
+//                        dprintf(fd, "NUM FILES       = %u\n", kNumThread);
+//                        dprintf(fd, "BYTES PER WRITE = %u\n", BYTES_PER_WRITE);
+//                        dprintf(fd, "WRITE MODE      = %u\n", WRITE_MODE);
+//                        dprintf(fd, "TIME TAKEN      = %f\n", time_avg);
+//                        dprintf(fd, "*************************\n");
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    close(fd);
+    int fd = open("./report/testall.txt", O_RDWR | O_CREAT | O_APPEND, 0666);
 
     printf("=================== REGRESSION TESTING START ===================\n");
     
-    for (NVM_SIZE = 1024 * 1024 * 1024LLU; NVM_SIZE <= 64 * 1024 * 1024 * 1024LLU; NVM_SIZE *= 4) {
-        NUM_FLUSH = 16;
-        for (SYNC_OPTION = 0; SYNC_OPTION <= 1; SYNC_OPTION++) {
-            MONITOR_OPTION = 0;
-            TOTAL_FILE_SIZE = 80 * 1024 * 1024 * 1024LLU;
-            TEST_FILE_RANGE_START = 1;
-            TEST_FILE_RANGE_END = 64;
-            for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 4) {
-                for (BYTES_PER_WRITE = 256; BYTES_PER_WRITE <= 1024 * 1024; BYTES_PER_WRITE *= 64) {
-                    for (WRITE_MODE = 0; WRITE_MODE <= 0/*1*/; WRITE_MODE++) {
-                        NVM_WRITE = 1;
-                        TEST_CYCLE = 5;
+    MONITOR_OPTION = 0;
+    TEST_CYCLE = 5;
 
-                        double time_avg = 0;
-
-                        for(uint32_t i = 0; i < TEST_CYCLE; i++) {
-                            printf(">> %u files start to be written <<\n", kNumThread);
-                            if(NVM_WRITE) {
-                                test_nvm_durable_write();
-                            } else {
-                                test_write();
-                            }
-
-                            time_avg += kTimeSec;
-                        }
-
-                        time_avg /= TEST_CYCLE;
-                        dprintf(fd, "*************************\n");
-                        dprintf(fd, "NVM SIZE        = %lu\n", NVM_SIZE);
-                        dprintf(fd, "SYNC OPTION     = %d\n", SYNC_OPTION);
-                        dprintf(fd, "NUM FILES       = %u\n", kNumThread);
-                        dprintf(fd, "BYTES PER WRITE = %u\n", BYTES_PER_WRITE);
-                        dprintf(fd, "WRITE MODE      = %u\n", WRITE_MODE);
-                        dprintf(fd, "TIME TAKEN      = %f\n", time_avg);
-                        dprintf(fd, "*************************\n");
-                    }
-                }
-            }
+    printf(">> NVM APPEND <<\n");
+    NVM_WRITE = 1;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_APPEND;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_nvm_durable_write();
+            time_avg += kTimeSec;
         }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> NVM APPEND %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
     }
+    printf(">> NVM RANDOM <<\n");
+    NVM_WRITE = 1;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_RANDOM;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_nvm_durable_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> NVM RANDOM %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+    printf(">> NVM SKEWED <<\n");
+    NVM_WRITE = 1;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_SKEWED;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_nvm_durable_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> NVM SKEWED %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+
+    printf(">> VANILA APPEND <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 0;
+    WRITE_MODE = WRITE_MODE_APPEND;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA APPEND %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+    printf(">> VANILA RANDOM <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 0;
+    WRITE_MODE = WRITE_MODE_RANDOM;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA RANDOM %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+    printf(">> VANILA SKEWED <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 0;
+    WRITE_MODE = WRITE_MODE_SKEWED;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA SKEWED %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+
+    printf(">> VANILA DURABLE APPEND <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_APPEND;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_durable_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA DURABLE APPEND %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+    printf(">> VANILA DURABLE RANDOM <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_RANDOM;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_durable_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA DURABLE RANDOM %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+    printf(">> VANILA DURABLE SKEWED <<\n");
+    NVM_WRITE = 0;
+    SYNC_OPTION = 1;
+    WRITE_MODE = WRITE_MODE_SKEWED;
+    for (kNumThread = TEST_FILE_RANGE_START; kNumThread <= TEST_FILE_RANGE_END; kNumThread *= 2) {
+        double time_avg = 0;
+        for (uint32_t i = 0; i < TEST_CYCLE; i++) {
+            printf("    >> %u files %u cycle <<\n", kNumThread, i+1);
+            test_durable_write();
+            time_avg += kTimeSec;
+        }
+        time_avg /= TEST_CYCLE;
+        dprintf(fd, ">> VANILA DURABLE SKEWED %2u files <<\n", kNumThread);
+        dprintf(fd, "TIME TAKEN = %f\n\n", time_avg);
+    }
+
     close(fd);
 }
 

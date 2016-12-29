@@ -112,8 +112,6 @@ void test_durable_write_skewed()
     pthread_t write_thread[kNumThread];
     int tid[kNumThread];
 
-    g_rand_obj->skew_init(THETA, DEFAULT_N);
-
     for (uint32_t i = 0; i < kNumThread; i++) {
         tid[i] = i + 1;
         pthread_create(&write_thread[i], NULL, thread_durable_write_skewed, (void *)&tid[i]);
@@ -133,10 +131,10 @@ void test_durable_write()
     buffer = (char*) malloc(BYTES_PER_WRITE);
     fill_buf(buffer, BYTES_PER_WRITE);
 
-    g_rand_obj = new Random();
-
     // for random tests
+    g_rand_obj = new Random();
     if (WRITE_MODE == WRITE_MODE_RANDOM || WRITE_MODE == WRITE_MODE_SKEWED) {
+        g_rand_obj->skew_init(THETA, TOTAL_FILE_SIZE / kNumThread / BYTES_PER_WRITE);
         printf("Random Test: appending to a new file...\n");
         fill_buf_append(buffer, BYTES_PER_WRITE);
         test_durable_write_append();

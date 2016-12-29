@@ -22,30 +22,18 @@
 #endif
 
 #define DEFAULT_DISTR_N (5 * 1024 * 1024)
-#define THETA (0.25)                // For zipf distribution
+#define THETA (0.01)                // For zipf distribution
 #define DEFAULT_N (5 * 1024 * 1024) // For zipf distribution
 
 class Random {
 
 public:
-//    Random();
-//    ~Random();
-//    
-//    uint32_t unif_rand();
-//    uint64_t unif_rand64();
-//    
-//    int skew_init(double t, uint64_t n);
-//    uint32_t skew_rand();
-//    uint64_t skew_rand64();
-//    uint64_t skew_rand_at(uint64_t i);
-//    void skew_print_dist();
     /**
       * Constructor
       * Initialize dist_ and n_ to default value.
       */
     Random() {
         dist_ = 0;
-        //dist_ = new uint64_t[DEFAULT_DISTR_N];
         n_ = 0;
         srand(time(NULL));
     };
@@ -56,7 +44,6 @@ public:
       */
     ~Random() {
         delete[] dist_;
-        //free(dist_);
         n_ = 0;
     };
     
@@ -125,10 +112,7 @@ public:
             n_ = n;
         }
         
-        //printf("Hello\n");
         dist_ = new uint64_t[n];
-        //dist_ = (uint64_t *)malloc(sizeof(uint64_t) * n);
-        //printf("Hello\n");
 
         /* sum = {1/1 + 1/2 + 1/3 + ... + 1/n} ,
            when theta goes to 0. */
@@ -205,9 +189,10 @@ public:
       * Print out distribution partitioned into 10 groups. 
       */
     void skew_print_dist() {
-        uint64_t unit = n_ / 10;
-        uint64_t *section = new uint64_t[10];
-        for (int i = 0; i < 10; i++) {
+        int num_sec = 10;
+        uint64_t unit = n_ / num_sec;
+        uint64_t *section = new uint64_t[num_sec];
+        for (int i = 0; i < num_sec; i++) {
             section[i] = 0;
         }
     
@@ -215,9 +200,9 @@ public:
             section[dist_[i] / unit]++;
         }
     
-        for (int i = 0; i < 10; i++) {
-            printf("From %10llu to %10llu : %10llu\n",
-                    i * unit, (i + 1) * unit, section[i]);
+        for (int i = 0; i < num_sec; i++) {
+            printf("From %10llu to %10llu : %10llu = %f%\n",
+                    i * unit, (i + 1) * unit, section[i], (double)section[i]/n_);
         }
     };
 
