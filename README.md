@@ -4,11 +4,11 @@
 
 ### Install
 ```
-$ git clone --recursive http://166.104.29.119:3389/guddnjs91/atomic-durable-nvm.git
+$ git clone --recursive https://github.com/guddnjs91/autobahn_app.git
 ```
 or
 ```
-$ git clone http://166.104.140.26:3389/guddnjs91/atomic-durable-nvm.git
+$ git clone https://github.com/guddnjs91/autobahn_app.git
 $ git submodule init
 $ git submodule update
 ```
