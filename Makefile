@@ -17,10 +17,12 @@ OBJS := $(CXX_SRCS:.cc=.o)
 #SRCS = src/$(OBJS: .o=.cc)
 BIN = bin/
 INCLUDE = include
+LIBCUCKOOINC = include/libcuckoo/include
 LIB = ./lib
 LIBNAME = -lpthread -lrt
 
-CFLAGS += -I$(INCLUDE) 
+CFLAGS += -I$(INCLUDE)
+CPPFLAGS += -I$(LIBCUCKOOINC)
 
 all: test
 
